@@ -83,8 +83,8 @@
   .msg .msg-name.orange { color: var(--tg-orange); }
   .msg .msg-name.purple { color: var(--tg-purple); }
   .msg.yield { opacity: 0.25; }
-  .msg.yield::after { content: '🔇 yield'; position: absolute; top: -8px; right: -4px; font-size: 10px; font-family: var(--mono); color: var(--tg-red); background: var(--surface); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); }
-  .msg.respond::after { content: '✅'; position: absolute; top: -8px; right: -4px; font-size: 10px; background: var(--surface); padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(79,174,78,0.3); }
+  .msg.yield::after { content: 'yield'; position: absolute; top: -8px; right: -4px; font-size: 10px; font-family: var(--mono); color: var(--tg-red); background: var(--surface); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); }
+  .msg.respond::after { content: ''; position: absolute; top: -8px; right: -4px; width: 20px; height: 20px; background: var(--surface); border-radius: 6px; border: 1px solid rgba(79,174,78,0.3); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234fae4e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; }
   @keyframes msgIn { from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)} }
   .msg:nth-child(1) { animation-delay: 0s; }
   .msg:nth-child(2) { animation-delay: .15s; }
@@ -109,7 +109,22 @@
 
   /* MODE CARDS */
   .mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
-  @media (max-width: 540px) { .mode-cards { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) {
+    .hero { min-height: 50vh; padding: 60px 20px 40px; }
+    .hero h1 { font-size: 32px; }
+    .content { padding: 0 16px; }
+    .cmp-table { font-size: 13px; }
+    .cmp-table th, .cmp-table td { padding: 8px 10px; }
+    .mode-cards { grid-template-columns: 1fr; }
+    .chat-sim { padding: 16px; }
+    .flow-wrap { padding: 20px 12px; }
+    .flow-svg { min-width: 600px; }
+    .uc-card { flex-direction: column; }
+    .cas-box { min-width: auto; }
+    .lang-switch { top: 10px; right: 10px; }
+    .lang-btn { padding: 6px 10px; font-size: 10px; }
+    .footer { padding: 40px 16px; }
+  }
   .mode-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
   .mode-card.active-mode { border-color: var(--tg-blue); }
   .mode-card h4 { font-family: var(--mono); font-size: 14px; font-weight: 700; margin-bottom: 8px; }
@@ -311,7 +326,7 @@
         <line x1="440" y1="312" x2="530" y2="312" stroke="var(--border)" stroke-width="1.5"/>
         <text x="480" y="305" fill="var(--tg-green)" font-size="10" font-family="var(--mono)">yes</text>
         <rect x="530" y="296" width="110" height="32" rx="8" fill="rgba(229,84,84,0.15)" stroke="var(--tg-red)" stroke-opacity=".4" stroke-dasharray="4 3"/>
-        <text x="585" y="317" text-anchor="middle" fill="var(--tg-red)" font-size="12" font-family="var(--mono)">YIELD 🔇</text>
+        <text x="585" y="317" text-anchor="middle" fill="var(--tg-red)" font-size="12" font-family="var(--mono)">YIELD</text>
 
         <!-- No one else → respond -->
         <line x1="240" y1="312" x2="150" y2="312" stroke="var(--border)" stroke-width="1.5"/>
@@ -376,7 +391,7 @@
 
     <div class="uc-grid">
       <div class="uc-card">
-        <div class="uc-icon i-blue">🏢</div>
+        <div class="uc-icon i-blue"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></div>
         <div>
           <h4 data-i18n="uc1_h">Team AI Workspace</h4>
           <p data-i18n="uc1_p">Group làm "AI workspace" cho team. Mọi người chat bình thường → tất cả bot lắng nghe. Cần deploy? @devops_bot deploy staging.</p>
@@ -384,7 +399,7 @@
         </div>
       </div>
       <div class="uc-card">
-        <div class="uc-icon i-green">🌐</div>
+        <div class="uc-icon i-green"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>
         <div>
           <h4 data-i18n="uc2_h">Multi-language Support</h4>
           <p data-i18n="uc2_p">Hai bot ngôn ngữ. Mặc định cả hai respond. Muốn chỉ tiếng Việt? @vi_bot giải thích cái này.</p>
@@ -392,7 +407,7 @@
         </div>
       </div>
       <div class="uc-card">
-        <div class="uc-icon i-purple">💬</div>
+        <div class="uc-icon i-purple"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg></div>
         <div>
           <h4 data-i18n="uc3_h">Phòng họp AI</h4>
           <p data-i18n="uc3_p">Group discussion nơi mọi bot đều contribute ý kiến. Khi cần ý kiến cụ thể: mention trực tiếp.</p>
