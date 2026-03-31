@@ -1,0 +1,7 @@
+---
+// Force-directed Knowledge Graphs — complex post with Mermaid, Three.js, inline scripts
+// Uses Vite ?raw import to avoid Astro JSX parsing issues with braces in code/diagrams
+// @ts-ignore
+import rawHtml from './_force-directed-knowledge-graphs.html?raw';
+---
+<Fragment set:html={rawHtml} />
