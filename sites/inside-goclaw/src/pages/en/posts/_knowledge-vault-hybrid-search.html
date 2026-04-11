@@ -61,8 +61,18 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-eve
 
 /* ─── Hero ─── */
 .hero-band { min-height: 55dvh; display: flex; flex-direction: column; justify-content: center; padding: 80px 32px 48px; position: relative; background: var(--bg-alt); border-bottom: 1px solid var(--border); overflow: hidden; }
-.hero-band::before { content: ''; position: absolute; width: 420px; height: 420px; border-radius: 50%; right: -60px; top: 50%; transform: translateY(-50%); background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; opacity: 0.6; }
-.hero-band::after { content: ''; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: 50px; top: 50%; transform: translateY(-50%); border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; }
+/* Hero decorative elements matching thumbnail style */
+.hero-search-ring { position: absolute; border-radius: 50%; border: 1px solid; pointer-events: none; }
+.hero-search-ring.r1 { width: 280px; height: 280px; top: 50%; right: 80px; transform: translateY(-50%); border-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+.hero-search-ring.r2 { width: 180px; height: 180px; top: 50%; right: 130px; transform: translateY(-50%); border-color: color-mix(in srgb, var(--green) 18%, transparent); }
+.hero-search-ring.r3 { width: 360px; height: 360px; top: 50%; right: 40px; transform: translateY(-50%); border-color: color-mix(in srgb, var(--violet) 14%, transparent); }
+.hero-search-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 30%, transparent); }
+.hero-search-dot.d1 { top: 30%; right: 160px; }
+.hero-search-dot.d2 { top: 60%; right: 240px; }
+.hero-search-dot.d3 { top: 25%; right: 300px; }
+.hero-search-dot.d4 { top: 70%; right: 120px; }
+.hero-search-dot.d5 { top: 50%; right: 340px; width: 10px; height: 10px; background: color-mix(in srgb, var(--green) 25%, transparent); }
+.hero-search-dot.d6 { top: 80%; right: 200px; width: 6px; height: 6px; background: color-mix(in srgb, var(--violet) 25%, transparent); }
 .hero-inner { max-width: 900px; margin: 0 auto; width: 100%; position: relative; z-index: 2; }
 .post-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 24px; display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); border-radius: var(--radius-sm); background: var(--accent-dim); }
 .post-eyebrow::before { content: '\25C8'; font-size: 8px; flex-shrink: 0; }
@@ -250,7 +260,7 @@ li { margin-bottom: 6px; font-size: 14.5px; }
   .pipeline-step:first-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important; }
   .pipeline-step:last-child { border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important; }
   .pipeline-step:not(:last-child)::after, .pipeline-step:not(:last-child)::before { display: none; }
-  .hero-band::before, .hero-band::after { display: none; }
+  .hero-search-ring, .hero-search-dot { display: none; }
 }
 </style>
 </head>
@@ -284,6 +294,16 @@ li { margin-bottom: 6px; font-size: 14.5px; }
 
 <!-- ══ HERO ══ -->
 <header class="hero-band">
+  <!-- Decorative elements matching thumbnail style -->
+  <div class="hero-search-ring r1"></div>
+  <div class="hero-search-ring r2"></div>
+  <div class="hero-search-ring r3"></div>
+  <div class="hero-search-dot d1"></div>
+  <div class="hero-search-dot d2"></div>
+  <div class="hero-search-dot d3"></div>
+  <div class="hero-search-dot d4"></div>
+  <div class="hero-search-dot d5"></div>
+  <div class="hero-search-dot d6"></div>
   <div class="hero-inner">
     <div class="post-eyebrow">Inside GoClaw — v3 Release</div>
     <h1 class="post-title"><em>Knowledge Vault</em>: Hybrid Search &amp; Wikilinks</h1>
