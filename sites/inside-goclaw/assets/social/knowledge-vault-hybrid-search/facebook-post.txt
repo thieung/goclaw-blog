@@ -1,0 +1,20 @@
+GoClaw v3.3.0 ra mắt Knowledge Vault — biến workspace filesystem thành knowledge base có cấu trúc, search được, link được, cross-reference luôn
+
+Tính năng này giải quyết vấn đề memory system của agent chưa đủ khi cần tìm document cụ thể hay track mối quan hệ giữa files.
+
+Kiến trúc khá ấn tượng:
+- Document registry: metadata pointer, content vẫn ở filesystem, DB chỉ giữ path + hash + embeddings
+- Wikilinks hai chiều: format [[target]] giống Obsidian/Notion, auto-extract từ markdown content
+- Hybrid search trong Vault: FTS (keyword) 0.4 + Vector (semantic) 0.6, kết hợp precision và recall
+- Cross-store fan-out: search đồng thời qua Vault (0.4) + Episodic (0.3) + Knowledge Graph (0.3), normalize → dedup → sort
+- Enrichment pipeline 5 phase async: prepare → batch summarize (5 docs/1 LLM call) → embed → classify links → sync wikilinks
+- Filesystem sync: fsnotify watcher + lazy hash check trên BeforeRead, catch được external edits
+- VaultRetriever auto-inject relevant docs vào agent context, agent không cần chủ động gọi search
+
+Team docs cũng được support — nullable agent_id + COALESCE trick cho phép docs không thuộc agent cụ thể, scope inference từ path (agents/ → personal, teams/ → team).
+
+Mở Dashboard → DATA → Vault là dùng được ngay, không cần config gì thêm.
+
+Chi tiết kiến trúc để link ở comment 👇
+
+#GoClaw #KnowledgeVault #AIAgents #NextLevelBuilder

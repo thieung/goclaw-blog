@@ -1,0 +1,7 @@
+GoClaw v3.3.0 có thêm Knowledge Vault — document registry + wikilinks 2 chiều + hybrid search fan-out qua 3 nguồn (Vault, Episodic, KG)
+
+Agent ghi file → enrichment pipeline 5 phase async → sẵn sàng search. FTS + vector trong Vault, cross-store weighted merge.
+
+Mở Dashboard → Vault → upload hoặc rescan workspace → dùng ngay.
+
+https://goclaw.thieunv.space/posts/knowledge-vault-hybrid-search

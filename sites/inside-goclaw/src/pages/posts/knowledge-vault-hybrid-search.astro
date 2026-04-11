@@ -1,0 +1,7 @@
+---
+// Knowledge Vault: Hybrid Search & Wikilinks — raw HTML preserved
+// Uses Vite ?raw import to avoid Astro JSX parsing issues with braces in code/diagrams
+// @ts-ignore
+import rawHtml from './_knowledge-vault-hybrid-search.html?raw';
+---
+<Fragment set:html={rawHtml} />

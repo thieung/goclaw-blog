@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { width: 1200px; height: 630px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; background: #f8f9fb; position: relative; }
+.bg { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 30% 20%, rgba(8,145,178,0.06) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 75% 75%, rgba(8,145,178,0.04) 0%, transparent 50%); }
+.grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px); background-size: 40px 40px; }
+.accent-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(180deg, #0891b2, #0d9488, #0891b2); }
+.bg-logo { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); width: 300px; height: 300px; opacity: 0.05; pointer-events: none; z-index: 0; filter: brightness(0.7); }
+/* Search visualization */
+.search-ring { position: absolute; border-radius: 50%; border: 1px solid; pointer-events: none; }
+.search-ring.r1 { width: 120px; height: 120px; top: 140px; left: 880px; border-color: rgba(8,145,178,0.2); }
+.search-ring.r2 { width: 80px; height: 80px; top: 160px; left: 900px; border-color: rgba(5,150,105,0.15); }
+.search-ring.r3 { width: 160px; height: 160px; top: 120px; left: 860px; border-color: rgba(124,58,237,0.12); }
+.search-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: rgba(8,145,178,0.35); }
+.search-dot.d1 { top: 200px; left: 950px; }
+.search-dot.d2 { top: 260px; left: 1000px; }
+.search-dot.d3 { top: 170px; left: 1050px; }
+.search-dot.d4 { top: 300px; left: 920px; }
+.search-dot.d5 { top: 240px; left: 1080px; width: 8px; height: 8px; background: rgba(5,150,105,0.25); }
+.search-dot.d6 { top: 340px; left: 980px; width: 4px; height: 4px; background: rgba(124,58,237,0.25); }
+/* Wikilink brackets */
+.wiki-mark { position: absolute; font-family: 'Geist Mono', monospace; font-size: 48px; font-weight: 700; color: rgba(8,145,178,0.07); pointer-events: none; }
+.wiki-mark.w1 { top: 60px; right: 260px; }
+.wiki-mark.w2 { top: 440px; right: 340px; }
+.content { position: relative; z-index: 1; padding: 56px 72px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+.top { display: flex; align-items: center; gap: 14px; }
+.logo img { width: 44px; height: 44px; }
+.brand { font-family: 'Geist Mono', monospace; font-size: 17px; font-weight: 600; color: rgba(15,23,42,0.85); }
+.version { margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 13px; color: #0891b2; background: rgba(8,145,178,0.08); border: 1px solid rgba(8,145,178,0.15); padding: 5px 14px; border-radius: 8px; font-weight: 600; }
+.middle { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.eyebrow { font-family: 'Geist Mono', monospace; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: #0891b2; margin-bottom: 14px; opacity: 0.75; }
+h1 { font-size: 50px; font-weight: 700; line-height: 1.1; color: #0f172a; max-width: 720px; letter-spacing: -0.02em; }
+h1 .hl { color: #0891b2; }
+.subtitle { margin-top: 18px; font-size: 17px; color: rgba(15,23,42,0.45); max-width: 620px; line-height: 1.5; font-weight: 400; }
+.bottom { display: flex; align-items: center; gap: 10px; }
+.tag { font-family: 'Geist Mono', monospace; font-size: 11px; padding: 4px 12px; border-radius: 6px; background: rgba(8,145,178,0.06); color: rgba(8,145,178,0.7); border: 1px solid rgba(8,145,178,0.12); }
+.url { margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: rgba(15,23,42,0.3); }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="grid"></div>
+<img class="bg-logo" src="../../../public/favicon.svg" alt="">
+<div class="accent-bar"></div>
+<div class="search-ring r1"></div><div class="search-ring r2"></div><div class="search-ring r3"></div>
+<div class="search-dot d1"></div><div class="search-dot d2"></div><div class="search-dot d3"></div>
+<div class="search-dot d4"></div><div class="search-dot d5"></div><div class="search-dot d6"></div>
+<div class="wiki-mark w1">[[</div>
+<div class="wiki-mark w2">]]</div>
+<div class="content">
+  <div class="top">
+    <div class="logo"><img src="../../../public/favicon.svg" alt=""></div>
+    <div class="brand">GoClaw</div>
+    <div class="version">v3.3.0</div>
+  </div>
+  <div class="middle">
+    <div class="eyebrow">INSIDE GOCLAW v3 — Deep Dive</div>
+    <h1><span class="hl">Knowledge Vault</span>: Hybrid Search & Wikilinks</h1>
+    <div class="subtitle">Document registry + wikilinks 2 chiều + hybrid search (FTS + vector) + cross-store fan-out</div>
+  </div>
+  <div class="bottom">
+    <span class="tag">knowledge-vault</span>
+    <span class="tag">hybrid-search</span>
+    <span class="tag">pgvector</span>
+    <span class="tag">wikilinks</span>
+    <span class="url">goclaw.thieunv.space</span>
+  </div>
+</div>
+</body>
+</html>

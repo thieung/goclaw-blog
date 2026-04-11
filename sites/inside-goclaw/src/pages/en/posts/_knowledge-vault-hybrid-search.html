@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoClaw v3.3.0 — Knowledge Vault: Hybrid Search & Wikilinks</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── Design Tokens ─── */
+:root {
+  --font-body: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', Consolas, monospace;
+  --bg:             #090c10;
+  --bg-alt:         #0d1117;
+  --surface:        #111820;
+  --surface2:       #161d27;
+  --surface3:       #1c2533;
+  --border:         rgba(255,255,255,0.06);
+  --border-hi:      rgba(255,255,255,0.11);
+  --text:           #a8b8c8;
+  --text-dim:       #4e6070;
+  --text-bright:    #dce8f0;
+  --text-hi:        #f0f6fa;
+  --accent:         #06b6d4;
+  --accent-dim:     rgba(6,182,212,0.07);
+  --accent-hi:      #22d3ee;
+  --accent-glow:    rgba(6,182,212,0.15);
+  --green:          #10b981;
+  --green-dim:      rgba(16,185,129,0.07);
+  --red:            #f87171;
+  --red-dim:        rgba(248,113,113,0.07);
+  --amber:          #f59e0b;
+  --amber-dim:      rgba(245,158,11,0.07);
+  --violet:         #a78bfa;
+  --violet-dim:     rgba(167,139,250,0.07);
+  --teal:           #2dd4bf;
+  --teal-dim:       rgba(45,212,191,0.07);
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
+}
+[data-theme="light"] {
+  --bg: #f4f6f8; --bg-alt: #edf0f4; --surface: #ffffff; --surface2: #f0f2f5; --surface3: #e4e8ec;
+  --border: rgba(0,0,0,0.07); --border-hi: rgba(0,0,0,0.12);
+  --text: #374151; --text-dim: #7a8694; --text-bright: #111827; --text-hi: #030712;
+  --accent: #0891b2; --accent-dim: rgba(8,145,178,0.07); --accent-hi: #0e7490; --accent-glow: rgba(8,145,178,0.08);
+  --green: #059669; --green-dim: rgba(5,150,105,0.07); --red: #dc2626; --red-dim: rgba(220,38,38,0.07);
+  --amber: #d97706; --amber-dim: rgba(217,119,6,0.07); --violet: #7c3aed; --violet-dim: rgba(124,58,237,0.07);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); line-height: 1.7; min-height: 100dvh; -webkit-font-smoothing: antialiased; }
+body::after { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.018; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.15'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+[data-theme="light"] body::after { opacity: 0.04; }
+
+/* ─── Fixed Nav ─── */
+.fixed-nav { position: fixed; top: 16px; right: 16px; z-index: 600; display: flex; gap: 6px; }
+.nav-btn { width: 36px; height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi); background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: background .15s, color .15s; text-decoration: none; font-family: var(--font-body); }
+.nav-btn:hover { background: var(--surface3); color: var(--text-bright); }
+
+/* ─── Hero ─── */
+.hero-band { min-height: 55dvh; display: flex; flex-direction: column; justify-content: center; padding: 80px 32px 48px; position: relative; background: var(--bg-alt); border-bottom: 1px solid var(--border); overflow: hidden; }
+.hero-band::before { content: ''; position: absolute; width: 420px; height: 420px; border-radius: 50%; right: -60px; top: 50%; transform: translateY(-50%); background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; opacity: 0.6; }
+.hero-band::after { content: ''; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: 50px; top: 50%; transform: translateY(-50%); border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; }
+.hero-inner { max-width: 900px; margin: 0 auto; width: 100%; position: relative; z-index: 2; }
+.post-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 24px; display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); border-radius: var(--radius-sm); background: var(--accent-dim); }
+.post-eyebrow::before { content: '\25C8'; font-size: 8px; flex-shrink: 0; }
+.post-title { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700; color: var(--text-hi); letter-spacing: -0.04em; line-height: 1.08; max-width: 780px; margin-bottom: 20px; }
+.post-title em { color: var(--accent); font-style: normal; }
+
+.text-accent { color: var(--accent); font-weight: 600; }
+.post-deck { font-size: 1.1rem; color: var(--text-dim); max-width: 600px; line-height: 1.65; font-weight: 400; margin-bottom: 28px; }
+.post-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.meta-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; padding: 3px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi); color: var(--text-dim); background: var(--surface); }
+.meta-tag--accent { border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent); background: var(--accent-dim); }
+
+/* ─── TOC ─── */
+.toc-bar { position: sticky; top: 0; z-index: 200; display: flex; gap: 2px; align-items: center; justify-content: center; overflow-x: auto; -webkit-overflow-scrolling: touch; background: color-mix(in srgb, var(--bg-alt) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); padding: 10px 32px; }
+.toc-bar::-webkit-scrollbar { display: none; }
+.toc-label { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; padding-right: 10px; margin-right: 6px; border-right: 1px solid var(--border); }
+.toc-link { display: block; font-size: 11px; color: var(--text-dim); text-decoration: none; padding: 4px 9px; border-radius: var(--radius-sm); transition: all .15s; white-space: nowrap; flex-shrink: 0; font-weight: 400; }
+.toc-link:hover { color: var(--text); background: var(--surface2); }
+.toc-link.active { color: var(--accent-hi); background: var(--accent-dim); font-weight: 600; }
+
+/* ─── Sections ─── */
+.section-band { width: 100%; padding: 52px 32px; border-bottom: 1px solid var(--border); }
+.section-band:nth-child(odd) { background: var(--bg); }
+.section-band:nth-child(even) { background: var(--bg-alt); }
+.section-band .band-inner { max-width: 900px; margin: 0 auto; }
+.sec-label { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 10px; margin: 0 0 6px; scroll-margin-top: 56px; }
+.sec-label::before { content: '\25C8'; color: var(--text-dim); font-size: 8px; flex-shrink: 0; }
+h2.sec-title { font-size: 1.55rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.025em; margin-bottom: 18px; line-height: 1.2; }
+h3 { font-size: 1.05rem; font-weight: 600; color: var(--text-bright); margin: 28px 0 10px; letter-spacing: -0.01em; }
+p { margin-bottom: 14px; font-size: 15px; }
+strong { color: var(--text-bright); font-weight: 600; }
+code { font-family: var(--font-mono); font-size: 0.84em; background: var(--surface2); color: var(--accent-hi); padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border); }
+
+/* ─── Code File ─── */
+.code-file { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin: 14px 0 22px; }
+.code-file__header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
+.code-file__header::before { content: '\25B8'; color: var(--accent); font-size: 10px; flex-shrink: 0; }
+.code-file__body { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; padding: 16px; background: var(--surface); white-space: pre-wrap; word-break: break-word; max-height: 460px; overflow: auto; color: var(--text); scrollbar-width: thin; scrollbar-color: var(--surface3) transparent; }
+.code-file__body::-webkit-scrollbar { width: 5px; height: 5px; }
+.code-file__body::-webkit-scrollbar-track { background: transparent; }
+.code-file__body::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* ─── KPI Strip ─── */
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin: 24px 0; }
+.kpi-item { background: var(--surface); padding: 18px 14px; text-align: center; }
+.kpi-value { font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: var(--text-bright); line-height: 1; margin-bottom: 5px; }
+.kpi-label { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); }
+
+/* ─── Pain Strip ─── */
+.pain-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin: 20px 0 24px; }
+.pain-card { background: var(--surface); padding: 22px 18px; text-align: center; }
+.pain-num { font-family: var(--font-mono); font-size: 2rem; font-weight: 700; color: var(--red); line-height: 1; margin-bottom: 8px; }
+.pain-card p { font-size: 13px; margin: 0; color: var(--text-dim); }
+
+/* ─── Cards ─── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 22px; margin-bottom: 14px; }
+.card--accent { border-left: 3px solid var(--accent); }
+.card--green { border-left: 3px solid var(--green); }
+.card--amber { border-left: 3px solid var(--amber); }
+.card--violet { border-left: 3px solid var(--violet); }
+.card--red { border-left: 3px solid var(--red); }
+.card-label { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.card-label::before { content: '\25B9'; font-size: 9px; opacity: 0.5; flex-shrink: 0; }
+
+/* ─── Tables ─── */
+.table-wrap { overflow-x: auto; margin: 12px 0 22px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.data-table th { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border-hi); background: var(--surface2); }
+.data-table th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.data-table th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+.data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); }
+.data-table td:first-child { font-weight: 600; color: var(--text-bright); white-space: nowrap; }
+
+/* ─── Arch Diagram ─── */
+.arch-diagram { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; margin: 20px 0 24px; position: relative; overflow: hidden; }
+.arch-diagram::before { content: ''; position: absolute; top: -60px; right: -60px; width: 180px; height: 180px; background: radial-gradient(circle, var(--accent-glow), transparent 70%); pointer-events: none; }
+.arch-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); text-align: center; margin-bottom: 24px; }
+.arch-flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.arch-node { padding: 10px 20px; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 12px; text-align: center; white-space: nowrap; position: relative; }
+.arch-node--action { background: var(--surface2); border: 1px solid var(--border-hi); color: var(--text); }
+.arch-node--event { background: var(--accent-dim); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); color: var(--accent); }
+.arch-node--enrich { background: var(--green-dim); border: 1px solid color-mix(in srgb, var(--green) 25%, transparent); color: var(--green); }
+.arch-node--search { background: var(--violet-dim); border: 1px solid color-mix(in srgb, var(--violet) 25%, transparent); color: var(--violet); }
+.arch-arrow { display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 16px; height: 28px; }
+.arch-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+/* ─── Pipeline ─── */
+.pipeline { display: flex; gap: 0; align-items: stretch; margin: 18px 0 24px; flex-wrap: wrap; }
+.pipeline-step { flex: 1; min-width: 80px; padding: 14px 10px; background: var(--surface); border: 1px solid var(--border); position: relative; text-align: center; }
+.pipeline-step:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.pipeline-step:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.pipeline-step:not(:first-child) { border-left: none; }
+.pipeline-step:not(:last-child)::after { content: ''; position: absolute; right: -8px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border: 8px solid transparent; border-left-color: var(--border-hi); z-index: 2; }
+.pipeline-step:not(:last-child)::before { content: ''; position: absolute; right: -7px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border: 7px solid transparent; border-left-color: var(--surface); z-index: 3; }
+.ps-num { font-family: var(--font-mono); font-size: 9px; color: var(--accent); display: block; margin-bottom: 4px; letter-spacing: 1px; }
+.ps-label { font-size: 11px; font-weight: 600; color: var(--text-bright); }
+
+/* ─── Link Types ─── */
+.link-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 20px; }
+.link-chip { padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); font-size: 13px; }
+.link-chip strong { font-family: var(--font-mono); font-size: 12px; display: block; margin-bottom: 3px; }
+.link-chip span { color: var(--text-dim); font-size: 12px; }
+
+/* ─── Resolution Steps ─── */
+.resolution-steps { display: flex; flex-direction: column; gap: 0; margin: 14px 0 20px; }
+.res-step { display: flex; align-items: flex-start; gap: 16px; position: relative; padding: 12px 0 12px 52px; }
+.res-step::before { content: attr(data-step); position: absolute; left: 0; top: 12px; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 700; border: 1px solid var(--accent); color: var(--accent); background: var(--bg); }
+.res-step:not(:last-child)::after { content: ''; position: absolute; left: 16px; top: 46px; bottom: 0; width: 1px; background: var(--border-hi); }
+.res-step__content { padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); flex: 1; font-size: 14px; }
+
+/* ─── Fan-Out ─── */
+.fanout { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 20px; margin: 16px 0 24px; }
+.fanout-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); text-align: center; margin-bottom: 20px; }
+.fanout-sources { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.fanout-src { padding: 14px 12px; border-radius: var(--radius-md); text-align: center; border: 1px solid var(--border); }
+.fanout-src--vault { background: var(--accent-dim); border-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+.fanout-src--episodic { background: var(--green-dim); border-color: color-mix(in srgb, var(--green) 20%, transparent); }
+.fanout-src--kg { background: var(--violet-dim); border-color: color-mix(in srgb, var(--violet) 20%, transparent); }
+.fanout-src__name { font-family: var(--font-mono); font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.fanout-src--vault .fanout-src__name { color: var(--accent); }
+.fanout-src--episodic .fanout-src__name { color: var(--green); }
+.fanout-src--kg .fanout-src__name { color: var(--violet); }
+.fanout-src__weight { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--text-bright); }
+.fanout-merge { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.fanout-merge__step { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); padding: 6px 12px; border-radius: var(--radius-sm); background: var(--surface2); border: 1px solid var(--border); }
+.fanout-merge__arrow { color: var(--text-dim); font-size: 14px; }
+
+/* ─── Callout ─── */
+.callout { border: 1px solid var(--border); border-top: 2px solid var(--accent); padding: 14px 18px; background: var(--surface); border-radius: 0 0 var(--radius-md) var(--radius-md); margin: 14px 0 20px; font-size: 14px; }
+.callout strong { color: var(--accent-hi); }
+
+/* ─── Browser Mockup (for screenshot) ─── */
+.browser-frame { border: 1px solid var(--border-hi); border-radius: var(--radius-lg); overflow: hidden; margin: 20px 0 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+.browser-frame__bar { display: flex; align-items: center; gap: 7px; padding: 11px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.browser-frame__dot { width: 10px; height: 10px; border-radius: 50%; }
+.browser-frame__dot--r { background: #fe5f57; }
+.browser-frame__dot--y { background: #febc2e; }
+.browser-frame__dot--g { background: #28c840; }
+.browser-frame__url { margin-left: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); background: var(--surface); padding: 4px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); flex: 1; max-width: 340px; }
+.browser-frame__body { background: var(--surface); }
+.browser-frame__body img { width: 100%; height: auto; display: block; }
+.browser-frame__placeholder { padding: 60px 24px; text-align: center; color: var(--text-dim); font-size: 14px; font-family: var(--font-mono); }
+
+/* ─── Getting Started Steps ─── */
+.gs-steps { counter-reset: gs; margin: 20px 0; }
+.gs-step { position: relative; padding: 18px 22px 18px 64px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 12px; counter-increment: gs; }
+.gs-step::before { content: counter(gs); position: absolute; left: 16px; top: 18px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 14px; font-weight: 700; background: var(--accent-dim); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); }
+.gs-step h4 { font-size: 14px; font-weight: 600; color: var(--text-bright); margin-bottom: 6px; }
+.gs-step p { margin: 0; font-size: 14px; color: var(--text); }
+
+ul, ol { padding-left: 22px; margin-bottom: 14px; }
+li { margin-bottom: 6px; font-size: 14.5px; }
+
+/* ─── Footer ─── */
+.footer-band { padding: 48px 32px; background: var(--bg-alt); border-top: 1px solid var(--border); text-align: center; }
+.footer-text { font-size: 1.05rem; color: var(--text-dim); max-width: 600px; margin: 0 auto 12px; line-height: 1.5; }
+.footer-text em { color: var(--accent); font-style: normal; font-weight: 600; }
+.footer-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); opacity: 0.5; }
+.footer-ver a { color: inherit; text-decoration: none; }
+.footer-ver a:hover { color: var(--accent); }
+.footer-back { display: inline-block; margin-top: 16px; font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); text-decoration: none; padding: 6px 14px; border: 1px solid var(--border-hi); border-radius: var(--radius-sm); transition: all .15s; }
+.footer-back:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 900px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) {
+  .hero-band { min-height: auto; padding: 56px 16px 32px; }
+  .section-band { padding: 36px 16px; }
+  .toc-bar { padding: 8px 12px; justify-content: flex-start; }
+  .toc-label { display: none; }
+  .toc-link { font-size: 10px; padding: 3px 6px; }
+  .post-title { font-size: 1.6rem; }
+  .pain-strip { grid-template-columns: 1fr; }
+  .link-types { grid-template-columns: 1fr; }
+  .fanout-sources { grid-template-columns: 1fr; }
+  .fanout-merge { flex-direction: column; }
+}
+@media (max-width: 600px) {
+  .pipeline { flex-direction: column; }
+  .pipeline-step { border-radius: 0 !important; border-left: 1px solid var(--border) !important; }
+  .pipeline-step:first-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important; }
+  .pipeline-step:last-child { border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important; }
+  .pipeline-step:not(:last-child)::after, .pipeline-step:not(:last-child)::before { display: none; }
+  .hero-band::before, .hero-band::after { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="fixed-nav">
+  <a href="/" class="nav-btn home-link" title="Home" aria-label="Home">&#x2190;</a>
+  <button class="nav-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">&#x25D0;</button>
+</div>
+
+<script>
+(function(){
+  var saved = localStorage.getItem('goclaw-blog-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('themeToggle');
+    btn.textContent = saved === 'dark' ? '\u2600' : '\u25D0';
+    btn.addEventListener('click', function(){
+      var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      var nxt = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nxt);
+      localStorage.setItem('goclaw-blog-theme', nxt);
+      btn.textContent = nxt === 'dark' ? '\u2600' : '\u25D0';
+      location.reload();
+    });
+  });
+})();
+</script>
+
+<div class="page">
+
+<!-- ══ HERO ══ -->
+<header class="hero-band">
+  <div class="hero-inner">
+    <div class="post-eyebrow">Inside GoClaw — v3 Release</div>
+    <h1 class="post-title"><em>Knowledge Vault</em>: Hybrid Search &amp; Wikilinks</h1>
+    <p class="post-deck" data-i18n="deck">Document registry + [[wikilinks]] bidirectional + unified search fan-out qua Vault, Episodic, Knowledge Graph.</p>
+    <div class="post-meta">
+      <span class="meta-tag meta-tag--accent">v3.3.0</span>
+      <span class="meta-tag">pgvector</span>
+      <span class="meta-tag">hybrid-search</span>
+      <span class="meta-tag">wikilinks</span>
+      <span class="meta-tag">April 2026</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══ TOC ══ -->
+<nav class="toc-bar" id="tocBar">
+  <span class="toc-label">TOC</span>
+  <a class="toc-link" href="#s01" data-i18n="toc01">01 Problem</a>
+  <a class="toc-link" href="#s02" data-i18n="toc02">02 Arch</a>
+  <a class="toc-link" href="#s03" data-i18n="toc03">03 Data</a>
+  <a class="toc-link" href="#s04" data-i18n="toc04">04 Wikilinks</a>
+  <a class="toc-link" href="#s05" data-i18n="toc05">05 Search</a>
+  <a class="toc-link" href="#s06" data-i18n="toc06">06 Enrich</a>
+  <a class="toc-link" href="#s07" data-i18n="toc07">07 FS Sync</a>
+  <a class="toc-link" href="#s08" data-i18n="toc08">08 Retriever</a>
+  <a class="toc-link" href="#s09" data-i18n="toc09">09 Use Cases</a>
+  <a class="toc-link" href="#s10" data-i18n="toc10">10 Quick Start</a>
+  <a class="toc-link" href="#s11" data-i18n="toc11">11 Tool</a>
+  <a class="toc-link" href="#s12" data-i18n="toc12">12 API</a>
+  <a class="toc-link" href="#s13" data-i18n="toc13">13 Schema</a>
+  <a class="toc-link" href="#s14" data-i18n="toc14">14 Summary</a>
+</nav>
+
+<main class="main-content">
+
+<!-- ══ 01 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s01" data-i18n="s01_label">01 — Vấn đề</div>
+  <h2 class="sec-title" data-i18n="s01_title">Memory chưa phải knowledge</h2>
+  <p data-i18n="s01_intro">AI agent có memory — nhưng memory không phải knowledge. GoClaw đã có 3-tier memory: Working → Episodic → Semantic. Nhưng khi agent cần tìm document cụ thể, cross-reference giữa files, hoặc track mối quan hệ tài liệu — memory system không đủ.</p>
+  <div class="pain-strip">
+    <div class="pain-card"><div class="pain-num">1</div><p data-i18n="pain1">Tìm kiếm phân mảnh — phải query từng store riêng</p></div>
+    <div class="pain-card"><div class="pain-num">2</div><p data-i18n="pain2">Không có document relationships — backlinks không tồn tại</p></div>
+    <div class="pain-card"><div class="pain-num">3</div><p data-i18n="pain3">Stale content — external edits không đồng bộ vào DB</p></div>
+  </div>
+  <p data-i18n="s01_solution"><strong class="text-accent">Knowledge Vault</strong> giải quyết cả 3: <strong>document registry</strong> + <strong>wikilinks</strong> + <strong>hybrid search</strong> + <strong>filesystem sync</strong>.</p>
+</div></div>
+
+<!-- ══ 02 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s02" data-i18n="s02_label">02 — Kiến trúc</div>
+  <h2 class="sec-title" data-i18n="s02_title">Query layer trên memory system</h2>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Component</th><th data-i18n="th_role">Vai trò</th></tr></thead>
+    <tbody>
+      <tr><td>VaultStore</td><td data-i18n="c_store">Document CRUD, quản lý links, hybrid search (FTS + vector)</td></tr>
+      <tr><td>VaultSearchService</td><td data-i18n="c_search">Điều phối search: fan-out song song qua vault, episodic, KG</td></tr>
+      <tr><td>EnrichWorker</td><td data-i18n="c_enrich">Pipeline async 5 phase: prepare → summarize → embed → classify → wikilinks</td></tr>
+      <tr><td>VaultSyncWorker</td><td data-i18n="c_sync">Giám sát filesystem: phát hiện file thay đổi, đồng bộ hash</td></tr>
+      <tr><td>VaultInterceptor</td><td data-i18n="c_intercept">Hook file operations: tự đăng ký document khi agent write</td></tr>
+      <tr><td>VaultRetriever</td><td data-i18n="c_retriever">Cầu nối vault search vào agent L0 memory</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 data-i18n="s02_write_h">Write Path</h3>
+  <div class="arch-diagram">
+    <div class="arch-label">Write Path — Agent ghi file</div>
+    <div class="arch-flow">
+      <div class="arch-node arch-node--action" data-i18n="af_write">Agent ghi file → Workspace FS</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-node arch-node--action">VaultInterceptor (AfterWrite)</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-node arch-node--event">EventBus: VaultDocUpserted</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-row">
+        <div class="arch-node arch-node--enrich">P0: Prepare</div>
+        <div class="arch-node arch-node--enrich">P1: Summarize</div>
+        <div class="arch-node arch-node--enrich">P2: Embed</div>
+        <div class="arch-node arch-node--enrich">P3: Classify</div>
+        <div class="arch-node arch-node--enrich">P4: Wikilinks</div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-node arch-node--search" data-i18n="af_ready">Sẵn sàng cho search</div>
+    </div>
+  </div>
+
+  <h3 data-i18n="s02_read_h">Read Path</h3>
+  <div class="fanout">
+    <div class="fanout-label" data-i18n="read_label">Read Path — Agent tìm kiếm</div>
+    <div class="fanout-sources">
+      <div class="fanout-src fanout-src--vault"><div class="fanout-src__name">VaultStore</div><div class="fanout-src__weight">0.4</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;">FTS + Vector</div></div>
+      <div class="fanout-src fanout-src--episodic"><div class="fanout-src__name">EpisodicStore</div><div class="fanout-src__weight">0.3</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;" data-i18n="ep_sub">Session summaries</div></div>
+      <div class="fanout-src fanout-src--kg"><div class="fanout-src__name">KGStore</div><div class="fanout-src__weight">0.3</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;" data-i18n="kg_sub">Entity similarity</div></div>
+    </div>
+    <div class="fanout-merge">
+      <div class="fanout-merge__step">Normalize</div>
+      <div class="fanout-merge__arrow">→</div>
+      <div class="fanout-merge__step">Dedup</div>
+      <div class="fanout-merge__arrow">→</div>
+      <div class="fanout-merge__step">Sort</div>
+      <div class="fanout-merge__arrow">→</div>
+      <div class="fanout-merge__step">Top N</div>
+    </div>
+  </div>
+
+  <h3 data-i18n="s02_scope_h">Tenant & Scope Isolation</h3>
+  <p data-i18n="s02_scope_p">Mỗi document thuộc 1 phạm vi: <strong>personal</strong> (riêng agent), <strong>team</strong> (team workspace), <strong>shared</strong> (cross-agent, chưa triển khai). Documents của tenant A hoàn toàn tách biệt tenant B — kể cả links cũng không thể cross-tenant. Personal docs có thể link đến team docs.</p>
+</div></div>
+
+<!-- ══ 03 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s03" data-i18n="s03_label">03 — Data Model</div>
+  <h2 class="sec-title">vault_documents + vault_links</h2>
+  <p data-i18n="s03_docs_p">Document registry: metadata pointers. Content sống trên filesystem; DB giữ path, hash, embeddings.</p>
+  <div class="code-file">
+    <div class="code-file__header">vault_documents — schema</div>
+    <div class="code-file__body">CREATE TABLE vault_documents (
+    id           UUID PRIMARY KEY,
+    tenant_id    UUID NOT NULL,
+    agent_id     UUID,                    -- nullable: team/shared docs
+    team_id      UUID,                    -- team scoping
+    scope        TEXT DEFAULT 'personal', -- personal | team | shared
+    path         TEXT NOT NULL,           -- workspace-relative
+    title        TEXT DEFAULT '',
+    doc_type     TEXT DEFAULT 'note',
+    content_hash TEXT DEFAULT '',         -- SHA-256
+    summary      TEXT DEFAULT '',         -- LLM-generated
+    embedding    vector(1536),            -- pgvector cosine
+    tsv          tsvector GENERATED ALWAYS AS (
+        to_tsvector('simple', coalesce(title,'') || ' ' ||
+                    coalesce(path,'') || ' ' || coalesce(summary,''))
+    ) STORED,
+    metadata     JSONB DEFAULT '{}',
+    UNIQUE(tenant_id, COALESCE(agent_id, nil-uuid),
+           COALESCE(team_id, nil-uuid), scope, path)
+);</div>
+  </div>
+  <div class="callout" data-i18n="s03_callout"><strong>COALESCE trick:</strong> nil-UUID placeholder cho phép nhiều docs cùng path khi agent_id NULL — giải quyết edge case team docs không thuộc agent cụ thể.</div>
+  <h3 data-i18n="s03_idx_h">Indices</h3>
+  <p data-i18n="s03_idx_p"><strong>HNSW</strong> (Hierarchical Navigable Small World, m=16, ef=64) — index chuyên dụng cho vector search, tìm documents "gần nhau" về ngữ nghĩa. <strong>GIN</strong> (Generalized Inverted Index) — index cho full-text search, tìm nhanh documents chứa keyword cụ thể.</p>
+  <div class="kpi-strip">
+    <div class="kpi-item"><div class="kpi-value">HNSW</div><div class="kpi-label">Vector Index</div></div>
+    <div class="kpi-item"><div class="kpi-value">GIN</div><div class="kpi-label">FTS Index</div></div>
+    <div class="kpi-item"><div class="kpi-value">m=16</div><div class="kpi-label">HNSW M</div></div>
+    <div class="kpi-item"><div class="kpi-value">ef=64</div><div class="kpi-label">HNSW ef</div></div>
+  </div>
+  <h3>vault_links</h3>
+  <div class="code-file">
+    <div class="code-file__header">vault_links — bidirectional links</div>
+    <div class="code-file__body">CREATE TABLE vault_links (
+    id          UUID PRIMARY KEY,
+    from_doc_id UUID REFERENCES vault_documents(id) ON DELETE CASCADE,
+    to_doc_id   UUID REFERENCES vault_documents(id) ON DELETE CASCADE,
+    link_type   TEXT DEFAULT 'wikilink',
+    context     TEXT DEFAULT '',
+    UNIQUE(from_doc_id, to_doc_id, link_type)
+);</div>
+  </div>
+  <p data-i18n="s03_types"><strong>7 loại link:</strong> <code>wikilink</code> (tự động từ <code>[[...]]</code>), <code>reference</code>, <code>depends_on</code>, <code>extends</code>, <code>related</code>, <code>supersedes</code>, <code>contradicts</code>. Semantic links do LLM phân loại.</p>
+</div></div>
+
+<!-- ══ 04 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s04" data-i18n="s04_label">04 — Wikilinks</div>
+  <h2 class="sec-title" data-i18n="s04_title">[[Links]] hai chiều</h2>
+  <p data-i18n="s04_intro">Bidirectional markdown links theo format <code>[[target]]</code> — giống Obsidian hay Notion.</p>
+  <div class="code-file">
+    <div class="code-file__header">internal/vault/links.go</div>
+    <div class="code-file__body">var wikilinkRe = regexp.MustCompile(`\[\[([^\]|]+)(?:\|[^\]]+)?\]\]`)
+
+// [[path/to/file.md]]    → path-based
+// [[name|display text]]   → display text ignored
+// Context: ~25 chars before + after</div>
+  </div>
+  <h3 data-i18n="s04_resolve_h">Resolution Strategy</h3>
+  <div class="resolution-steps">
+    <div class="res-step" data-step="1"><div class="res-step__content"><strong>Exact path</strong> — <code>GetDocument(tenantID, agentID, target)</code></div></div>
+    <div class="res-step" data-step="2"><div class="res-step__content"><strong>Path + .md</strong> — Retry with <code>.md</code> suffix</div></div>
+    <div class="res-step" data-step="3"><div class="res-step__content"><strong>Basename search</strong> — Indexed column <code>path_basename</code></div></div>
+    <div class="res-step" data-step="4"><div class="res-step__content"><strong>Basename + .md</strong> — Last resort. Unresolved = nil</div></div>
+  </div>
+  <h3 data-i18n="s04_sync_h">Sync Strategy</h3>
+  <p data-i18n="s04_sync_p"><code>SyncDocLinks()</code> — replace strategy: Extract <code>[[...]]</code> → xóa outgoing wikilinks cũ → resolve targets → batch tạo mới. Semantic links (LLM-classified) không bị ảnh hưởng.</p>
+</div></div>
+
+<!-- ══ 05 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s05" data-i18n="s05_label">05 — Hybrid Search</div>
+  <h2 class="sec-title" data-i18n="s05_title">FTS + Vector + Cross-Store Fan-Out</h2>
+  <h3 data-i18n="s05_why_h">Tại sao cần "hybrid"?</h3>
+  <p data-i18n="s05_why_p">Giả sử agent search "cách xác thực người dùng": <strong>FTS</strong> tìm đúng keyword nhưng bỏ sót docs dùng từ khác ("authentication flow"). <strong>Vector search</strong> hiểu nghĩa tương đương nhưng đôi khi trả kết quả "gần nghĩa" nhưng không liên quan. Kết hợp cả hai: FTS cho precision, vector cho recall.</p>
+
+  <h3 data-i18n="s05_store_h">Bước 1: FTS + Vector trong Vault</h3>
+  <div class="code-file">
+    <div class="code-file__header">FTS — keyword match (ts_rank)</div>
+    <div class="code-file__body">SELECT ..., ts_rank(tsv, plainto_tsquery('simple', $1)) AS score
+FROM vault_documents
+WHERE tenant_id = $2 AND tsv @@ plainto_tsquery('simple', $1)
+ORDER BY score DESC LIMIT $N</div>
+  </div>
+  <div class="code-file">
+    <div class="code-file__header">Vector — semantic match (pgvector cosine)</div>
+    <div class="code-file__body">SELECT ..., 1 - (embedding &lt;=&gt; $1) AS score
+FROM vault_documents
+WHERE tenant_id = $2 AND embedding IS NOT NULL
+ORDER BY embedding &lt;=&gt; $1 LIMIT $N
+
+-- Score = 1 - cosine_distance (1.0 = identical)</div>
+  </div>
+  <div class="callout" data-i18n="s05_merge"><strong>Merge:</strong> FTS 0.4, Vector 0.6. Normalize theo max score → weighted sum. Document xuất hiện ở cả 2 → cộng scores.</div>
+
+  <h3 data-i18n="s05_fanout_h">Bước 2: Fan-Out qua 3 Sources</h3>
+  <div class="fanout">
+    <div class="fanout-label">VaultSearchService.Search() — Parallel Fan-Out</div>
+    <div class="fanout-sources">
+      <div class="fanout-src fanout-src--vault"><div class="fanout-src__name">VaultStore</div><div class="fanout-src__weight">0.4</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;">FTS + Vector</div></div>
+      <div class="fanout-src fanout-src--episodic"><div class="fanout-src__name">EpisodicStore</div><div class="fanout-src__weight">0.3</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;" data-i18n="ep_sub2">Lịch sử hội thoại</div></div>
+      <div class="fanout-src fanout-src--kg"><div class="fanout-src__name">KGStore</div><div class="fanout-src__weight">0.3</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Knowledge graph</div></div>
+    </div>
+    <div class="fanout-merge">
+      <div class="fanout-merge__step">Normalize (max=1.0)</div>
+      <div class="fanout-merge__arrow">→</div>
+      <div class="fanout-merge__step" data-i18n="fm_dedup">Loại trùng theo ID</div>
+      <div class="fanout-merge__arrow">→</div>
+      <div class="fanout-merge__step" data-i18n="fm_sort">Sort weighted DESC</div>
+      <div class="fanout-merge__arrow">→</div>
+      <div class="fanout-merge__step">Top N</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;margin:14px 0 20px;">
+    <div class="card card--accent" style="padding:12px 16px;"><p style="margin:0;font-size:14px;" data-i18n="s05_grace"><strong>Graceful degradation:</strong> Store nil → skip.</p></div>
+    <div class="card card--green" style="padding:12px 16px;"><p style="margin:0;font-size:14px;" data-i18n="s05_overshoot"><strong>Overshooting:</strong> Mỗi store trả maxResults*2.</p></div>
+    <div class="card card--violet" style="padding:12px 16px;"><p style="margin:0;font-size:14px;" data-i18n="s05_team_ctx"><strong>Team context:</strong> Từ RunContext — chống spoofing.</p></div>
+  </div>
+</div></div>
+
+<!-- ══ 06 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s06" data-i18n="s06_label">06 — Enrichment Pipeline</div>
+  <h2 class="sec-title" data-i18n="s06_title">5-phase async worker</h2>
+  <p data-i18n="s06_intro">Khi document ghi vào workspace, chưa sẵn sàng cho search. EnrichWorker xử lý async qua 5 phase để biến raw file thành searchable document.</p>
+  <div class="pipeline">
+    <div class="pipeline-step"><span class="ps-num">P0</span><span class="ps-label">Prepare</span></div>
+    <div class="pipeline-step"><span class="ps-num">P1</span><span class="ps-label">Summarize</span></div>
+    <div class="pipeline-step"><span class="ps-num">P2</span><span class="ps-label">Embed</span></div>
+    <div class="pipeline-step"><span class="ps-num">P3</span><span class="ps-label">Classify</span></div>
+    <div class="pipeline-step"><span class="ps-num">P4</span><span class="ps-label">Wikilinks</span></div>
+  </div>
+
+  <div class="card card--accent"><div class="card-label" style="color:var(--accent);">Phase 0: Prepare</div><p style="margin:0;font-size:14px;" data-i18n="p0_desc">Dedup check (docID + hash) → batch fetch metadata → đọc file (max 4MB) → filter docs đã có summary.</p></div>
+  <div class="card card--green"><div class="card-label" style="color:var(--green);">Phase 1: Batch Summarize</div><p style="margin:0;font-size:14px;" data-i18n="p1_desc">Gom 5 docs vào 1 LLM call. Temp 0.2, max 1536 tokens. Output JSON: <code>[{"idx":1,"summary":"..."}]</code>. <strong>Giảm 5x LLM calls.</strong></p></div>
+  <div class="card card--amber"><div class="card-label" style="color:var(--amber);">Phase 2: Embed</div><p style="margin:0;font-size:14px;" data-i18n="p2_desc">Ghép title + path + summary → embedding vector 1536 chiều. Biến text thành "tọa độ" trong không gian ngữ nghĩa.</p></div>
+  <div class="card card--violet"><div class="card-label" style="color:var(--violet);">Phase 3: Classify Links</div><p style="margin:0;font-size:14px;" data-i18n="p3_desc">FindSimilarDocs (cosine ≥ 0.7) → LLM classify thành 6 loại link. Temp 0.1. Output <code>SKIP</code> nếu không có mối quan hệ.</p></div>
+  <div class="card card--red"><div class="card-label" style="color:var(--red);">Phase 4: Wikilink Sync</div><p style="margin:0;font-size:14px;" data-i18n="p4_desc">Extract <code>[[...]]</code> → resolve targets → xóa wikilinks cũ → batch tạo mới. Dedup map bounded 10K entries, evict 25%.</p></div>
+
+  <h3 data-i18n="s06_const_h">Tuning Constants</h3>
+  <div class="kpi-strip">
+    <div class="kpi-item"><div class="kpi-value">5</div><div class="kpi-label">Batch Size</div></div>
+    <div class="kpi-item"><div class="kpi-value">3</div><div class="kpi-label">Max Concurrent</div></div>
+    <div class="kpi-item"><div class="kpi-value">3k</div><div class="kpi-label">Runes/File</div></div>
+    <div class="kpi-item"><div class="kpi-value">0.7</div><div class="kpi-label">Cosine Min</div></div>
+  </div>
+  <p data-i18n="s06_retry"><strong>Retry:</strong> Escalating timeouts <code>5→7→10 phút</code>, backoffs <code>0→2→4s</code>. <strong>BatchQueue:</strong> Lock-free producer-consumer per tenant:agent — ngăn thundering herd khi rescan.</p>
+</div></div>
+
+<!-- ══ 07 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s07" data-i18n="s07_label">07 — Filesystem Sync & Safety</div>
+  <h2 class="sec-title" data-i18n="s07_title">Đồng bộ & bảo vệ workspace</h2>
+  <p data-i18n="s07_intro">Agent ghi file, nhưng file có thể bị sửa từ bên ngoài (user edit, git pull). Vault có 3 cơ chế đồng bộ:</p>
+
+  <div class="card card--accent"><div class="card-label" style="color:var(--accent);">VaultSyncWorker</div><p style="margin:0;font-size:14px;" data-i18n="sync_desc">fsnotify theo dõi workspace. Debounce 500ms → SHA-256 hash → so sánh DB → trigger EnrichWorker nếu thay đổi. Chỉ sync docs đã đăng ký.</p></div>
+  <div class="card card--green"><div class="card-label" style="color:var(--green);">SafeWalkWorkspace</div><p style="margin:0;font-size:14px;" data-i18n="walk_desc">Quét toàn bộ workspace với limits: 5K files, 500MB total, 50MB/file. Skip symlinks, <code>node_modules</code>, <code>.git</code>. Path traversal blocked.</p></div>
+  <div class="card card--amber"><div class="card-label" style="color:var(--amber);">Lazy Hash Sync</div><p style="margin:0;font-size:14px;" data-i18n="lazy_desc">VaultInterceptor.BeforeRead() — khi agent đọc file, check hash FS vs DB. Catch external edits ngay cả khi watcher không chạy.</p></div>
+
+  <h3 data-i18n="s07_own_h">Ownership Inference</h3>
+  <div class="code-file">
+    <div class="code-file__header">workspace/ → scope inference</div>
+    <div class="code-file__body">workspace/
+├── agents/{agent_key}/...  → scope="personal"
+├── teams/{team_uuid}/...   → scope="team"
+└── anything/else           → scope="shared"</div>
+  </div>
+</div></div>
+
+<!-- ══ 08 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s08" data-i18n="s08_label">08 — Retriever Integration</div>
+  <h2 class="sec-title" data-i18n="s08_title">Auto-inject vào agent context</h2>
+  <p data-i18n="s08_intro"><code>VaultRetriever</code> tự động inject relevant documents vào context trước khi agent suy nghĩ — agent không cần chủ động gọi <code>vault_search</code>.</p>
+  <div class="code-file">
+    <div class="code-file__header">RetrieverConfig</div>
+    <div class="code-file__body">type RetrieverConfig struct {
+  RelevanceThreshold float64  // 0.3 — loại kết quả quá thấp
+  MaxL0Items         int      // 5 — giới hạn context size
+  TenantID           string
+}</div>
+  </div>
+  <p data-i18n="s08_result">User hỏi "cách thiết lập authentication" → vault tự inject <code>docs/auth.md</code> (score 0.92) + <code>SOUL.md</code> (score 0.45) vào context → agent trả lời chính xác hơn, không cần user chỉ file.</p>
+</div></div>
+
+<!-- ══ 09 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s09" data-i18n="s09_label">09 — Use Cases</div>
+  <h2 class="sec-title" data-i18n="s09_title">Ứng dụng thực tế</h2>
+
+  <div class="card card--accent"><div class="card-label" style="color:var(--accent);" data-i18n="uc1_h">Agent tự tổ chức workspace</div><p style="margin:0;font-size:14px;" data-i18n="uc1_p">Agent ghi notes, dùng <code>[[wikilinks]]</code> cross-reference. Vault tự phát hiện links, tạo backlinks, index nội dung. Search trả về cả file trực tiếp lẫn docs liên quan qua wikilinks.</p></div>
+  <div class="card card--green"><div class="card-label" style="color:var(--green);" data-i18n="uc2_h">Team knowledge sharing</div><p style="margin:0;font-size:14px;" data-i18n="uc2_p">Personal docs (<code>agents/my-agent/</code>) chỉ agent thấy. Team docs (<code>teams/uuid/</code>) mọi thành viên search được. Personal có thể <code>[[link]]</code> đến team docs.</p></div>
+  <div class="card card--violet"><div class="card-label" style="color:var(--violet);" data-i18n="uc3_h">Context-aware responses</div><p style="margin:0;font-size:14px;" data-i18n="uc3_p">VaultRetriever tự inject relevant docs trước khi agent trả lời. User hỏi "authentication?" → agent đã có <code>docs/auth.md</code> trong context, không cần chỉ dẫn.</p></div>
+</div></div>
+
+<!-- ══ 10 — ÁP DỤNG NGAY ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s10" data-i18n="s10_label">10 — Áp Dụng Ngay</div>
+  <h2 class="sec-title" data-i18n="s10_title">Mở Dashboard, dùng ngay</h2>
+  <p data-i18n="s10_intro"><strong class="text-accent">Knowledge Vault</strong> không cần cài đặt hay cấu hình gì thêm — mở Dashboard là dùng được ngay.</p>
+
+  <div class="browser-frame">
+    <div class="browser-frame__bar">
+      <span class="browser-frame__dot browser-frame__dot--r"></span>
+      <span class="browser-frame__dot browser-frame__dot--y"></span>
+      <span class="browser-frame__dot browser-frame__dot--g"></span>
+      <span class="browser-frame__url">localhost:3000/vault</span>
+    </div>
+    <div class="browser-frame__body">
+      <img src="/posts/assets/knowledge-vault-dashboard.jpg" alt="Knowledge Vault Dashboard" onerror="this.parentElement.innerHTML='<div class=browser-frame__placeholder>Knowledge Vault — DATA &gt; Vault<br><br>Left: document list with type filters &nbsp;|&nbsp; Right: knowledge graph visualization<br><span style=font-size:11px;opacity:0.5>Screenshot: /posts/assets/knowledge-vault-dashboard.jpg</span></div>'">
+    </div>
+  </div>
+
+  <div class="gs-steps">
+    <div class="gs-step"><h4 data-i18n="gs1_h">Mở Knowledge Vault</h4><p data-i18n="gs1_p">Sidebar trái → <strong>Vault</strong> (nhóm DATA). Giao diện 2 phần: danh sách documents (trái) + knowledge graph visualization (phải). Thanh lọc theo type (context, memory, note, skill, episodic, media) + dropdown lọc agent/team.</p></div>
+    <div class="gs-step"><h4 data-i18n="gs2_h">Upload Documents</h4><p data-i18n="gs2_p">Nhấn <strong>+</strong> (góc phải trên) → dialog "Upload to Vault" hiện lên → chọn phạm vi (Shared/Agent/Team) → kéo thả hoặc click để chọn files (.md, .txt, .json, .yaml, .csv, ...) → <strong>Upload</strong>. Enrichment pipeline tự chạy.</p></div>
+    <div class="gs-step"><h4 data-i18n="gs3_h">Rescan Workspace (tùy chọn)</h4><p data-i18n="gs3_p">Nhấn nút <strong>Rescan workspace</strong> (ngay cạnh nút +) → quét toàn bộ workspace, phát hiện files mới/thay đổi, tự suy luận scope (personal/team/shared).</p></div>
+    <div class="gs-step"><h4 data-i18n="gs4_h">Explore, Graph &amp; Search</h4><p data-i18n="gs4_p">Sidebar duyệt documents theo type. Panel phải hiển thị knowledge graph — pan/zoom khám phá relationships giữa các docs. Search bar tìm kiếm thống nhất. Tạo manual links trong detail panel. Agent tự dùng vault trong hội thoại.</p></div>
+  </div>
+</div></div>
+
+<!-- ══ 11 — AGENT TOOL ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s11" data-i18n="s11_label">11 — Agent Tool</div>
+  <h2 class="sec-title" data-i18n="s11_title">vault_search</h2>
+  <p data-i18n="s11_intro">Tool tìm kiếm thống nhất qua tất cả knowledge sources — agent gọi trực tiếp trong hội thoại khi cần tìm tài liệu.</p>
+
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Param</th><th>Type</th><th>Required</th><th data-i18n="th_desc">Mô tả</th></tr></thead>
+    <tbody>
+      <tr><td><code>query</code></td><td>string</td><td>✓</td><td data-i18n="tp1">Natural language search query</td></tr>
+      <tr><td><code>scope</code></td><td>string</td><td></td><td data-i18n="tp2">Filter: personal, team, shared (mặc định: all)</td></tr>
+      <tr><td><code>types</code></td><td>string</td><td></td><td data-i18n="tp3">Comma-separated: context, memory, note, skill, episodic (mặc định: all)</td></tr>
+      <tr><td><code>maxResults</code></td><td>number</td><td></td><td data-i18n="tp4">Số kết quả tối đa (mặc định: 10)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="code-file">
+    <div class="code-file__header">vault_search — ví dụ</div>
+    <div class="code-file__body">{ "query": "authentication flow", "scope": "team", "types": "context,note", "maxResults": 10 }
+
+// User: "Tìm tài liệu về authentication"
+// Agent → vault_search(query="authentication")
+// → Top 10 từ vault + episodic + KG</div>
+  </div>
+
+
+</div></div>
+
+<!-- ══ 12 — REST API ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s12" data-i18n="s12_label">12 — REST API</div>
+  <h2 class="sec-title" data-i18n="s12_title">HTTP Endpoints</h2>
+
+  <h3>Documents</h3>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Method</th><th>Endpoint</th><th data-i18n="th_func">Chức năng</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET</code></td><td><code>/v1/vault/documents</code></td><td data-i18n="ep_list">Danh sách documents (filter: scope, doc_type, team_id)</td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/vault/documents</code></td><td data-i18n="ep_create">Tạo document mới</td></tr>
+      <tr><td><code>GET</code></td><td><code>/v1/vault/documents/{docID}</code></td><td data-i18n="ep_get">Chi tiết 1 document</td></tr>
+      <tr><td><code>PUT</code></td><td><code>/v1/vault/documents/{docID}</code></td><td data-i18n="ep_update">Cập nhật metadata</td></tr>
+      <tr><td><code>DELETE</code></td><td><code>/v1/vault/documents/{docID}</code></td><td data-i18n="ep_delete">Xóa document</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Links</h3>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Method</th><th>Endpoint</th><th data-i18n="th_func">Chức năng</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET</code></td><td><code>.../{docID}/links</code></td><td>Outbound + backlinks</td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/vault/links</code></td><td data-i18n="ep_clink">Tạo link (from, to, type, context)</td></tr>
+      <tr><td><code>DELETE</code></td><td><code>/v1/vault/links/{linkID}</code></td><td data-i18n="ep_dlink">Xóa link</td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/vault/links/batch</code></td><td data-i18n="ep_batch">Batch get links cho nhiều doc IDs</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 data-i18n="s12_ops_h">Search & Operations</h3>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Method</th><th>Endpoint</th><th data-i18n="th_func">Chức năng</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST</code></td><td><code>/v1/vault/search</code></td><td>Unified cross-store search</td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/vault/upload</code></td><td data-i18n="ep_upload">Upload files (max 50 files, 50MB/file)</td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/vault/rescan</code></td><td data-i18n="ep_rescan">Quét lại workspace</td></tr>
+      <tr><td><code>GET</code></td><td><code>...enrichment-status</code></td><td data-i18n="ep_enrich">Tiến độ enrichment (JSON/SSE)</td></tr>
+    </tbody>
+  </table></div>
+
+  <p data-i18n="s12_compat"><strong>Per-agent endpoints:</strong> Tất cả cũng có bản scoped tại <code>/v1/agents/{agentID}/vault/...</code> (backward compatible).</p>
+  <p data-i18n="s12_guard"><strong>Concurrency guard:</strong> Rescan chặn 2 scan song song cùng tenant. <strong>Non-owner:</strong> Chỉ thấy personal docs + teams mình thuộc về.</p>
+</div></div>
+
+<!-- ══ 13 — SCHEMA ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s13" data-i18n="s13_label">13 — Schema Evolution</div>
+  <h2 class="sec-title">4 migrations</h2>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Migration</th><th data-i18n="th_content">Nội dung</th></tr></thead>
+    <tbody>
+      <tr><td>000038</td><td>Initial: vault_documents, vault_links, vault_versions</td></tr>
+      <tr><td>000042</td><td data-i18n="m2">Thêm <code>summary</code>, regenerate tsvector</td></tr>
+      <tr><td>000043</td><td data-i18n="m3">Thêm <code>team_id</code>, <code>custom_scope</code></td></tr>
+      <tr><td>000046</td><td data-i18n="m4">Nullable <code>agent_id</code>, COALESCE constraint, trigger auto-scope</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout" data-i18n="s13_callout"><strong>Migration 046:</strong> Trigger tự set scope='shared' khi agent bị xóa và doc không thuộc team — tránh orphaned documents.</div>
+</div></div>
+
+<!-- ══ 14 ══ -->
+<div class="section-band"><div class="band-inner reveal">
+  <div class="sec-label" id="s14" data-i18n="s14_label">14 — Tóm tắt kỹ thuật</div>
+  <h2 class="sec-title" data-i18n="s14_title">File references</h2>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Component</th><th>File</th><th data-i18n="th_role2">Vai trò</th></tr></thead>
+    <tbody>
+      <tr><td>Vault service</td><td><code>internal/vault/*.go</code></td><td data-i18n="f1">Search coordinator, enrichment, wikilinks, FS walk</td></tr>
+      <tr><td>PG store</td><td><code>internal/store/pg/vault_*.go</code></td><td data-i18n="f2">Hybrid search (FTS + vector), link management</td></tr>
+      <tr><td>SQLite store</td><td><code>internal/store/sqlitestore/vault_*.go</code></td><td data-i18n="f3">Lite edition: FTS-only</td></tr>
+      <tr><td>Tools</td><td><code>internal/tools/vault_*.go</code></td><td data-i18n="f4">vault_search tool, VaultInterceptor hooks</td></tr>
+      <tr><td>HTTP handlers</td><td><code>internal/http/vault_*.go</code></td><td data-i18n="f5">REST API, upload, rescan, enrichment status</td></tr>
+      <tr><td>Migrations</td><td><code>migrations/000038-000046</code></td><td data-i18n="f6">Schema evolution (4 iterations)</td></tr>
+    </tbody>
+  </table></div>
+  <h3 data-i18n="s14_tradeoff_h">Design Trade-offs</h3>
+  <div class="card card--accent"><div class="card-label" style="color:var(--accent);">Search Weights</div><p style="margin:0;font-size:14px;" data-i18n="dt1"><strong>FTS 0.4, Vector 0.6</strong> — Vector ưu tiên semantic; FTS bổ sung keyword precision. <strong>Cross-store 0.4/0.3/0.3</strong> — Vault curated content ưu tiên.</p></div>
+  <div class="card card--green"><div class="card-label" style="color:var(--green);">Batch Processing</div><p style="margin:0;font-size:14px;" data-i18n="dt2"><strong>5 docs/LLM call</strong> — Balance throughput vs quality. <strong>Cosine 0.7</strong> — Chỉ classify truly similar, giảm noise.</p></div>
+  <div class="card card--violet"><div class="card-label" style="color:var(--violet);">Schema Flexibility</div><p style="margin:0;font-size:14px;" data-i18n="dt3"><strong>Nullable agent_id</strong> — Team docs không bắt buộc thuộc agent. <strong>Replace strategy</strong> cho wikilinks — đơn giản, idempotent.</p></div>
+</div></div>
+
+</main>
+
+<!-- ══ FOOTER ══ -->
+<footer class="footer-band">
+  <p class="footer-text" data-i18n="footer_text"><strong class="text-accent">Knowledge Vault</strong> biến filesystem thành knowledge base có cấu trúc — <em>hybrid search</em>, bidirectional wikilinks, async enrichment. Zero external dependencies ngoài PostgreSQL + pgvector.</p>
+  <div class="footer-ver"><a href="https://github.com/nichetop/goclaw">GoClaw v3.3.0</a> — Inside GoClaw Series</div>
+  <a class="footer-back home-link" href="/" data-i18n="footer_back">← Về blog</a>
+</footer>
+
+</div>
+
+<script>
+/* Scroll reveal */
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+/* TOC active */
+const tocLinks = document.querySelectorAll('.toc-link');
+const sections = Array.from(tocLinks).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const tocObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      tocLinks.forEach(l => l.classList.remove('active'));
+      const match = Array.from(tocLinks).find(l => l.getAttribute('href') === '#' + e.target.id);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => tocObs.observe(s));
+
+/* i18n */
+const T = {
+  vi: {
+    deck: 'Document registry + bidirectional [[wikilinks]] + unified search fan-out across Vault, Episodic, Knowledge Graph.',
+    toc01:'01 Problem',toc02:'02 Arch',toc03:'03 Data',toc04:'04 Wikilinks',toc05:'05 Search',toc06:'06 Enrich',toc07:'07 FS Sync',toc08:'08 Retriever',toc09:'09 Use Cases',toc10:'10 Quick Start',toc11:'11 Tool',toc12:'12 API',toc13:'13 Schema',toc14:'14 Summary',
+    s01_label:'01 — Problem',s01_title:'Memory is not knowledge',
+    s01_intro:'AI agents have memory — but memory is not knowledge. GoClaw has 3-tier memory: Working → Episodic → Semantic. But when agents need a specific document, cross-references, or relationship tracking — memory falls short.',
+    pain1:'Fragmented search — query each store separately',pain2:'No document relationships — backlinks don\'t exist',pain3:'Stale content — external edits not synced to DB',
+    s01_solution:'<strong class="text-accent">Knowledge Vault</strong> solves all three: <strong>document registry</strong> + <strong>wikilinks</strong> + <strong>hybrid search</strong> + <strong>filesystem sync</strong>.',
+    s02_label:'02 — Architecture',s02_title:'Query layer above memory',th_role:'Role',
+    c_store:'Document CRUD, link management, hybrid search (FTS + vector)',c_search:'Search coordinator: parallel fan-out across vault, episodic, KG',c_enrich:'5-phase async pipeline: prepare → summarize → embed → classify → wikilinks',c_sync:'Filesystem watcher: detect changes, sync content hashes',c_intercept:'Hook file operations: auto-register on agent write',c_retriever:'Bridge vault search into agent L0 memory',
+    s02_write_h:'Write Path',af_write:'Agent writes file → Workspace FS',af_ready:'Ready for search',s02_read_h:'Read Path',read_label:'Read Path — Agent searches',ep_sub:'Session summaries',kg_sub:'Entity similarity',
+    s02_scope_h:'Tenant & Scope Isolation',s02_scope_p:'Each document belongs to a scope: <strong>personal</strong> (agent-only), <strong>team</strong> (team workspace), <strong>shared</strong> (cross-agent, not yet implemented). Tenant A docs completely isolated from tenant B — even links can\'t cross tenant. Personal docs can link to team docs.',
+    s03_label:'03 — Data Model',s03_docs_p:'Document registry: metadata pointers. Content lives on filesystem; DB holds path, hash, embeddings.',
+    s03_callout:'<strong>COALESCE trick:</strong> nil-UUID placeholder allows multiple docs per path when agent_id is NULL — solves edge case of team docs without agent ownership.',
+    s03_idx_h:'Indices',s03_idx_p:'<strong>HNSW</strong> (Hierarchical Navigable Small World, m=16, ef=64) — specialized vector search index for finding semantically similar documents. <strong>GIN</strong> (Generalized Inverted Index) — full-text search index for keyword matching.',
+    s03_types:'<strong>7 link types:</strong> <code>wikilink</code> (auto from <code>[[...]]</code>), <code>reference</code>, <code>depends_on</code>, <code>extends</code>, <code>related</code>, <code>supersedes</code>, <code>contradicts</code>. Semantic links classified by LLM.',
+    s04_label:'04 — Wikilinks',s04_title:'Bidirectional [[links]]',s04_intro:'Bidirectional markdown links using <code>[[target]]</code> format — like Obsidian or Notion.',s04_resolve_h:'Resolution Strategy',s04_sync_h:'Sync Strategy',
+    s04_sync_p:'<code>SyncDocLinks()</code> — replace strategy: Extract <code>[[...]]</code> → delete old outgoing wikilinks → resolve targets → batch create new. Semantic links (LLM-classified) unaffected.',
+    s05_label:'05 — Hybrid Search',s05_title:'FTS + Vector + Cross-Store Fan-Out',
+    s05_why_h:'Why "hybrid"?',s05_why_p:'Say agent searches "user authentication": <strong>FTS</strong> finds exact keywords but misses docs using different terms ("login process"). <strong>Vector search</strong> understands semantic equivalence but sometimes returns loosely related results. Combined: FTS for precision, vector for recall.',
+    s05_store_h:'Step 1: FTS + Vector in Vault',s05_merge:'<strong>Merge:</strong> FTS 0.4, Vector 0.6. Normalize by max score → weighted sum. Documents in both → scores added.',
+    s05_fanout_h:'Step 2: Fan-Out across 3 Sources',ep_sub2:'Conversation history',fm_dedup:'Dedup by ID',fm_sort:'Sort weighted DESC',
+    s05_grace:'<strong>Graceful degradation:</strong> Nil store → skip.',s05_overshoot:'<strong>Overshooting:</strong> Each store returns maxResults*2.',s05_team_ctx:'<strong>Team context:</strong> From RunContext — prevents spoofing.',
+    s06_label:'06 — Enrichment Pipeline',s06_title:'5-phase async worker',s06_intro:'When a document is written, it\'s not search-ready. EnrichWorker processes it through 5 phases to make it searchable.',
+    s06_const_h:'Tuning Constants',p0_desc:'Dedup check (docID + hash) → batch fetch metadata → read file (max 4MB) → filter already-summarized docs.',p1_desc:'Pack 5 docs into 1 LLM call. Temp 0.2, max 1536 tokens. JSON output: <code>[{"idx":1,"summary":"..."}]</code>. <strong>5x fewer LLM calls.</strong>',p2_desc:'Concatenate title + path + summary → 1536-dim embedding vector. Transforms text into coordinates in semantic space.',p3_desc:'FindSimilarDocs (cosine ≥ 0.7) → LLM classifies into 6 link types. Temp 0.1. Outputs <code>SKIP</code> if no meaningful relationship.',p4_desc:'Extract <code>[[...]]</code> → resolve targets → delete old wikilinks → batch create new. Dedup map bounded at 10K entries, evicts 25%.',
+    s06_retry:'<strong>Retry:</strong> Escalating timeouts <code>5→7→10 min</code>, backoffs <code>0→2→4s</code>. <strong>BatchQueue:</strong> Lock-free producer-consumer per tenant:agent — prevents thundering herd on rescan.',
+    s07_label:'07 — Filesystem Sync & Safety',s07_title:'Sync & protect workspace',s07_intro:'Agent writes files, but they can be modified externally (user edits, git pull). Vault has 3 sync mechanisms:',
+    sync_desc:'fsnotify watches workspace. Debounce 500ms → SHA-256 → compare DB → trigger EnrichWorker on change. Only syncs registered docs.',walk_desc:'Walks entire workspace with limits: 5K files, 500MB total, 50MB/file. Skips symlinks, <code>node_modules</code>, <code>.git</code>. Path traversal blocked.',lazy_desc:'VaultInterceptor.BeforeRead() — on agent file read, checks FS hash vs DB. Catches external edits even without watcher running.',s07_own_h:'Ownership Inference',
+    s08_label:'08 — Retriever Integration',s08_title:'Auto-inject into agent context',s08_intro:'<code>VaultRetriever</code> automatically injects relevant documents into context before the agent thinks — no manual <code>vault_search</code> needed.',s08_result:'User asks "how to set up authentication" → vault auto-injects <code>docs/auth.md</code> (score 0.92) + <code>SOUL.md</code> (score 0.45) → more accurate responses.',
+    s09_label:'09 — Use Cases',s09_title:'Real-world applications',uc1_h:'Agent workspace organization',uc1_p:'Agent writes notes, uses <code>[[wikilinks]]</code> for cross-references. Vault auto-detects links, creates backlinks, indexes content.',uc2_h:'Team knowledge sharing',uc2_p:'Personal docs only visible to agent. Team docs searchable by all members. Personal can <code>[[link]]</code> to team docs.',uc3_h:'Context-aware responses',uc3_p:'VaultRetriever auto-injects relevant docs before agent responds.',
+    s10_label:'10 — Quick Start',s10_title:'Open Dashboard, start using',s10_intro:'<strong class="text-accent">Knowledge Vault</strong> needs no setup — open Dashboard and start immediately.',
+    gs1_h:'Open Knowledge Vault',gs1_p:'Left sidebar → <strong>Vault</strong> (DATA section). 2-panel UI: document list (left) + knowledge graph visualization (right). Type filter chips + agent/team dropdowns.',gs2_h:'Upload Documents',gs2_p:'Click <strong>+</strong> (top right) → "Upload to Vault" dialog → choose destination (Shared/Agent/Team) → drag & drop or browse files (.md, .txt, .json, .yaml, .csv, ...) → <strong>Upload</strong>. Enrichment runs automatically.',gs3_h:'Rescan Workspace (optional)',gs3_p:'Click <strong>Rescan workspace</strong> (next to + button) → scans workspace, detects new/changed files, infers scope (personal/team/shared) automatically.',gs4_h:'Explore, Graph &amp; Search',gs4_p:'Sidebar browses docs by type. Right panel shows knowledge graph — pan/zoom to explore relationships. Search bar for unified search. Create manual links in detail panel. Agent auto-uses vault.',
+    s11_label:'11 — Agent Tool',s11_title:'vault_search — the only tool',s11_intro:'Agents have <strong>1 tool</strong> to interact with vault. A unified search across all knowledge sources.',th_desc:'Description',tp1:'Natural language search query',tp2:'Filter: personal, team, shared (default: all)',tp3:'Comma-separated: context, memory, note, skill, episodic (default: all)',tp4:'Max results (default: 10)',s11_note:'<strong>Note:</strong> No <code>vault_link</code> tool — links are auto-created via wikilinks and LLM classification, or manually via REST API / Dashboard.',s11_interceptor_h:'VaultInterceptor — Auto-registration',s11_interceptor_p:'Not a tool — middleware hooked into file operations:',icp_write:'Hooks <code>write_file</code> → auto-registers vault document, triggers enrichment',icp_media:'Hooks <code>create_image</code>, <code>create_video</code>, <code>tts</code> → registers media doc',icp_read:'Hooks <code>read_file</code> → lazy hash sync, catches external edits',
+    s12_label:'12 — REST API',s12_title:'HTTP Endpoints',th_func:'Function',ep_list:'List documents (filter: scope, doc_type, team_id)',ep_create:'Create new document',ep_get:'Get document details',ep_update:'Update metadata',ep_delete:'Delete document',ep_clink:'Create link (from, to, type, context)',ep_dlink:'Delete link',ep_batch:'Batch get links for multiple doc IDs',s12_ops_h:'Search & Operations',ep_upload:'Upload files (max 50 files, 50MB/file)',ep_rescan:'Rescan workspace',ep_enrich:'Enrichment progress (JSON/SSE)',s12_compat:'<strong>Per-agent endpoints:</strong> All also available scoped at <code>/v1/agents/{agentID}/vault/...</code> (backward compatible).',s12_guard:'<strong>Concurrency guard:</strong> Rescan blocks parallel scans per tenant. <strong>Non-owner:</strong> Only sees personal docs + own teams.',
+    s13_label:'13 — Schema Evolution',th_content:'Content',m2:'Add <code>summary</code>, regenerate tsvector',m3:'Add <code>team_id</code>, <code>custom_scope</code>',m4:'Nullable <code>agent_id</code>, COALESCE constraint, auto-scope trigger',s13_callout:'<strong>Migration 046:</strong> Trigger auto-sets scope=\'shared\' when agent deleted and doc has no team — prevents orphaned documents.',
+    s14_label:'14 — Summary',s14_title:'File references',th_role2:'Role',f1:'Search coordinator, enrichment, wikilinks, FS walk',f2:'Hybrid search (FTS + vector), link management',f3:'Lite edition: FTS-only',f4:'vault_search tool, VaultInterceptor hooks',f5:'REST API, upload, rescan, enrichment status',f6:'Schema evolution (4 iterations)',s14_tradeoff_h:'Design Trade-offs',
+    dt1:'<strong>FTS 0.4, Vector 0.6</strong> — Vector prioritizes semantic; FTS adds keyword precision. <strong>Cross-store 0.4/0.3/0.3</strong> — Vault curated content prioritized.',dt2:'<strong>5 docs/LLM call</strong> — Balance throughput vs quality. <strong>Cosine 0.7</strong> — Only classify truly similar, reduce noise.',dt3:'<strong>Nullable agent_id</strong> — Team docs don\'t require agent ownership. <strong>Replace strategy</strong> for wikilinks — simple, idempotent.',
+    footer_text:'<strong class="text-accent">Knowledge Vault</strong> turns the filesystem into a structured knowledge base — <em>hybrid search</em>, bidirectional wikilinks, async enrichment. Zero external dependencies beyond PostgreSQL + pgvector.',footer_back:'← Back to blog',
+  },
+  en: {
+    deck: 'Document registry + bidirectional [[wikilinks]] + unified search fan-out across Vault, Episodic, Knowledge Graph.',
+    toc01:'01 Problem',toc02:'02 Arch',toc03:'03 Data',toc04:'04 Wikilinks',toc05:'05 Search',toc06:'06 Enrich',toc07:'07 FS Sync',toc08:'08 Retriever',toc09:'09 Use Cases',toc10:'10 Quick Start',toc11:'11 Tool',toc12:'12 API',toc13:'13 Schema',toc14:'14 Summary',
+    s01_label:'01 — Problem',s01_title:'Memory is not knowledge',
+    s01_intro:'AI agents have memory — but memory is not knowledge. GoClaw has 3-tier memory: Working → Episodic → Semantic. But when agents need a specific document, cross-references, or relationship tracking — memory falls short.',
+    pain1:'Fragmented search — query each store separately',pain2:'No document relationships — backlinks don\'t exist',pain3:'Stale content — external edits not synced to DB',
+    s01_solution:'<strong class="text-accent">Knowledge Vault</strong> solves all three: <strong>document registry</strong> + <strong>wikilinks</strong> + <strong>hybrid search</strong> + <strong>filesystem sync</strong>.',
+    s02_label:'02 — Architecture',s02_title:'Query layer above memory',th_role:'Role',
+    c_store:'Document CRUD, link management, hybrid search (FTS + vector)',c_search:'Search coordinator: parallel fan-out across vault, episodic, KG',c_enrich:'5-phase async pipeline: prepare → summarize → embed → classify → wikilinks',c_sync:'Filesystem watcher: detect changes, sync content hashes',c_intercept:'Hook file operations: auto-register on agent write',c_retriever:'Bridge vault search into agent L0 memory',
+    s02_write_h:'Write Path',af_write:'Agent writes file → Workspace FS',af_ready:'Ready for search',s02_read_h:'Read Path',read_label:'Read Path — Agent searches',ep_sub:'Session summaries',kg_sub:'Entity similarity',
+    s02_scope_h:'Tenant & Scope Isolation',s02_scope_p:'Each document belongs to a scope: <strong>personal</strong> (agent-only), <strong>team</strong> (team workspace), <strong>shared</strong> (cross-agent, not yet implemented). Tenant A docs completely isolated from tenant B — even links can\'t cross tenant. Personal docs can link to team docs.',
+    s03_label:'03 — Data Model',s03_docs_p:'Document registry: metadata pointers. Content lives on filesystem; DB holds path, hash, embeddings.',
+    s03_callout:'<strong>COALESCE trick:</strong> nil-UUID placeholder allows multiple docs per path when agent_id is NULL — solves edge case of team docs without agent ownership.',
+    s03_idx_h:'Indices',s03_idx_p:'<strong>HNSW</strong> (Hierarchical Navigable Small World, m=16, ef=64) — specialized vector search index for finding semantically similar documents. <strong>GIN</strong> (Generalized Inverted Index) — full-text search index for keyword matching.',
+    s03_types:'<strong>7 link types:</strong> <code>wikilink</code> (auto from <code>[[...]]</code>), <code>reference</code>, <code>depends_on</code>, <code>extends</code>, <code>related</code>, <code>supersedes</code>, <code>contradicts</code>. Semantic links classified by LLM.',
+    s04_label:'04 — Wikilinks',s04_title:'Bidirectional [[links]]',s04_intro:'Bidirectional markdown links using <code>[[target]]</code> format — like Obsidian or Notion.',s04_resolve_h:'Resolution Strategy',s04_sync_h:'Sync Strategy',
+    s04_sync_p:'<code>SyncDocLinks()</code> — replace strategy: Extract <code>[[...]]</code> → delete old outgoing wikilinks → resolve targets → batch create new. Semantic links (LLM-classified) unaffected.',
+    s05_label:'05 — Hybrid Search',s05_title:'FTS + Vector + Cross-Store Fan-Out',
+    s05_why_h:'Why "hybrid"?',s05_why_p:'Say agent searches "user authentication": <strong>FTS</strong> finds exact keywords but misses docs using different terms ("login process"). <strong>Vector search</strong> understands semantic equivalence but sometimes returns loosely related results. Combined: FTS for precision, vector for recall.',
+    s05_store_h:'Step 1: FTS + Vector in Vault',s05_merge:'<strong>Merge:</strong> FTS 0.4, Vector 0.6. Normalize by max score → weighted sum. Documents in both → scores added.',
+    s05_fanout_h:'Step 2: Fan-Out across 3 Sources',ep_sub2:'Conversation history',fm_dedup:'Dedup by ID',fm_sort:'Sort weighted DESC',
+    s05_grace:'<strong>Graceful degradation:</strong> Nil store → skip.',s05_overshoot:'<strong>Overshooting:</strong> Each store returns maxResults*2.',s05_team_ctx:'<strong>Team context:</strong> From RunContext — prevents spoofing.',
+    s06_label:'06 — Enrichment Pipeline',s06_title:'5-phase async worker',s06_intro:'When a document is written, it\'s not search-ready. EnrichWorker processes it through 5 phases to make it searchable.',
+    s06_const_h:'Tuning Constants',p0_desc:'Dedup check (docID + hash) → batch fetch metadata → read file (max 4MB) → filter already-summarized docs.',p1_desc:'Pack 5 docs into 1 LLM call. Temp 0.2, max 1536 tokens. JSON output: <code>[{"idx":1,"summary":"..."}]</code>. <strong>5x fewer LLM calls.</strong>',p2_desc:'Concatenate title + path + summary → 1536-dim embedding vector. Transforms text into coordinates in semantic space.',p3_desc:'FindSimilarDocs (cosine ≥ 0.7) → LLM classifies into 6 link types. Temp 0.1. Outputs <code>SKIP</code> if no meaningful relationship.',p4_desc:'Extract <code>[[...]]</code> → resolve targets → delete old wikilinks → batch create new. Dedup map bounded at 10K entries, evicts 25%.',
+    s06_retry:'<strong>Retry:</strong> Escalating timeouts <code>5→7→10 min</code>, backoffs <code>0→2→4s</code>. <strong>BatchQueue:</strong> Lock-free producer-consumer per tenant:agent — prevents thundering herd on rescan.',
+    s07_label:'07 — Filesystem Sync & Safety',s07_title:'Sync & protect workspace',s07_intro:'Agent writes files, but they can be modified externally (user edits, git pull). Vault has 3 sync mechanisms:',
+    sync_desc:'fsnotify watches workspace. Debounce 500ms → SHA-256 → compare DB → trigger EnrichWorker on change. Only syncs registered docs.',walk_desc:'Walks entire workspace with limits: 5K files, 500MB total, 50MB/file. Skips symlinks, <code>node_modules</code>, <code>.git</code>. Path traversal blocked.',lazy_desc:'VaultInterceptor.BeforeRead() — on agent file read, checks FS hash vs DB. Catches external edits even without watcher running.',s07_own_h:'Ownership Inference',
+    s08_label:'08 — Retriever Integration',s08_title:'Auto-inject into agent context',s08_intro:'<code>VaultRetriever</code> automatically injects relevant documents into context before the agent thinks — no manual <code>vault_search</code> needed.',s08_result:'User asks "how to set up authentication" → vault auto-injects <code>docs/auth.md</code> (score 0.92) + <code>SOUL.md</code> (score 0.45) → more accurate responses.',
+    s09_label:'09 — Use Cases',s09_title:'Real-world applications',uc1_h:'Agent workspace organization',uc1_p:'Agent writes notes, uses <code>[[wikilinks]]</code> for cross-references. Vault auto-detects links, creates backlinks, indexes content.',uc2_h:'Team knowledge sharing',uc2_p:'Personal docs only visible to agent. Team docs searchable by all members. Personal can <code>[[link]]</code> to team docs.',uc3_h:'Context-aware responses',uc3_p:'VaultRetriever auto-injects relevant docs before agent responds.',
+    s10_label:'10 — Quick Start',s10_title:'Open Dashboard, start using',s10_intro:'<strong class="text-accent">Knowledge Vault</strong> needs no setup — open Dashboard and start immediately.',
+    gs1_h:'Open Knowledge Vault',gs1_p:'Left sidebar → <strong>Vault</strong> (DATA section). 2-panel UI: document list (left) + knowledge graph visualization (right). Type filter chips + agent/team dropdowns.',gs2_h:'Upload Documents',gs2_p:'Click <strong>+</strong> (top right) → "Upload to Vault" dialog → choose destination (Shared/Agent/Team) → drag & drop or browse files (.md, .txt, .json, .yaml, .csv, ...) → <strong>Upload</strong>. Enrichment runs automatically.',gs3_h:'Rescan Workspace (optional)',gs3_p:'Click <strong>Rescan workspace</strong> (next to + button) → scans workspace, detects new/changed files, infers scope (personal/team/shared) automatically.',gs4_h:'Explore, Graph &amp; Search',gs4_p:'Sidebar browses docs by type. Right panel shows knowledge graph — pan/zoom to explore relationships. Search bar for unified search. Create manual links in detail panel. Agent auto-uses vault.',
+    s11_label:'11 — Agent Tool',s11_title:'vault_search — the only tool',s11_intro:'Agents have <strong>1 tool</strong> to interact with vault. A unified search across all knowledge sources.',th_desc:'Description',tp1:'Natural language search query',tp2:'Filter: personal, team, shared (default: all)',tp3:'Comma-separated: context, memory, note, skill, episodic (default: all)',tp4:'Max results (default: 10)',s11_note:'<strong>Note:</strong> No <code>vault_link</code> tool — links are auto-created via wikilinks and LLM classification, or manually via REST API / Dashboard.',s11_interceptor_h:'VaultInterceptor — Auto-registration',s11_interceptor_p:'Not a tool — middleware hooked into file operations:',icp_write:'Hooks <code>write_file</code> → auto-registers vault document, triggers enrichment',icp_media:'Hooks <code>create_image</code>, <code>create_video</code>, <code>tts</code> → registers media doc',icp_read:'Hooks <code>read_file</code> → lazy hash sync, catches external edits',
+    s12_label:'12 — REST API',s12_title:'HTTP Endpoints',th_func:'Function',ep_list:'List documents (filter: scope, doc_type, team_id)',ep_create:'Create new document',ep_get:'Get document details',ep_update:'Update metadata',ep_delete:'Delete document',ep_clink:'Create link (from, to, type, context)',ep_dlink:'Delete link',ep_batch:'Batch get links for multiple doc IDs',s12_ops_h:'Search & Operations',ep_upload:'Upload files (max 50 files, 50MB/file)',ep_rescan:'Rescan workspace',ep_enrich:'Enrichment progress (JSON/SSE)',s12_compat:'<strong>Per-agent endpoints:</strong> All also available scoped at <code>/v1/agents/{agentID}/vault/...</code> (backward compatible).',s12_guard:'<strong>Concurrency guard:</strong> Rescan blocks parallel scans per tenant. <strong>Non-owner:</strong> Only sees personal docs + own teams.',
+    s13_label:'13 — Schema Evolution',th_content:'Content',m2:'Add <code>summary</code>, regenerate tsvector',m3:'Add <code>team_id</code>, <code>custom_scope</code>',m4:'Nullable <code>agent_id</code>, COALESCE constraint, auto-scope trigger',s13_callout:'<strong>Migration 046:</strong> Trigger auto-sets scope=\'shared\' when agent deleted and doc has no team — prevents orphaned documents.',
+    s14_label:'14 — Summary',s14_title:'File references',th_role2:'Role',f1:'Search coordinator, enrichment, wikilinks, FS walk',f2:'Hybrid search (FTS + vector), link management',f3:'Lite edition: FTS-only',f4:'vault_search tool, VaultInterceptor hooks',f5:'REST API, upload, rescan, enrichment status',f6:'Schema evolution (4 iterations)',s14_tradeoff_h:'Design Trade-offs',
+    dt1:'<strong>FTS 0.4, Vector 0.6</strong> — Vector prioritizes semantic; FTS adds keyword precision. <strong>Cross-store 0.4/0.3/0.3</strong> — Vault curated content prioritized.',dt2:'<strong>5 docs/LLM call</strong> — Balance throughput vs quality. <strong>Cosine 0.7</strong> — Only classify truly similar, reduce noise.',dt3:'<strong>Nullable agent_id</strong> — Team docs don\'t require agent ownership. <strong>Replace strategy</strong> for wikilinks — simple, idempotent.',
+    footer_text:'<strong class="text-accent">Knowledge Vault</strong> turns the filesystem into a structured knowledge base — <em>hybrid search</em>, bidirectional wikilinks, async enrichment. Zero external dependencies beyond PostgreSQL + pgvector.',footer_back:'← Back to blog',
+  }
+};
+let currentLang = 'en';
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const val = T[lang]?.[el.dataset.i18n];
+    if (val !== undefined) el.innerHTML = val;
+  });
+}
+const pathMatch = window.location.pathname.match(/^\/(en)\//);
+const urlLang = new URLSearchParams(window.location.search).get('lang');
+const detectedLang = urlLang || (pathMatch && pathMatch[1]) || null;
+if (detectedLang && ['vi','en'].includes(detectedLang)) setLang(detectedLang);
+const localePrefix = window.location.pathname.match(/^\/(en)\//);
+const homeHref = localePrefix ? '/' + localePrefix[1] : '/';
+document.querySelectorAll('.home-link').forEach(a => a.href = homeHref);
+</script>
+</body>
+</html>

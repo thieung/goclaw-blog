@@ -1,0 +1,19 @@
+GoClaw v3.3.0 ships Knowledge Vault — turning the agent workspace into a structured, searchable knowledge base.
+
+The architecture is genuinely clever:
+
+Write path: Agent writes file → VaultInterceptor auto-registers → 5-phase enrichment pipeline (prepare → batch summarize 5 docs/1 LLM call → embed 1536d → classify semantic links → extract & resolve [[wikilinks]])
+
+Read path: VaultSearchService fans out in parallel across 3 stores — Vault (FTS 0.4 + Vector 0.6), Episodic (0.3), Knowledge Graph (0.3) — normalize, dedup, sort, top N. Graceful degradation if any store is nil.
+
+Hybrid search within Vault: PostgreSQL ts_rank (GIN index) + pgvector cosine (HNSW m=16, ef=64), merged with weighted scores. Documents appearing in both get score addition.
+
+Cross-store weights reflect content curation: Vault docs (user-uploaded, manually curated) get highest weight, episodic and KG fill context gaps.
+
+Auto-sync: fsnotify watcher + lazy hash check on BeforeRead catches external edits even when watcher isn't running.
+
+VaultRetriever auto-injects relevant docs into agent context before thinking — no explicit search call needed.
+
+Deep dive into the schema, API, and design trade-offs:
+
+https://goclaw.thieunv.space/posts/knowledge-vault-hybrid-search
