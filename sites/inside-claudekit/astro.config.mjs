@@ -4,6 +4,7 @@ import vercel from '@astrojs/vercel';
 export default defineConfig({
   output: 'static',
   adapter: vercel(),
+  compressHTML: false,
   trailingSlash: 'never',
   i18n: {
     defaultLocale: 'vi',

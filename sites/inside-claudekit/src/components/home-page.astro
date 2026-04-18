@@ -70,9 +70,9 @@ interface Post {
 const posts: Post[] = [
   {
     slug: 'claudekit-beginners-guide',
-    date: 'Apr 14, 2026',
+    date: 'Apr 18, 2026',
     tags: ['beginner', 'setup', 'workflow', 'skills'],
-    status: 'draft',
+    status: 'published',
     title: {
       vi: 'Bắt đầu với Claude Code và ClaudeKit',
       en: 'Getting Started with Claude Code & ClaudeKit',
@@ -80,10 +80,10 @@ const posts: Post[] = [
       ja: 'Claude Code と ClaudeKit を始める',
     },
     excerpt: {
-      vi: 'Từ AI assistant thành development partner. Hướng dẫn Engineer Kit với real-world use cases và best practices.',
-      en: 'From AI assistant to development partner. Engineer Kit guide with real-world use cases and best practices.',
-      zh: '从 AI 助手到开发伙伴。工程师工具包指南，包含实际用例和最佳实践。',
-      ja: 'AI アシスタントから開発パートナーへ。実際のユースケースとベストプラクティスによるエンジニアキットガイド。',
+      vi: 'Từ AI assistant thành development partner. Giải thích cơ chế hoạt động của Claude và hướng dẫn Engineer Kit với real-world use cases và best/bad practices.',
+      en: 'From AI assistant to development partner. Explains how Claude works and guides you through the Engineer Kit with real-world use cases and best/bad practices.',
+      zh: '从 AI 助手到开发伙伴。解释 Claude 的工作机制，并通过真实使用案例和最佳/不良实践指导使用 Engineer Kit。',
+      ja: 'AI アシスタントから開発パートナーへ。Claude の仕組みを解説し、実際のユースケースとベスト/バッドプラクティスで Engineer Kit をガイド。',
     },
   },
   {
@@ -126,7 +126,9 @@ const posts: Post[] = [
 
 function postUrl(slug: string): string | null {
   const post = posts.find(p => p.slug === slug);
-  if (!post || post.status !== 'published') return null;
+  if (!post) return null;
+  if (post.status === 'upcoming') return null;
+  if (post.status === 'draft') return `/drafts/${slug}`;
   return locale === 'vi' ? `/posts/${slug}` : `/${locale}/posts/${slug}`;
 }
 
@@ -135,8 +137,15 @@ function isClickable(slug: string): boolean {
 }
 ---
 <!DOCTYPE html>
-<html lang={t.htmlLang} data-theme="dark">
+<html lang={t.htmlLang}>
 <head>
+<script is:inline>
+  // Apply saved theme immediately to prevent flash
+  (function() {
+    var saved = localStorage.getItem('theme');
+    document.documentElement.setAttribute('data-theme', saved || 'dark');
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{t.siteTitle}</title>
@@ -146,7 +155,8 @@ function isClickable(slug: string): boolean {
 <meta property="og:type" content="website">
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style is:global>
   /* ── Design Tokens: Monospace Editorial ── */
   :root {
@@ -164,10 +174,11 @@ function isClickable(slug: string): boolean {
     --accent-border: rgba(0,255,65,0.20);
     --amber: #ffb347;
     --amber-dim: rgba(255,179,71,0.10);
-    --mono: 'Geist Mono', 'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace;
+    --mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Geist Mono', monospace;
+    --display: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
     --nav-bg: rgba(12,13,16,0.88);
     --card-shadow: rgba(0,0,0,0.4);
-    --grain-opacity: 0.012;
+    --grain-opacity: 0.08;
   }
   [data-theme="light"] {
     --bg: #f5f5f0; --surface: #fff; --surface2: #f0f0ea;
@@ -183,7 +194,72 @@ function isClickable(slug: string): boolean {
   body {
     font-family: var(--mono); background: var(--bg); color: var(--text);
     line-height: 1.7; -webkit-font-smoothing: antialiased; font-size: 14px;
-    overflow-x: hidden;
+    overflow-x: hidden; position: relative;
+  }
+
+  /* ── Aurora Background (dark mode only) ── */
+  .aurora-bg {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    overflow: hidden; opacity: 0.6;
+  }
+  [data-theme="light"] .aurora-bg { display: none; }
+
+  .aurora-bg::before,
+  .aurora-bg::after {
+    content: ''; position: absolute; border-radius: 50%;
+    filter: blur(80px);
+    animation: aurora-drift 20s ease-in-out infinite alternate;
+  }
+
+  .aurora-bg::before {
+    width: 60vw; height: 50vh;
+    top: -15%; left: -10%;
+    background: radial-gradient(ellipse, rgba(0,255,65,0.15) 0%, rgba(0,200,100,0.08) 40%, transparent 70%);
+    animation-name: aurora-drift-1;
+  }
+
+  .aurora-bg::after {
+    width: 50vw; height: 45vh;
+    bottom: 10%; right: -5%;
+    background: radial-gradient(ellipse, rgba(120,80,200,0.12) 0%, rgba(80,120,220,0.06) 45%, transparent 70%);
+    animation-name: aurora-drift-2;
+    animation-delay: -10s;
+  }
+
+  .aurora-orb {
+    position: absolute; border-radius: 50%; filter: blur(100px);
+  }
+  .aurora-orb--1 {
+    width: 40vw; height: 35vh; top: 30%; left: 50%;
+    background: radial-gradient(ellipse, rgba(0,180,255,0.08) 0%, transparent 60%);
+    animation: aurora-drift-3 25s ease-in-out infinite alternate;
+  }
+  .aurora-orb--2 {
+    width: 35vw; height: 30vh; top: 50%; right: 30%;
+    background: radial-gradient(ellipse, rgba(255,100,80,0.06) 0%, transparent 55%);
+    animation: aurora-drift-4 22s ease-in-out infinite alternate;
+    animation-delay: -5s;
+  }
+
+  @keyframes aurora-drift-1 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(8vw, 5vh) scale(1.1); }
+    100% { transform: translate(3vw, 10vh) scale(0.95); }
+  }
+  @keyframes aurora-drift-2 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-6vw, -8vh) scale(1.15); }
+    100% { transform: translate(-3vw, 3vh) scale(1.05); }
+  }
+  @keyframes aurora-drift-3 {
+    0% { transform: translate(-50%, 0) scale(1); opacity: 0.8; }
+    50% { transform: translate(-45%, 8vh) scale(1.2); opacity: 1; }
+    100% { transform: translate(-55%, -5vh) scale(0.9); opacity: 0.7; }
+  }
+  @keyframes aurora-drift-4 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(5vw, -6vh) scale(1.1); }
+    100% { transform: translate(-4vw, 4vh) scale(1.05); }
   }
 
   /* ── Grain overlay ── */
@@ -248,22 +324,33 @@ function isClickable(slug: string): boolean {
     position: relative;
   }
   .hero-deco {
-    position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
-    width: 340px; height: 340px; pointer-events: none;
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    width: 300px; height: 230px; pointer-events: none;
     color: var(--text-dim);
   }
   .hero-eyebrow {
-    font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 20px;
-    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0;
+    margin-bottom: 24px;
+    display: inline-flex; align-items: center; gap: 8px;
   }
+  .hero-eyebrow .term-caret { color: var(--accent); font-weight: 600; }
+  .hero-eyebrow .term-path { color: var(--accent); font-weight: 500; }
+  .hero-eyebrow .term-cursor {
+    display: inline-block; width: 7px; height: 14px;
+    background: var(--accent); margin-left: 2px;
+    vertical-align: -2px;
+    animation: term-blink 1s step-end infinite;
+  }
+  @keyframes term-blink { 50% { opacity: 0; } }
   .hero h1 {
-    font-family: var(--mono); font-size: clamp(40px, 7vw, 64px);
-    font-weight: 700; line-height: 1.1; letter-spacing: -0.03em;
-    color: var(--text-hi); margin-bottom: 20px;
+    font-family: var(--display); font-size: clamp(44px, 7.6vw, 76px);
+    font-weight: 700; line-height: 1.02; letter-spacing: -0.045em;
+    color: var(--text-hi); margin-bottom: 22px;
+    font-feature-settings: "ss01", "ss02", "ss05";
   }
   .hero h1 em {
-    font-style: normal; color: var(--accent);
+    font-style: normal; font-weight: 500; color: var(--accent);
+    letter-spacing: -0.035em;
   }
   .hero-desc {
     max-width: 60ch; font-size: 14px; color: var(--text);
@@ -303,13 +390,24 @@ function isClickable(slug: string): boolean {
     display: block; padding: 24px; margin-bottom: 12px;
     background: var(--surface); border: 1px solid var(--border);
     border-left: 3px solid var(--border);
-    border-radius: 2px; text-decoration: none; color: inherit;
+    border-radius: 6px; text-decoration: none; color: inherit;
     transition: all 0.15s; position: relative;
+  }
+  [data-theme="dark"] .post-card {
+    background: rgba(22,24,32,0.85);
+    backdrop-filter: blur(12px);
+    border-color: rgba(60,65,80,0.6);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
   }
   .post-card:hover {
     border-left-color: var(--accent);
     background: var(--surface2);
     box-shadow: 0 4px 20px var(--card-shadow);
+  }
+  [data-theme="dark"] .post-card:hover {
+    background: rgba(28,30,38,0.9);
+    border-color: rgba(80,90,110,0.7);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,255,65,0.1);
   }
   .post-card:hover .post-title { color: var(--accent); }
   .post-card:hover .post-arrow { opacity: 1; color: var(--accent); }
@@ -336,7 +434,7 @@ function isClickable(slug: string): boolean {
     letter-spacing: -0.02em; transition: color 0.15s;
   }
   .post-excerpt {
-    font-size: 13px; color: var(--text-dim); line-height: 1.7; max-width: 60ch;
+    font-size: 13px; color: var(--text-dim); line-height: 1.7;
   }
   .post-tags { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
   .post-tag {
@@ -381,7 +479,7 @@ function isClickable(slug: string): boolean {
     .lang-btn { padding: 3px 6px; font-size: 9px; }
     .hero { padding: 96px 16px 48px; }
     .hero-deco { display: none; }
-    .hero h1 { font-size: clamp(28px, 8vw, 36px); }
+    .hero h1 { font-size: clamp(32px, 9vw, 42px); line-height: 1.08; letter-spacing: -0.04em; }
     .hero h1 br { display: none; }
     .hero-desc { font-size: 13px; }
     .section-divider { padding: 0 16px; }
@@ -410,13 +508,19 @@ function isClickable(slug: string): boolean {
 </head>
 <body>
 
+<!-- Aurora background (dark mode only) -->
+<div class="aurora-bg" aria-hidden="true">
+  <div class="aurora-orb aurora-orb--1"></div>
+  <div class="aurora-orb aurora-orb--2"></div>
+</div>
+
 <!-- NAV -->
 <nav class="nav">
   <div class="nav-left">
     <a class="nav-brand" href="/">
-      <img class="logo-image" src="/logo-horizontal.png" alt="ClaudeKit" height="18">
+      <img class="logo-image" src="/logo-horizontal.png" alt="ClaudeKit" height="30">
       <span class="nav-x">x</span>
-      <img src="/claude-color.svg" alt="" width="18" height="18">
+      <img src="/claude-color.svg" alt="" width="22" height="22">
     </a>
     <span class="nav-sep">/</span>
     <span class="nav-tag">engineer notes</span>
@@ -445,90 +549,53 @@ function isClickable(slug: string): boolean {
 
 <!-- HERO -->
 <header class="hero">
-  <svg class="hero-deco" viewBox="0 0 340 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- ═══ CC CLI Terminal ═══ -->
-    <rect x="20" y="16" width="220" height="165" rx="6" stroke="#e07840" stroke-width="1" opacity="0.18" fill="#e07840" fill-opacity="0.02"/>
+  <svg class="hero-deco" viewBox="0 0 260 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Terminal window -->
+    <rect x="0" y="0" width="260" height="200" rx="6" stroke="#e07840" stroke-width="1" opacity="0.18" fill="#e07840" fill-opacity="0.02"/>
     <!-- Title bar -->
-    <rect x="20" y="16" width="220" height="22" rx="6" fill="#e07840" fill-opacity="0.04"/>
-    <circle cx="34" cy="27" r="2.5" fill="#e07840" opacity="0.3"/>
-    <circle cx="44" cy="27" r="2.5" fill="#e07840" opacity="0.18"/>
-    <circle cx="54" cy="27" r="2.5" fill="#e07840" opacity="0.18"/>
-    <!-- "claude" title text -->
-    <text x="130" y="30" font-family="var(--mono)" font-size="7" fill="#e07840" opacity="0.25" text-anchor="middle">claude</text>
-    <!-- Prompt line: $ claude -->
+    <rect x="0" y="0" width="260" height="24" rx="6" fill="#e07840" fill-opacity="0.04"/>
+    <circle cx="14" cy="12" r="2.5" fill="#e07840" opacity="0.3"/>
+    <circle cx="24" cy="12" r="2.5" fill="#e07840" opacity="0.18"/>
+    <circle cx="34" cy="12" r="2.5" fill="#e07840" opacity="0.18"/>
+    <text x="130" y="15" font-family="var(--mono)" font-size="7" fill="#e07840" opacity="0.25" text-anchor="middle">agentic working</text>
+    <!-- $ claude -->
     <g opacity="0.22">
-      <text x="32" y="52" font-family="var(--mono)" font-size="7" fill="var(--text-dim)">$</text>
-      <text x="42" y="52" font-family="var(--mono)" font-size="7" fill="#e07840">claude</text>
+      <text x="14" y="40" font-family="var(--mono)" font-size="7" fill="var(--text-dim)">$</text>
+      <text x="24" y="40" font-family="var(--mono)" font-size="7" fill="#e07840">claude</text>
     </g>
     <!-- User prompt -->
     <g opacity="0.2">
-      <text x="32" y="66" font-family="var(--mono)" font-size="6.5" fill="#e07840">❯</text>
-      <text x="42" y="66" font-family="var(--mono)" font-size="6.5" fill="var(--text-bright)">/ck:cook "inside claudekit"</text>
+      <text x="14" y="56" font-family="var(--mono)" font-size="6.5" fill="#e07840">❯</text>
+      <text x="24" y="56" font-family="var(--mono)" font-size="6.5" fill="var(--text-bright)">/ck:cook "inside claudekit"</text>
     </g>
-    <!-- CC response lines -->
+    <!-- Response lines -->
     <g opacity="0.14">
-      <rect x="32" y="90" width="55" height="2" rx="1" fill="#e07840"/>
-      <rect x="92" y="90" width="30" height="2" rx="1" fill="var(--accent)"/>
-      <rect x="32" y="100" width="40" height="2" rx="1" fill="var(--text-dim)"/>
-      <rect x="78" y="100" width="65" height="2" rx="1" fill="var(--text-dim)"/>
-      <rect x="32" y="110" width="50" height="2" rx="1" fill="var(--accent)" opacity="0.7"/>
-      <rect x="88" y="110" width="45" height="2" rx="1" fill="var(--text-dim)"/>
+      <rect x="14" y="68" width="55" height="2" rx="1" fill="#e07840"/>
+      <rect x="74" y="68" width="30" height="2" rx="1" fill="var(--accent)"/>
+      <rect x="14" y="78" width="40" height="2" rx="1" fill="var(--text-dim)"/>
+      <rect x="60" y="78" width="65" height="2" rx="1" fill="var(--text-dim)"/>
+      <rect x="14" y="88" width="50" height="2" rx="1" fill="var(--accent)" opacity="0.7"/>
+      <rect x="70" y="88" width="45" height="2" rx="1" fill="var(--text-dim)"/>
+      <rect x="14" y="98" width="35" height="2" rx="1" fill="var(--text-dim)"/>
+      <rect x="55" y="98" width="70" height="2" rx="1" fill="#e07840" opacity="0.5"/>
     </g>
     <!-- Task progress -->
     <g opacity="0.18">
-      <text x="32" y="127" font-family="var(--mono)" font-size="6" fill="var(--accent)">✓</text>
-      <rect x="42" y="123" width="70" height="2" rx="1" fill="var(--accent)" opacity="0.5"/>
-      <text x="32" y="138" font-family="var(--mono)" font-size="6" fill="var(--accent)">✓</text>
-      <rect x="42" y="134" width="55" height="2" rx="1" fill="var(--accent)" opacity="0.5"/>
-      <text x="32" y="149" font-family="var(--mono)" font-size="6" fill="#e07840">●</text>
-      <rect x="42" y="145" width="80" height="2" rx="1" fill="#e07840" opacity="0.4"/>
+      <text x="14" y="118" font-family="var(--mono)" font-size="6" fill="var(--accent)">✓</text>
+      <text x="24" y="118" font-family="var(--mono)" font-size="6" fill="var(--text-dim)">research</text>
+      <text x="14" y="132" font-family="var(--mono)" font-size="6" fill="var(--accent)">✓</text>
+      <text x="24" y="132" font-family="var(--mono)" font-size="6" fill="var(--text-dim)">plan</text>
+      <text x="14" y="146" font-family="var(--mono)" font-size="6" fill="var(--accent)">✓</text>
+      <text x="24" y="146" font-family="var(--mono)" font-size="6" fill="var(--text-dim)">implement</text>
+      <text x="14" y="160" font-family="var(--mono)" font-size="6" fill="#e07840">●</text>
+      <text x="24" y="160" font-family="var(--mono)" font-size="6" fill="#e07840">testing...</text>
     </g>
-    <!-- Blinking cursor at bottom -->
-    <rect x="32" y="158" width="6" height="10" rx="1" fill="var(--accent)" opacity="0.25"/>
-
-    <!-- ═══ Claude sparkle (official color SVG) ═══ -->
-    <image href="/claude-color.svg" x="225" y="10" width="100" height="100" opacity="0.18"/>
-
-    <!-- ═══ Flow arrow: Claude → Terminal (collaboration) ═══ -->
-    <path d="M235 70 C225 70, 240 55, 235 48" stroke="#e07840" stroke-width="0.8" opacity="0.15" stroke-dasharray="3 3"/>
-    <path d="M235 80 C222 88, 240 105, 235 115" stroke="#e07840" stroke-width="0.8" opacity="0.12" stroke-dasharray="3 3"/>
-
-    <!-- ═══ Git commits timeline (daily workflow) ═══ -->
-    <g transform="translate(268, 130)">
-      <line x1="0" y1="0" x2="0" y2="100" stroke="var(--accent)" stroke-width="1" opacity="0.12"/>
-      <circle cx="0" cy="10" r="3.5" fill="var(--accent)" opacity="0.3"/>
-      <rect x="10" y="7" width="40" height="6" rx="1" fill="var(--accent)" opacity="0.08"/>
-      <circle cx="0" cy="35" r="3.5" fill="#e07840" opacity="0.3"/>
-      <rect x="10" y="32" width="30" height="6" rx="1" fill="#e07840" opacity="0.08"/>
-      <circle cx="0" cy="60" r="3.5" fill="var(--accent)" opacity="0.25"/>
-      <rect x="10" y="57" width="50" height="6" rx="1" fill="var(--accent)" opacity="0.08"/>
-      <circle cx="0" cy="85" r="3.5" fill="#e07840" opacity="0.2"/>
-      <rect x="10" y="82" width="35" height="6" rx="1" fill="#e07840" opacity="0.06"/>
-    </g>
-
-    <!-- ═══ File tree (project structure) ═══ -->
-    <g transform="translate(36, 186)" opacity="0.14">
-      <rect width="100" height="14" rx="2" fill="var(--accent)" fill-opacity="0.3"/>
-      <text x="6" y="10.5" font-family="var(--mono)" font-size="8" fill="var(--accent)">src/</text>
-      <line x1="8" y1="22" x2="8" y2="80" stroke="var(--text-dim)" stroke-width="0.5" stroke-dasharray="2 2"/>
-      <text x="16" y="30" font-family="var(--mono)" font-size="7" fill="var(--text-dim)">components/</text>
-      <text x="16" y="44" font-family="var(--mono)" font-size="7" fill="#e07840">hooks.ts</text>
-      <text x="16" y="58" font-family="var(--mono)" font-size="7" fill="var(--text-dim)">skills/</text>
-      <text x="16" y="72" font-family="var(--mono)" font-size="7" fill="var(--accent)">CLAUDE.md</text>
-      <text x="16" y="86" font-family="var(--mono)" font-size="7" fill="var(--text-dim)">agents/</text>
-    </g>
-
-    <!-- ═══ Subtle grid backdrop ═══ -->
-    <g opacity="0.03">
-      <line x1="0" y1="0" x2="340" y2="0" stroke="currentColor" stroke-width="0.5"/>
-      <line x1="0" y1="60" x2="340" y2="60" stroke="currentColor" stroke-width="0.5"/>
-      <line x1="0" y1="120" x2="340" y2="120" stroke="currentColor" stroke-width="0.5"/>
-      <line x1="0" y1="180" x2="340" y2="180" stroke="currentColor" stroke-width="0.5"/>
-      <line x1="0" y1="240" x2="340" y2="240" stroke="currentColor" stroke-width="0.5"/>
-      <line x1="0" y1="300" x2="340" y2="300" stroke="currentColor" stroke-width="0.5"/>
-    </g>
+    <!-- Cursor -->
+    <rect x="14" y="174" width="6" height="10" rx="1" fill="var(--accent)" opacity="0.25"/>
   </svg>
-  <div class="hero-eyebrow">/inside-claudekit</div>
+  <div class="hero-eyebrow">
+    <span class="term-caret">❯</span><span class="term-path">/inside-claudekit</span><span class="term-cursor"></span>
+  </div>
   <h1><Fragment set:html={t.heroTitle} /></h1>
   <p class="hero-desc">{t.heroDesc}</p>
 </header>
@@ -595,16 +662,13 @@ searchInput.addEventListener('input', () => {
   noResults.style.display = visible === 0 ? 'block' : 'none';
 });
 
-// Theme toggle
+// Theme toggle - theme already applied via inline script in head
 const themeToggle = document.querySelector('.theme-toggle') as HTMLButtonElement;
-const savedTheme = localStorage.getItem('claudekit-blog-theme');
-if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
-
 themeToggle.addEventListener('click', () => {
   const current = document.documentElement.getAttribute('data-theme');
   const next = current === 'light' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('claudekit-blog-theme', next);
+  localStorage.setItem('theme', next);
 });
 </script>
 </body>

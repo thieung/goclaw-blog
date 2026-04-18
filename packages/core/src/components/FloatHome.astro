@@ -1,10 +1,12 @@
 ---
-/** Fixed-position home button (top-left corner) */
+/** Fixed-position home button (top-left corner) — auto-detects locale from URL */
 interface Props {
   href?: string;
 }
 
-const { href = '/' } = Astro.props;
+const locale = Astro.currentLocale || 'vi';
+const defaultHref = locale === 'vi' ? '/' : `/${locale}`;
+const { href = defaultHref } = Astro.props;
 ---
 
 <a class="float-home" href={href} aria-label="Home">←</a>
