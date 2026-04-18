@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "turbo dev --filter=inside-goclaw",
     "build": "turbo build",
-    "check": "turbo check"
+    "check": "turbo check",
+    "validate:i18n": "node scripts/validate-i18n-completeness.js"
   },
   "packageManager": "pnpm@10.26.2",
   "devDependencies": {

@@ -1,31 +1,67 @@
 # Project: GoClaw Blog
 
-Static HTML blog for GoClaw. Deployed on Vercel.
+Astro monorepo blog platform for GoClaw. Deployed on Vercel.
 
 ## Stack
-- Pure HTML/CSS/JS — no build step
-- Each post is a self-contained `.html` file in `posts/`
-- Each post has its own unique design (fonts, colors, layout)
+- **Astro** — static site generator, zero JS to client by default
+- **pnpm workspaces + Turborepo** — monorepo management
+- Each post has its own unique design (fonts, colors, layout) — CSS stays per-post
+- Legacy `posts/` folder contains published static HTML (pre-migration)
+
+## Monorepo Structure
+```
+├── packages/core/           — shared components, i18n utils
+├── sites/inside-goclaw/     — Astro site (→ Vercel)
+│   └── src/
+│       ├── components/      — page-specific Astro components
+│       ├── content/         — content collections
+│       ├── drafts/          — draft .astro posts
+│       ├── i18n/            — translation JSON per post slug
+│       ├── layouts/         — base layouts
+│       └── pages/           — routes (posts/, admin/, en/, zh/, ja/)
+├── posts/                   — published static HTML (legacy)
+├── social/                  — social media content per post
+├── plans/                   — implementation plans
+└── docs/                    — project documentation
+```
+
+## Build Commands
+```bash
+pnpm install
+pnpm dev          # start dev server
+pnpm build        # production build
+```
 
 ## Adding a New Post
-1. Create `posts/<slug>.html`
-2. Add card entry to `index.html` (newest first)
-3. Push — Vercel auto-deploys
+1. Create `sites/inside-goclaw/src/drafts/<slug>.astro`
+2. Add i18n translations in `sites/inside-goclaw/src/i18n/<slug>/`
+3. When ready, move to `src/pages/posts/<slug>.astro`
+4. Add card entry to `src/pages/index.astro` (newest first)
+5. Push — Vercel auto-deploys
 
 ## i18n (Multilingual)
 Every post MUST support 4 languages: **vi** (default), **en**, **zh**, **ja**.
 
-### How it works
-- HTML elements use `data-i18n="key"` attributes. Default text in HTML is Vietnamese.
-- Add `data-i18n-html="1"` if content contains HTML tags (`<em>`, `<strong>`, `<code>`, etc.)
-- Translation object `const T = { vi: {}, en: {...}, zh: {...}, ja: {...} }` in a `<script>` block
-- `setLang(lang)` function iterates `[data-i18n]` elements and replaces innerHTML
-- Lang is controlled via URL param `?lang=xx` (homepage passes this)
-- Lang buttons (`.lang-btn`) are hidden by default, shown when URL param present
+### How it works (Astro)
+- Translation JSON files per post slug in `sites/inside-goclaw/src/i18n/<slug>/`
+- Astro injects translations at build time — no runtime JS fetch
+- Vietnamese is the default in HTML source
+- Locale routes: `/en/posts/<slug>`, `/zh/posts/<slug>`, `/ja/posts/<slug>`
+
+### Legacy posts (posts/*.html)
+- HTML elements use `data-i18n="key"` attributes
+- Translation object `const T = { vi: {}, en: {...}, zh: {...}, ja: {...} }` in `<script>` block
+- `setLang(lang)` replaces innerHTML of `[data-i18n]` elements
+- Lang controlled via URL param `?lang=xx`
+
+### Lang button behavior (IMPORTANT)
+- Lang buttons on post pages MUST navigate to locale URL (`/en/posts/...`) instead of just calling `setLang()` runtime
+- This ensures back-navigation to home preserves the selected language
+- Pattern: extract slug from current path, build new locale path, `window.location.href = newPath`
+- When editing `posts/*.html`, always sync changes to all 4 Astro locale copies in `sites/inside-goclaw/src/pages/{posts,en/posts,zh/posts,ja/posts}/_<slug>.html`
 
 ### What to i18n
 - All user-visible text: headings, paragraphs, labels, table headers, table descriptions, callouts, list items, card labels, subtitles, KPI labels, footer text
-- `index.html` card: title, excerpt in all 4 langs using `data-vi`, `data-en`, `data-zh`, `data-ja` (different system from posts)
 
 ### What NOT to i18n
 - Code blocks and code examples
@@ -44,8 +80,30 @@ kpi_label_1, kpi_label_2
 footer_text
 ```
 
+### i18n Workflow
+- **Source of truth:** HTML file (`drafts/<slug>.html` hoặc `.astro`)
+- **i18n JSON:** Derived artifact — manually populated từ HTML source
+- **Không có auto-generate** — phải copy text thủ công hoặc dùng LLM translate
+- Khi sửa content: sửa HTML source trước, rồi sync sang i18n JSON
+
+### i18n Validation (IMPORTANT)
+Run `pnpm validate:i18n` to detect truncated translations.
+
+**Common truncation causes:**
+- LLM token limit khi generate translations
+- Copy-paste không hết câu
+- Context window overflow với file lớn
+
+**Truncation patterns detected:**
+- Ends with conjunction: "hoặc", "or", "và", "and", "或", "と"
+- Ends with "· Có" / "· With" (incomplete comparison)
+- Unclosed HTML tags: `<code>`, `<strong>`, `<em>`
+- Ends with comma expecting more content
+
+**Prevention:** Copy FULL text từ HTML source. Verify all 4 langs có cùng structure.
+
 ## Social Content
-Each post has social media content in `social/<slug>/`:
+Each post has social media content in `sites/inside-goclaw/assets/social/<slug>/`:
 - `facebook-post.txt`, `facebook-comment.txt`
 - `x-post.txt`, `threads-post.txt`
 - `thumbnail-vi.html`, `thumbnail-en.html` (1200x630 OG images)
@@ -60,11 +118,12 @@ When writing Vietnamese social posts, translate tech terms to accessible Vietnam
 - No double dashes (--), use commas/periods. Use 🔹 for FB list items.
 - English posts (X/Twitter) keep original technical terms.
 
-## Directory Structure
-```
-posts/          — published HTML posts
-drafts/         — work-in-progress posts
-social/         — social media content per post
-plans/          — implementation plans
-docs/           — project documentation
-```
+## Icons
+- Use **Lucide icons** (inline SVG) instead of emojis for UI elements
+- CDN: `https://unpkg.com/lucide-static@latest/icons/`
+- Common icons: `terminal`, `code`, `zap`, `check`, `x`, `alert-triangle`, `info`, `arrow-right`, `sparkles`, `brain`, `rocket`
+
+## Future Phases
+- Phase 2: Extract `@blog/core` shared package
+- Phase 3: Scaffold `sites/inside-openclaw/` (→ Cloudflare)
+- Phase 4: Content Collections for markdown-based posts
