@@ -1,0 +1,16 @@
+Bài đầu tiên trong chuỗi series Inside ClaudeKit, bài tuy dài nhưng cover đủ những foundation cần nắm, hy vọng sẽ giúp các bạn đang cảm thấy "mù mờ" về Claude Code / ClaudeKit có cái nhìn rõ ràng hơn.
+
+Claude Code không chỉ là AI chatbot — nó là coding partner có thể đọc files, chạy commands, sửa code trực tiếp. Nhưng nếu không biết dùng đúng cách, rất dễ rơi vào tình trạng context bị đầy, Claude "quên" instructions, hoặc lặp lại công việc đã làm.
+
+Bài này cover:
+
+🔹 Context window là gì, tại sao quan trọng
+🔹 ClaudeKit Engineer Kit — bộ workflow templates biến Claude thành dev partner
+🔹 God Mode vs Coding Levels — khi nào dùng
+🔹 Cheat sheet 14 commands thường dùng nhất
+
+Mình cũng so sánh Claude Code với cách dùng AI truyền thống (copy-paste từng đoạn, phải hướng dẫn từng bước) — khác biệt rõ rệt.
+
+Nếu ae đang tìm cách leverage Claude Code hiệu quả hơn, bài này là điểm bắt đầu tốt.
+
+#ClaudeCode #AITools #Developer

@@ -1,0 +1,22 @@
+I just published a comprehensive guide on getting started with Claude Code and ClaudeKit — a topic I've been wanting to write about for a while.
+
+Claude Code represents a paradigm shift in AI-assisted development. Unlike traditional AI tools where you copy-paste code snippets and get responses, Claude Code is an agentic coding environment that:
+
+• Reads and modifies your files directly
+• Runs shell commands in your terminal
+• Explores your codebase autonomously
+• Plans and executes multi-step tasks
+
+But this power comes with constraints. The most critical one? Context window management.
+
+When your context fills up, Claude starts "forgetting" instructions, repeating completed work, and ignoring your project's rules. The solution is simple but often overlooked: use /clear between unrelated tasks.
+
+The post also covers ClaudeKit — a workflow template system built on YAGNI, KISS, and DRY principles. It transforms Claude from an AI assistant into a development partner with structured skills like /ck:cook, /ck:fix, and /ck:brainstorm.
+
+I've included a cheat sheet of the 14 most commonly used commands and explained the difference between "God Mode" (for experts) and configurable coding levels (for those who want more explanations).
+
+If you're a developer looking to leverage AI more effectively, this guide provides a solid foundation.
+
+Link in comments.
+
+#ClaudeCode #AIAssistant #DeveloperTools #Productivity #SoftwareEngineering

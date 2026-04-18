@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thumbnail: ClaudeKit Beginners Guide</title>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #1a1a1a;
+  color: #fff;
+  min-height: 100vh;
+  padding: 20px;
+}
+.controls {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 20px; padding: 16px; background: #252525; border-radius: 8px;
+}
+.control-group { display: flex; gap: 4px; align-items: center; }
+.control-label { font-size: 12px; color: #888; margin-right: 8px; text-transform: uppercase; letter-spacing: 1px; }
+.btn {
+  padding: 8px 16px; border: 1px solid #444; background: #333; color: #fff;
+  border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;
+}
+.btn:hover { background: #444; border-color: #666; }
+.btn.active { background: #e56a33; border-color: #e56a33; }
+.btn-export { background: #22c55e; border-color: #22c55e; font-weight: 600; }
+.btn-export:hover { background: #16a34a; }
+.dimensions { font-size: 11px; color: #666; margin-left: 8px; }
+
+.thumbnail-wrapper {
+  display: flex; justify-content: center; align-items: center;
+  background: #111; padding: 40px; border-radius: 12px;
+}
+
+/* Thumbnail Canvas */
+.thumbnail {
+  width: 1200px; height: 630px;
+  position: relative; overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  transform-origin: top left;
+}
+
+/* Light Theme */
+.thumbnail.theme-light {
+  background: linear-gradient(135deg, #faf7f0 0%, #f4ede0 50%, #ede3d0 100%);
+  color: #2e2a22;
+}
+.thumbnail.theme-light .accent { color: #c1440e; }
+.thumbnail.theme-light .bg-accent { background: #c1440e; }
+.thumbnail.theme-light .border-accent { border-color: #c1440e; }
+.thumbnail.theme-light .text-dim { color: #6b614d; }
+.thumbnail.theme-light .surface { background: rgba(255,255,255,0.6); }
+.thumbnail.theme-light .icon-stroke { stroke: #c1440e; }
+.thumbnail.theme-light .icon-bg { background: rgba(193,68,14,0.1); }
+
+/* Dark Theme */
+.thumbnail.theme-dark {
+  background: linear-gradient(135deg, #1a1612 0%, #211c16 50%, #2a231b 100%);
+  color: #d6c9af;
+}
+.thumbnail.theme-dark .accent { color: #e56a33; }
+.thumbnail.theme-dark .bg-accent { background: #e56a33; }
+.thumbnail.theme-dark .border-accent { border-color: #e56a33; }
+.thumbnail.theme-dark .text-dim { color: #9b8a6d; }
+.thumbnail.theme-dark .surface { background: rgba(0,0,0,0.3); }
+.thumbnail.theme-dark .icon-stroke { stroke: #e56a33; }
+.thumbnail.theme-dark .icon-bg { background: rgba(229,106,51,0.2); }
+
+/* Layout */
+.thumbnail-inner {
+  position: absolute; inset: 40px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+
+.top-bar {
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-img {
+  height: 30px; width: auto;
+}
+.theme-light .logo-img { filter: invert(1) hue-rotate(180deg); }
+.logo-x {
+  font-size: 10px; color: currentColor; opacity: 0.5; font-weight: 400;
+}
+.logo-claude {
+  width: 22px; height: 22px;
+}
+.logo-sep {
+  font-size: 14px; font-weight: 300; opacity: 0.4;
+}
+.logo-tag {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  opacity: 0.5; padding: 3px 10px;
+  border: 1px solid currentColor; border-radius: 3px;
+}
+
+.badge {
+  font-size: 11px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; padding: 6px 14px; border-radius: 20px;
+  border: 1px solid;
+}
+
+.main-content {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  padding: 0 20px;
+}
+.eyebrow {
+  font-size: 14px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.title {
+  font-size: 52px; font-weight: 700; line-height: 1.15;
+  letter-spacing: -1.5px; margin-bottom: 24px; max-width: 950px;
+}
+.title em { font-style: italic; }
+.theme-light .title em { color: #c1440e; }
+.theme-dark .title em { color: #e56a33; }
+.subtitle {
+  font-size: 21px; line-height: 1.5; max-width: 800px; font-weight: 400;
+}
+
+.bottom-bar {
+  display: flex; justify-content: space-between; align-items: flex-end;
+}
+.features {
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.feature {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 500;
+}
+.feature-icon {
+  width: 32px; height: 32px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center;
+}
+.feature-icon svg { width: 18px; height: 18px; stroke-width: 2; fill: none; }
+
+.url {
+  font-size: 14px; font-weight: 500; letter-spacing: 1px;
+}
+
+/* Decorative Elements */
+.deco-circle {
+  position: absolute; border-radius: 50%; pointer-events: none;
+}
+.theme-light .deco-circle { border: 1px solid rgba(193,68,14,0.15); }
+.theme-dark .deco-circle { border: 1px solid rgba(229,106,51,0.2); }
+.deco-1 { width: 400px; height: 400px; top: -100px; right: -100px; }
+.deco-2 { width: 300px; height: 300px; bottom: -80px; left: -80px; }
+.deco-3 { width: 200px; height: 200px; top: 50%; right: 80px; transform: translateY(-50%); }
+
+/* Grid pattern */
+.grid-pattern {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.03;
+  background-image:
+    linear-gradient(currentColor 1px, transparent 1px),
+    linear-gradient(90deg, currentColor 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Platform sizes */
+.thumbnail.platform-facebook { width: 1200px; height: 630px; }
+.thumbnail.platform-x { width: 1200px; height: 675px; }
+.thumbnail.platform-linkedin { width: 1200px; height: 627px; }
+.thumbnail.platform-instagram { width: 1080px; height: 1080px; }
+.thumbnail.platform-threads { width: 1080px; height: 1350px; }
+
+/* Instagram/Threads vertical adjustments */
+.thumbnail.platform-instagram .main-content,
+.thumbnail.platform-threads .main-content {
+  padding: 0;
+}
+.thumbnail.platform-instagram .title,
+.thumbnail.platform-threads .title {
+  font-size: 48px;
+}
+.thumbnail.platform-instagram .subtitle,
+.thumbnail.platform-threads .subtitle {
+  font-size: 18px;
+}
+.thumbnail.platform-instagram .features,
+.thumbnail.platform-threads .features {
+  flex-direction: column; gap: 12px;
+}
+.thumbnail.platform-threads .main-content {
+  justify-content: flex-start; padding-top: 80px;
+}
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <div class="control-group">
+    <span class="control-label">Lang</span>
+    <button class="btn active" data-lang="vi">VI</button>
+    <button class="btn" data-lang="en">EN</button>
+  </div>
+
+  <div class="control-group">
+    <span class="control-label">Theme</span>
+    <button class="btn" data-theme="light">Light</button>
+    <button class="btn active" data-theme="dark">Dark</button>
+  </div>
+
+  <div class="control-group">
+    <span class="control-label">Platform</span>
+    <button class="btn active" data-platform="facebook">Facebook<span class="dimensions">1200×630</span></button>
+    <button class="btn" data-platform="x">X<span class="dimensions">1200×675</span></button>
+    <button class="btn" data-platform="linkedin">LinkedIn<span class="dimensions">1200×627</span></button>
+    <button class="btn" data-platform="instagram">Instagram<span class="dimensions">1080×1080</span></button>
+    <button class="btn" data-platform="threads">Threads<span class="dimensions">1080×1350</span></button>
+  </div>
+
+  <button class="btn btn-export" onclick="exportPNG()">Export PNG (2x)</button>
+</div>
+
+<div class="thumbnail-wrapper">
+  <div id="thumbnail" class="thumbnail theme-dark platform-facebook">
+    <div class="grid-pattern"></div>
+    <div class="deco-circle deco-1"></div>
+    <div class="deco-circle deco-2"></div>
+    <div class="deco-circle deco-3"></div>
+
+    <div class="thumbnail-inner">
+      <div class="top-bar">
+        <div class="logo">
+          <!-- CK Logo image (matches homepage) -->
+          <img class="logo-img" src="https://claudekit.thieunv.space/logo-horizontal.png" alt="ClaudeKit">
+          <span class="logo-x">x</span>
+          <img class="logo-claude" src="https://claudekit.thieunv.space/claude-color.svg" alt="">
+        </div>
+        <div class="badge border-accent accent" data-i18n="badge">HƯỚNG DẪN</div>
+      </div>
+
+      <div class="main-content">
+        <div class="eyebrow accent" data-i18n="eyebrow">Inside ClaudeKit</div>
+        <h1 class="title" data-i18n="title">Bắt đầu với <em>Claude Code</em><br>và <em>ClaudeKit</em> EngineerKit</h1>
+        <p class="subtitle text-dim" data-i18n="subtitle">Từ AI assistant thành development partner. Cơ chế hoạt động, load memory, workflows, best practices và bad practices cần tránh.</p>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon icon-bg">
+              <!-- Lucide Brain icon -->
+              <svg class="icon-stroke" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
+                <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
+                <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>
+                <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/>
+                <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/>
+                <path d="M3.477 10.896a4 4 0 0 1 .585-.396"/>
+                <path d="M19.938 10.5a4 4 0 0 1 .585.396"/>
+                <path d="M6 18a4 4 0 0 1-1.967-.516"/>
+                <path d="M19.967 17.484A4 4 0 0 1 18 18"/>
+              </svg>
+            </div>
+            <span data-i18n="f1">Context & Memory</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon icon-bg">
+              <!-- Lucide Zap icon -->
+              <svg class="icon-stroke" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <span data-i18n="f2">ClaudeKit Skills</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon icon-bg">
+              <!-- Lucide FileText icon -->
+              <svg class="icon-stroke" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <line x1="10" y1="9" x2="8" y2="9"/>
+              </svg>
+            </div>
+            <span data-i18n="f3">Cheat Sheet</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon icon-bg">
+              <!-- Lucide Repeat icon (Workflows) -->
+              <svg class="icon-stroke" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m17 2 4 4-4 4"/>
+                <path d="M3 11v-1a4 4 0 0 1 4-4h14"/>
+                <path d="m7 22-4-4 4-4"/>
+                <path d="M21 13v1a4 4 0 0 1-4 4H3"/>
+              </svg>
+            </div>
+            <span data-i18n="f4">Workflows</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon icon-bg">
+              <!-- Lucide ListChecks icon (Use Cases) -->
+              <svg class="icon-stroke" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"/>
+                <path d="M7 12h10"/>
+                <path d="M10 18h7"/>
+                <path d="M4 6v-1a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v1"/>
+                <path d="M4 12v-1a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v1"/>
+                <path d="M4 18v-1a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v1"/>
+              </svg>
+            </div>
+            <span data-i18n="f5">Use Cases</span>
+          </div>
+        </div>
+        <div class="url text-dim">claudekit.thieunv.space</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const translations = {
+  vi: {
+    badge: "HƯỚNG DẪN",
+    eyebrow: "Inside ClaudeKit",
+    title: "Bắt đầu với <em>Claude Code</em><br>và <em>ClaudeKit</em> Engineer Kit",
+    subtitle: "Từ AI assistant thành development partner. Cơ chế hoạt động, load memory, workflows, best practices và bad practices cần tránh.",
+    f1: "Context & Memory",
+    f2: "ClaudeKit Skills",
+    f3: "Cheat Sheet",
+    f4: "Workflows",
+    f5: "Use Cases"
+  },
+  en: {
+    badge: "GUIDE",
+    eyebrow: "Inside ClaudeKit",
+    title: "Getting Started with <em>Claude Code</em><br>& <em>ClaudeKit</em> Engineer Kit",
+    subtitle: "From AI assistant to development partner. How it works, memory loading, workflows, best practices and bad practices to avoid.",
+    f1: "Context & Memory",
+    f2: "ClaudeKit Skills",
+    f3: "Cheat Sheet",
+    f4: "Workflows",
+    f5: "Use Cases"
+  }
+};
+
+let currentLang = 'vi';
+let currentTheme = 'dark';
+let currentPlatform = 'facebook';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (translations[lang][key]) {
+      el.innerHTML = translations[lang][key];
+    }
+  });
+  updateButtons('lang', lang);
+}
+
+function setTheme(theme) {
+  currentTheme = theme;
+  const thumb = document.getElementById('thumbnail');
+  thumb.classList.remove('theme-light', 'theme-dark');
+  thumb.classList.add('theme-' + theme);
+  updateButtons('theme', theme);
+}
+
+function setPlatform(platform) {
+  currentPlatform = platform;
+  const thumb = document.getElementById('thumbnail');
+  thumb.classList.remove('platform-facebook', 'platform-x', 'platform-linkedin', 'platform-instagram', 'platform-threads');
+  thumb.classList.add('platform-' + platform);
+  updateButtons('platform', platform);
+}
+
+function updateButtons(type, value) {
+  document.querySelectorAll(`[data-${type}]`).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset[type] === value);
+  });
+}
+
+document.querySelectorAll('[data-lang]').forEach(btn => {
+  btn.addEventListener('click', () => setLang(btn.dataset.lang));
+});
+document.querySelectorAll('[data-theme]').forEach(btn => {
+  btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+});
+document.querySelectorAll('[data-platform]').forEach(btn => {
+  btn.addEventListener('click', () => setPlatform(btn.dataset.platform));
+});
+
+async function exportPNG() {
+  const thumb = document.getElementById('thumbnail');
+  const canvas = await html2canvas(thumb, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: null
+  });
+
+  const link = document.createElement('a');
+  const filename = `claudekit-beginners-guide-${currentLang}-${currentTheme}-${currentPlatform}.png`;
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+
+</body>
+</html>

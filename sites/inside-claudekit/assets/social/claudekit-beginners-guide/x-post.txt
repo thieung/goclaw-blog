@@ -1,0 +1,16 @@
+Just published a guide on Claude Code + ClaudeKit for devs getting started.
+
+Key insight: Claude Code isn't just a chatbot — it's an agentic environment that reads files, runs commands, and modifies code directly.
+
+The catch? Context window management is everything.
+
+Covered in the post:
+
+• Why /clear is your most important command
+• ClaudeKit's YAGNI/KISS/DRY philosophy
+• God Mode (default) vs Coding Levels 0-4
+• 14-command cheat sheet for daily use
+
+If you've been copy-pasting code into ChatGPT, this is a different paradigm. Claude operates inside your codebase.
+
+Full post linked below.

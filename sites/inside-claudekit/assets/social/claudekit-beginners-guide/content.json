@@ -1,0 +1,27 @@
+{
+  "slug": "claudekit-beginners-guide",
+  "urls": {
+    "vi": "https://claudekit.thieunv.space/posts/claudekit-beginners-guide",
+    "en": "https://claudekit.thieunv.space/en/posts/claudekit-beginners-guide",
+    "zh": "https://claudekit.thieunv.space/zh/posts/claudekit-beginners-guide",
+    "ja": "https://claudekit.thieunv.space/ja/posts/claudekit-beginners-guide"
+  },
+  "posts": {
+    "facebook": {
+      "lang": "vi",
+      "content": "Mình vừa viết bài tổng hợp về Claude Code và ClaudeKit cho ae mới bắt đầu 🔥\n\nClaude Code không chỉ là AI chatbot — nó là coding partner có thể đọc files, chạy commands, sửa code trực tiếp. Nhưng nếu không biết dùng đúng cách, rất dễ rơi vào tình trạng context bị đầy, Claude \"quên\" instructions, hoặc lặp lại công việc đã làm.\n\nBài này cover:\n\n🔹 Context window là gì, tại sao quan trọng\n🔹 ClaudeKit Engineer Kit — bộ workflow templates biến Claude thành dev partner\n🔹 God Mode vs Coding Levels — khi nào dùng\n🔹 Cheat sheet 14 commands thường dùng nhất\n\nMình cũng so sánh Claude Code với cách dùng AI truyền thống (copy-paste từng đoạn, phải hướng dẫn từng bước) — khác biệt rõ rệt.\n\nNếu ae đang tìm cách leverage Claude Code hiệu quả hơn, bài này là điểm bắt đầu tốt.\n\n#ClaudeCode #AITools #Developer"
+    },
+    "threads": {
+      "lang": "vi",
+      "content": "Claude Code biến AI từ chatbot → dev partner: đọc files, chạy bash, sửa code trực tiếp 🚀\n\nMình vừa viết guide cho người mới: context management, ClaudeKit workflow, God Mode, và cheat sheet commands.\n\nLink bài viết trong bio!"
+    },
+    "x": {
+      "lang": "en",
+      "content": "Just published a guide on Claude Code + ClaudeKit for devs getting started.\n\nKey insight: Claude Code isn't just a chatbot — it's an agentic environment that reads files, runs commands, and modifies code directly.\n\nThe catch? Context window management is everything.\n\nCovered in the post:\n\n• Why /clear is your most important command\n• ClaudeKit's YAGNI/KISS/DRY philosophy\n• God Mode (default) vs Coding Levels 0-4\n• 14-command cheat sheet for daily use\n\nIf you've been copy-pasting code into ChatGPT, this is a different paradigm. Claude operates inside your codebase.\n\nFull post linked below."
+    },
+    "linkedin": {
+      "lang": "en",
+      "content": "I just published a comprehensive guide on getting started with Claude Code and ClaudeKit — a topic I've been wanting to write about for a while.\n\nClaude Code represents a paradigm shift in AI-assisted development. Unlike traditional AI tools where you copy-paste code snippets and get responses, Claude Code is an agentic coding environment that:\n\n• Reads and modifies your files directly\n• Runs shell commands in your terminal\n• Explores your codebase autonomously\n• Plans and executes multi-step tasks\n\nBut this power comes with constraints. The most critical one? Context window management.\n\nWhen your context fills up, Claude starts \"forgetting\" instructions, repeating completed work, and ignoring your project's rules. The solution is simple but often overlooked: use /clear between unrelated tasks.\n\nThe post also covers ClaudeKit — a workflow template system built on YAGNI, KISS, and DRY principles. It transforms Claude from an AI assistant into a development partner with structured skills like /ck:cook, /ck:fix, and /ck:brainstorm.\n\nI've included a cheat sheet of the 14 most commonly used commands and explained the difference between \"God Mode\" (for experts) and configurable coding levels (for those who want more explanations).\n\nIf you're a developer looking to leverage AI more effectively, this guide provides a solid foundation.\n\nLink in comments.\n\n#ClaudeCode #AIAssistant #DeveloperTools #Productivity #SoftwareEngineering"
+    }
+  }
+}

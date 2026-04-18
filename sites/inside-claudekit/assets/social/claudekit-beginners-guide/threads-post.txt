@@ -1,0 +1,5 @@
+Claude Code biến AI từ chatbot → dev partner: đọc files, chạy bash, sửa code trực tiếp 🚀
+
+Mình vừa viết guide cho người mới: context management, ClaudeKit workflow, God Mode, và cheat sheet commands.
+
+Link bài viết trong bio!

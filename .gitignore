@@ -9,3 +9,8 @@ dist/
 .claude/
 plans/**/*
 !plans/templates/*
+
+# Environment files
+.env
+.env.*
+!.env.production
