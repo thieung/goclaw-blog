@@ -1,5 +1,6 @@
 ---
 import Analytics from '@blog/core/components/Analytics.astro';
+import VercelAnalytics from '@vercel/analytics/astro';
 interface Props {
   locale: 'vi' | 'en' | 'zh' | 'ja';
 }
@@ -507,6 +508,7 @@ function isClickable(slug: string): boolean {
   .post-card:nth-child(3) { animation: fadeUp 0.35s ease 0.36s both; }
 </style>
 <Analytics measurementId={import.meta.env.INSIDE_CLAUDEKIT_GA_ID || ''} />
+<VercelAnalytics />
 </head>
 <body>
 
