@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khai phá sức mạnh của /ck:plan với --deep và --tdd · INSIDE CLAUDEKIT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Blueprint preset: dark default ── */
+    :root {
+      --font-body: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'Fira Code', 'SF Mono', monospace;
+
+      --bg: #0d1421;
+      --surface: #111d2e;
+      --surface2: #162030;
+      --surface-elevated: #162438;
+      --border: rgba(100, 160, 220, 0.12);
+      --border-bright: rgba(100, 160, 220, 0.22);
+      --text: #c8d8e8;
+      --text-dim: #607080;
+      --text-bright: #e8f0f8;
+      --accent: #4a90d9;
+      --accent-dim: rgba(74, 144, 217, 0.1);
+
+      /* Semantic colors — blueprint-harmonised */
+      --green: #4caf8a;
+      --green-dim: rgba(76, 175, 138, 0.1);
+      --red: #e06c6c;
+      --red-dim: rgba(224, 108, 108, 0.1);
+      --amber: #d4a030;
+      --amber-dim: rgba(212, 160, 48, 0.12);
+      --teal: #38b2c8;
+      --teal-dim: rgba(56, 178, 200, 0.1);
+      --plum: #b07cd4;
+      --plum-dim: rgba(176, 124, 212, 0.1);
+      --sage: #78a878;
+      --sage-dim: rgba(120, 168, 120, 0.1);
+    }
+
+    /* ── Light override: manual toggle ── */
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #e8eef4;
+      --surface-elevated: #e4eaf2;
+      --border: rgba(30, 60, 100, 0.1);
+      --border-bright: rgba(30, 60, 100, 0.2);
+      --text: #1a2a3a;
+      --text-dim: #5a7090;
+      --text-bright: #0e1a28;
+      --accent: #1a5fa8;
+      --accent-dim: rgba(26, 95, 168, 0.08);
+
+      --green: #1a7a5a;
+      --green-dim: rgba(26, 122, 90, 0.08);
+      --red: #b83030;
+      --red-dim: rgba(184, 48, 48, 0.08);
+      --amber: #9a6800;
+      --amber-dim: rgba(154, 104, 0, 0.09);
+      --teal: #0d7a9a;
+      --teal-dim: rgba(13, 122, 154, 0.08);
+      --plum: #7040a8;
+      --plum-dim: rgba(112, 64, 168, 0.08);
+      --sage: #3a7050;
+      --sage-dim: rgba(58, 112, 80, 0.08);
+    }
+
+    /* ── OS preference fallback (dark) ── */
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #f0f4f8;
+        --surface: #ffffff;
+        --surface2: #e8eef4;
+        --surface-elevated: #e4eaf2;
+        --border: rgba(30, 60, 100, 0.1);
+        --border-bright: rgba(30, 60, 100, 0.2);
+        --text: #1a2a3a;
+        --text-dim: #5a7090;
+        --text-bright: #0e1a28;
+        --accent: #1a5fa8;
+        --accent-dim: rgba(26, 95, 168, 0.08);
+
+        --green: #1a7a5a;
+        --green-dim: rgba(26, 122, 90, 0.08);
+        --red: #b83030;
+        --red-dim: rgba(184, 48, 48, 0.08);
+        --amber: #9a6800;
+        --amber-dim: rgba(154, 104, 0, 0.09);
+        --teal: #0d7a9a;
+        --teal-dim: rgba(13, 122, 154, 0.08);
+        --plum: #7040a8;
+        --plum-dim: rgba(112, 64, 168, 0.08);
+        --sage: #3a7050;
+        --sage-dim: rgba(58, 112, 80, 0.08);
+      }
+    }
+
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-body);
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--text);
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: 24px 24px;
+      overflow-wrap: break-word;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 300;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border-bright);
+      background: var(--surface);
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background 0.15s, color 0.15s;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    }
+    .theme-toggle:hover {
+      background: var(--surface-elevated);
+      color: var(--text);
+    }
+
+    /* ── Layout ── */
+    .page-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Sidebar TOC (floating rail, desktop only) ── */
+    .toc-sidebar {
+      display: none; /* hidden by default; shown via media query below */
+    }
+
+    /* ── Floating rail TOC — ≥1340px only (safe clearance) ── */
+    @media (min-width: 1340px) {
+      .toc-sidebar {
+        display: block;
+        position: fixed;
+        top: 32px;
+        left: 24px;
+        width: 210px;
+        max-height: calc(100vh - 64px);
+        overflow-y: auto;
+        z-index: 100;
+        /* Subtle scrollbar */
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-bright) transparent;
+      }
+
+      .toc-sidebar::-webkit-scrollbar { width: 4px; }
+      .toc-sidebar::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+      .toc-sidebar::-webkit-scrollbar-track { background: transparent; }
+
+      .toc-sidebar .toc__label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-dim);
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .toc-sidebar .toc__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        columns: 1;
+      }
+
+      .toc-sidebar .toc__list li {
+        margin-bottom: 2px;
+      }
+
+      .toc-sidebar .toc__list a {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-dim);
+        text-decoration: none;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        padding: 4px 6px 4px 8px;
+        border-left: 3px solid transparent;
+        border-radius: 0 4px 4px 0;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+        line-height: 1.4;
+      }
+
+      .toc-sidebar .toc__list a:hover {
+        color: var(--accent);
+        background: var(--accent-dim);
+      }
+
+      .toc-sidebar .toc__list a.is-active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: var(--accent-dim);
+      }
+
+      .toc-sidebar .toc__num {
+        color: var(--accent);
+        font-size: 10px;
+        flex-shrink: 0;
+        opacity: 0.7;
+      }
+
+      .toc-sidebar .toc__list a.is-active .toc__num {
+        opacity: 1;
+      }
+
+      /* Hide inline TOC on wide desktop — floating rail takes over */
+      .toc--inline {
+        display: none;
+      }
+    }
+
+    /* ── Article header ── */
+    .post-header {
+      margin-bottom: 40px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .series-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .series-tag::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .post-title {
+      font-size: clamp(26px, 4vw, 34px);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-bright);
+      margin: 0 0 12px;
+      letter-spacing: -0.4px;
+    }
+
+    .post-subtitle {
+      font-style: italic;
+      font-size: 18px;
+      color: var(--text-dim);
+      margin: 0 0 20px;
+      line-height: 1.5;
+    }
+
+    .post-meta {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      align-items: center;
+    }
+    .post-meta-sep {
+      color: var(--border-bright);
+    }
+    .post-meta .tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 48px;
+    }
+    .toc__label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+    .toc__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      columns: 2;
+      column-gap: 16px;
+    }
+    .toc__list li {
+      margin-bottom: 4px;
+      break-inside: avoid;
+    }
+    .toc__list a {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      text-decoration: none;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 2px 0;
+      transition: color 0.15s;
+    }
+    .toc__list a:hover { color: var(--accent); }
+    /* Active state for inline TOC (mobile scroll-spy) */
+    .toc__list a.is-active {
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+      padding-left: 6px;
+      margin-left: -3px;
+    }
+    .toc__num {
+      color: var(--accent);
+      font-size: 10px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+
+    /* ── Lead paragraph ── */
+    .lead {
+      font-size: 19px;
+      line-height: 1.7;
+      color: var(--text-bright);
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 56px;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: clamp(18px, 2.5vw, 22px);
+      font-weight: 700;
+      color: var(--text-bright);
+      margin: 0 0 20px;
+      line-height: 1.3;
+    }
+
+    .section-subtitle {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin: 28px 0 12px;
+    }
+
+    p {
+      margin: 0 0 1.4em;
+    }
+
+    /* ── Tables ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 24px 0;
+    }
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .data-table th {
+      background: var(--surface-elevated);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-align: left;
+      padding: 11px 16px;
+      border-bottom: 2px solid var(--border-bright);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: var(--text);
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: var(--accent-dim); }
+    .data-table code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    /* Highlighted rows in table (combo recommendation) */
+    .data-table tr.highlight td {
+      background: color-mix(in srgb, var(--teal-dim) 60%, transparent);
+    }
+    .data-table tr.highlight:hover td {
+      background: color-mix(in srgb, var(--teal-dim) 90%, transparent);
+    }
+
+    /* ── Code blocks ── */
+    .code-block {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.55;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--teal);
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      white-space: pre;
+      word-break: normal;
+      margin: 20px 0;
+      color: var(--text);
+    }
+    .code-block .comment {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    .code-block .kw { color: var(--accent); }
+    .code-block .str { color: var(--green); }
+    .code-block .hl { color: var(--teal); }
+
+    /* ── Blockquote / Pullquote ── */
+    .pullquote {
+      margin: 32px 0;
+      padding: 16px 20px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-dim);
+      border-radius: 0 8px 8px 0;
+    }
+    .pullquote p {
+      font-style: italic;
+      font-size: 16px;
+      color: var(--text-bright);
+      margin: 0;
+      line-height: 1.6;
+    }
+    .pullquote .arrow-chain {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent);
+      display: block;
+      margin-top: 8px;
+    }
+
+    /* ── Callout boxes ── */
+    .callout {
+      padding: 16px 20px;
+      border-radius: 8px;
+      border-left: 4px solid var(--callout-border, var(--accent));
+      background: var(--callout-bg, var(--accent-dim));
+      margin: 20px 0;
+    }
+    .callout--warning {
+      --callout-border: var(--amber);
+      --callout-bg: color-mix(in srgb, var(--amber) 10%, transparent);
+    }
+    .callout--info {
+      --callout-border: var(--accent);
+      --callout-bg: var(--accent-dim);
+    }
+    .callout__title {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--callout-border, var(--accent));
+    }
+    .callout p {
+      font-size: 15px;
+      line-height: 1.65;
+      margin: 0;
+      color: var(--text);
+    }
+    .callout p + p { margin-top: 8px; }
+
+    /* ── Ordered/unordered lists ── */
+    ul, ol {
+      padding-left: 1.6em;
+      margin: 12px 0 20px;
+    }
+    li { margin-bottom: 6px; }
+    li code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    /* Custom ordered list with accent numbers */
+    .list-ordered {
+      list-style: none;
+      padding-left: 0;
+      counter-reset: item;
+      margin: 16px 0;
+    }
+    .list-ordered li {
+      counter-increment: item;
+      padding-left: 2.2em;
+      position: relative;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .list-ordered li::before {
+      content: counter(item) ".";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      top: 3px;
+    }
+
+    /* ── Subsection numbering (6.x style) ── */
+    .sub-section {
+      margin: 28px 0;
+    }
+    .sub-section__label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--teal);
+      margin-bottom: 8px;
+    }
+
+    /* ── Step chain (TDD) ── */
+    .step-chain {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    .step-chain__item {
+      color: var(--text-bright);
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--green-dim);
+      font-size: 13px;
+    }
+    .step-chain__sep {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* ── Footer ── */
+    .post-footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .page-wrap { padding: 28px 16px 60px; }
+      .toc__list { columns: 1; }
+      body { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Theme toggle — FIRST child of body -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle light/dark theme"></button>
+<script>
+(function() {
+  var toggle = document.getElementById('themeToggle');
+  var saved = localStorage.getItem('theme');
+  var initial = saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  if (saved) document.documentElement.setAttribute('data-theme', initial);
+  toggle.textContent = initial === 'dark' ? '☀' : '☾';
+  toggle.addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    toggle.textContent = next === 'dark' ? '☀' : '☾';
+  });
+})();
+</script>
+
+<!-- ── Floating rail TOC (desktop ≥1340px) ── -->
+<nav class="toc-sidebar" aria-label="Mục lục (sidebar)">
+  <div class="toc__label">Mục lục</div>
+  <ul class="toc__list">
+    <li><a href="#s01"><span class="toc__num">01</span> Mode vs Flag</a></li>
+    <li><a href="#s02"><span class="toc__num">02</span> --deep</a></li>
+    <li><a href="#s03"><span class="toc__num">03</span> --tdd</a></li>
+    <li><a href="#s04"><span class="toc__num">04</span> /ck:brainstorm trước</a></li>
+    <li><a href="#s05"><span class="toc__num">05</span> Decision matrix</a></li>
+    <li><a href="#s06"><span class="toc__num">06</span> Cơ chế bên trong</a></li>
+    <li><a href="#s07"><span class="toc__num">07</span> Cách chạy</a></li>
+    <li><a href="#s08"><span class="toc__num">08</span> Best practices</a></li>
+    <li><a href="#s09"><span class="toc__num">09</span> Pitfalls</a></li>
+    <li><a href="#s10"><span class="toc__num">10</span> Tóm lại</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- ── HEADER ── -->
+  <header class="post-header">
+    <div class="series-tag">Inside ClaudeKit</div>
+    <h1 class="post-title">Khai phá sức mạnh của /ck:plan với --deep và --tdd</h1>
+    <p class="post-subtitle">Mode mới --deep cho per-phase scouting và flag mới --tdd cho tests-first</p>
+    <div class="post-meta">
+      <span>22/04/2026</span>
+      <span class="post-meta-sep">·</span>
+      <span>19 phút đọc</span>
+      <span class="post-meta-sep">·</span>
+      <span class="tag">claudekit</span>
+      <span class="tag">planning</span>
+      <span class="tag">tdd</span>
+      <span class="tag">refactor</span>
+    </div>
+  </header>
+
+  <!-- ── TOC (inline, mobile fallback) ── -->
+  <nav class="toc toc--inline" aria-label="Mục lục">
+    <div class="toc__label">Mục lục</div>
+    <ul class="toc__list">
+      <li><a href="#s01"><span class="toc__num">01</span> Mode vs Flag</a></li>
+      <li><a href="#s02"><span class="toc__num">02</span> --deep</a></li>
+      <li><a href="#s03"><span class="toc__num">03</span> --tdd</a></li>
+      <li><a href="#s04"><span class="toc__num">04</span> /ck:brainstorm trước</a></li>
+      <li><a href="#s05"><span class="toc__num">05</span> Decision matrix</a></li>
+      <li><a href="#s06"><span class="toc__num">06</span> Cơ chế bên trong</a></li>
+      <li><a href="#s07"><span class="toc__num">07</span> Cách chạy</a></li>
+      <li><a href="#s08"><span class="toc__num">08</span> Best practices</a></li>
+      <li><a href="#s09"><span class="toc__num">09</span> Pitfalls</a></li>
+      <li><a href="#s10"><span class="toc__num">10</span> Tóm lại</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── LEAD ── -->
+  <p class="lead">
+    Mấy tuần qua mình port một desktop app từ Tauri + Rust sang Wails + Go. 13 module, 40 giờ effort ước tính. Mô tả task xong thì nhận ra: nếu plan thiếu một góc, implementation sẽ đổ đèo rất nhanh. Đó là lúc mình dùng <code>/ck:plan --deep --tdd</code>.
+  </p>
+
+  <!-- ── SECTION 01 ── -->
+  <section class="section" id="s01">
+    <div class="section-label">01</div>
+    <h2 class="section-title">Mode vs Flag — hai khái niệm khác nhau</h2>
+
+    <p>Trong cấu trúc của <code>/ck:plan</code>, <em>mode</em> và <em>flag</em> phục vụ hai mục đích tách biệt nhau. Hiểu rõ ranh giới này giúp mình chọn đúng công cụ thay vì nhét hết vào một lệnh rồi tự hỏi sao kết quả trông lạ. Cả hai cùng hoạt động nhưng không cạnh tranh lẫn nhau.</p>
+
+    <p>Mode xác định <em>chiều sâu</em> của quá trình planning — từ nhanh đến toàn diện. Flag điều chỉnh <em>hành vi</em> trong quá trình đó mà không thay đổi bản chất của mode. Kết hợp đúng thì cả hai hỗ trợ nhau rất tốt.</p>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Loại</th>
+              <th>Ví dụ</th>
+              <th>Tác dụng</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Mode</strong></td>
+              <td><code>--fast</code>, <code>--hard</code>, <code>--deep</code>, <code>--parallel</code></td>
+              <td>Xác định pipeline planning sẽ chạy — nhanh hay đầy đủ, tuần tự hay song song</td>
+            </tr>
+            <tr>
+              <td><strong>Flag</strong></td>
+              <td><code>--tdd</code>, <code>--no-tasks</code></td>
+              <td>Điều chỉnh hành vi cụ thể bên trong mode đã chọn mà không thay đổi pipeline gốc</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <pre class="code-block"><span class="comment"># Syntax tổng quát của /ck:plan</span>
+argument-hint: "[task] [--fast|--hard|--deep|--parallel|--two] [--tdd|--no-tasks]"</pre>
+  </section>
+
+  <!-- ── SECTION 02 ── -->
+  <section class="section" id="s02">
+    <div class="section-label">02</div>
+    <h2 class="section-title">--deep — khi scope là "đại tu"</h2>
+
+    <p>Đây là mode dành cho những lần mình đứng trước một codebase cần thay đổi có hệ thống, không phải thêm một tính năng đơn lẻ. Với <code>--deep</code>, mỗi phase trong plan sẽ có riêng một vòng scouting để hiểu context trước khi đưa ra implementation steps. Điều này làm chậm quá trình planning một chút, nhưng đổi lại là plan chắc hơn nhiều.</p>
+
+    <h3 class="section-subtitle">Pipeline của --deep</h3>
+    <ol class="list-ordered">
+      <li>Scout toàn bộ codebase để lấy high-level map</li>
+      <li>Phân tích architectural boundaries và dependency graph</li>
+      <li>Xác định danh sách các khu vực ảnh hưởng (impact zones)</li>
+      <li>Với mỗi impact zone, chạy một vòng scouting riêng</li>
+      <li>Red team kiểm tra xem plan có bỏ sót edge case không</li>
+      <li>Tổng hợp các phát hiện thành phase files có chú giải rủi ro</li>
+      <li>Validation chéo giữa các phase để phát hiện conflict</li>
+      <li>Output plan hoàn chỉnh với per-phase context được điền sẵn</li>
+    </ol>
+
+    <div class="pullquote">
+      <p>Major refactor, 5+ areas, architectural debt → <code>--deep</code> → Need per-phase scouting</p>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Điều kiện</th>
+              <th>Project</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Thay đổi chạm ít nhất 5 module độc lập nhau</td>
+              <td>Port từ Tauri sang Wails với 13 module Go</td>
+            </tr>
+            <tr>
+              <td>Có architectural debt cần giải quyết cùng lúc</td>
+              <td>Refactor monolith tách ra microservice</td>
+            </tr>
+            <tr>
+              <td>Context của từng phase phụ thuộc vào phase trước đó</td>
+              <td>Database migration kèm API contract update</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 03 ── -->
+  <section class="section" id="s03">
+    <div class="section-label">03</div>
+    <h2 class="section-title">--tdd — khi sợ refactor phá hành vi đang chạy</h2>
+
+    <p>Flag <code>--tdd</code> không phải là một mode riêng — nó là một lớp hành vi được chèn vào bất kỳ mode nào mình đang dùng. Cụ thể hơn, nó yêu cầu plan phải viết test <em>trước</em> khi chạm vào code thực. Mình hay dùng flag này khi làm việc với code có side effects phức tạp, hoặc khi không chắc chắn về behavior hiện tại.</p>
+
+    <p>Một điểm cần nhớ: <code>--tdd</code> giả định codebase đã có behavior đúng. Nếu code đang có bug tiềm ẩn, test được viết trước sẽ chụp lại cả bug đó. Đây vừa là sức mạnh vừa là cái bẫy của flag này.</p>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Bước</th>
+              <th>Nội dung</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tests Before</strong></td>
+              <td>Viết test coverage cho behavior hiện tại, chạy để đảm bảo pass trước khi refactor</td>
+            </tr>
+            <tr>
+              <td><strong>Refactor</strong></td>
+              <td>Thực hiện thay đổi theo plan, giữ interface không đổi trừ khi có lý do rõ ràng</td>
+            </tr>
+            <tr>
+              <td><strong>Tests After</strong></td>
+              <td>Chạy lại toàn bộ test suite, verify không có regression, bổ sung test cho code mới</td>
+            </tr>
+            <tr>
+              <td><strong>Regression Gate</strong></td>
+              <td>Build chỉ được merge khi 100% test pass — không có ngoại lệ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="step-chain">
+      <span class="step-chain__item">Step 3.T — Tests</span>
+      <span class="step-chain__sep">→</span>
+      <span class="step-chain__item">Step 3.I — Implement</span>
+      <span class="step-chain__sep">→</span>
+      <span class="step-chain__item">Step 3.V — Verify</span>
+    </div>
+  </section>
+
+  <!-- ── SECTION 04 ── -->
+  <section class="section" id="s04">
+    <div class="section-label">04</div>
+    <h2 class="section-title">Một lưu ý — khi nào dùng /ck:brainstorm trước</h2>
+
+    <p>Không phải lúc nào cũng nên nhảy thẳng vào <code>/ck:plan</code>. Có những tình huống mà không gian giải pháp chưa đủ rõ ràng — khi đó planning sớm sẽ chỉ tạo ra một plan tối ưu cục bộ cho hướng đi sai. <code>/ck:brainstorm</code> giúp mình khám phá trade-offs trước khi commit vào một approach.</p>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tình huống</th>
+              <th>Bắt đầu từ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Có ít nhất 2 architectural approach khả thi, chưa rõ nên chọn cái nào</td>
+              <td><code>/ck:brainstorm</code> → <code>/ck:plan --deep</code></td>
+            </tr>
+            <tr>
+              <td>Scope rõ ràng, approach đã được quyết định, chỉ cần implementation plan</td>
+              <td><code>/ck:plan --deep --tdd</code> trực tiếp</td>
+            </tr>
+            <tr>
+              <td>Task nhỏ, thay đổi cục bộ, không ảnh hưởng architecture</td>
+              <td><code>/ck:plan --fast</code> hoặc <code>/ck:cook</code> thẳng</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 05 ── -->
+  <section class="section" id="s05">
+    <div class="section-label">05</div>
+    <h2 class="section-title">Decision matrix</h2>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tình huống</th>
+              <th>Lệnh</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Feature mới, scope nhỏ, không cần nhiều research</td>
+              <td><code>/ck:plan --fast</code></td>
+            </tr>
+            <tr>
+              <td>Feature phức tạp, cần research sâu nhưng không phải refactor</td>
+              <td><code>/ck:plan --hard</code></td>
+            </tr>
+            <tr>
+              <td>Refactor lớn, chạm nhiều module, cần per-phase scouting</td>
+              <td><code>/ck:plan --deep</code></td>
+            </tr>
+            <tr>
+              <td>Nhiều task độc lập nhau, muốn plan nhanh song song</td>
+              <td><code>/ck:plan --parallel</code></td>
+            </tr>
+            <tr>
+              <td>Cần test trước khi refactor bất kỳ mode nào</td>
+              <td>mode + <code>--tdd</code></td>
+            </tr>
+            <tr>
+              <td>Chỉ cần plan thuần, không cần task list</td>
+              <td>mode + <code>--no-tasks</code></td>
+            </tr>
+            <tr>
+              <td>Scope rộng, chưa rõ hướng</td>
+              <td><code>/ck:brainstorm</code> trước</td>
+            </tr>
+            <tr class="highlight">
+              <td>Đại tu codebase cũ, muốn đảm bảo không regression</td>
+              <td><code>/ck:plan --deep --tdd</code></td>
+            </tr>
+            <tr class="highlight">
+              <td>Port app sang platform khác, nhiều module, risk cao</td>
+              <td><code>/ck:plan --deep --tdd --parallel</code> (cẩn thận ownership)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 06 ── -->
+  <section class="section" id="s06">
+    <div class="section-label">06</div>
+    <h2 class="section-title">Inside — cơ chế bên trong</h2>
+
+    <!-- 6.1 -->
+    <div class="sub-section">
+      <div class="sub-section__label">6.1 — Mode comparison</div>
+      <p>Mỗi mode có một set researcher và validator riêng. Sự khác biệt lớn nhất giữa <code>--fast</code> và <code>--deep</code> không phải số lượng researcher mà là phạm vi scouting — <code>--deep</code> chạy scouting cho từng phase thay vì một lần duy nhất lúc đầu.</p>
+
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Researcher</th>
+                <th>Red Team</th>
+                <th>Validation</th>
+                <th>Per-phase scout</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--fast</code></td>
+                <td>1</td>
+                <td>Không</td>
+                <td>Cơ bản</td>
+                <td>Không</td>
+              </tr>
+              <tr>
+                <td><code>--hard</code></td>
+                <td>2-3</td>
+                <td>Có</td>
+                <td>Đầy đủ</td>
+                <td>Không</td>
+              </tr>
+              <tr>
+                <td><code>--deep</code></td>
+                <td>3+</td>
+                <td>Có</td>
+                <td>Đầy đủ</td>
+                <td>Có</td>
+              </tr>
+              <tr>
+                <td><code>--parallel</code></td>
+                <td>Song song</td>
+                <td>Tuỳ</td>
+                <td>Per-branch</td>
+                <td>Không</td>
+              </tr>
+              <tr>
+                <td><code>--two</code></td>
+                <td>2 vòng</td>
+                <td>Có</td>
+                <td>Cross-validation</td>
+                <td>Không</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="sub-section">
+      <div class="sub-section__label">6.2 — --tdd là composable flag</div>
+      <p>Flag <code>--tdd</code> không thay đổi mode selection logic. Nó được inject vào sau khi mode đã được xác định và chỉ ảnh hưởng đến cách các phase được đánh số và cấu trúc. Nghĩa là mình có thể kết hợp <code>--tdd</code> với bất kỳ mode nào mà không lo xung đột.</p>
+
+      <pre class="code-block"><span class="comment"># "--tdd" is composable and does not change mode selection</span>
+<span class="comment"># It injects T/I/V sub-steps into each phase that touches existing code</span>
+<span class="comment"># Phases that only add new files are unaffected</span></pre>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="sub-section">
+      <div class="sub-section__label">6.3 — Regression Gate</div>
+      <p>Với Go project, regression gate mặc định trông như thế này. Lệnh này được chèn tự động vào cuối mỗi phase có bước <code>.V</code>. Nếu codebase dùng ngôn ngữ khác, gate sẽ được điều chỉnh tương ứng.</p>
+
+      <pre class="code-block">Regression Gate: <span class="hl">go test ./...</span> && <span class="hl">go vet ./...</span></pre>
+    </div>
+
+    <!-- 6.4 -->
+    <div class="sub-section">
+      <div class="sub-section__label">6.4 — Per-phase scouting với --deep</div>
+      <p>Điểm khác biệt lớn nhất của <code>--deep</code> so với các mode khác là mỗi phase có một snapshot context riêng. Thay vì một lần scout ở đầu rồi distribute context cho tất cả phase, <code>--deep</code> scout lại trước mỗi phase để đảm bảo context không bị stale giữa chừng — đặc biệt quan trọng với refactor lớn kéo dài nhiều ngày.</p>
+
+      <p>Điều này cũng có nghĩa là khi mình resume một plan đang dở, <code>--deep</code> sẽ re-scout context hiện tại thay vì dùng snapshot cũ. Trade-off là tốn thêm token, nhưng với scope đủ lớn thì đây là sự đánh đổi hoàn toàn xứng đáng.</p>
+    </div>
+  </section>
+
+  <!-- ── SECTION 07 ── -->
+  <section class="section" id="s07">
+    <div class="section-label">07</div>
+    <h2 class="section-title">Cách chạy và vài mẫu prompt</h2>
+
+    <p>Dưới đây là ba mẫu prompt mình hay dùng. Mẫu đầu cho greenfield migration, mẫu hai cho legacy refactor với test coverage thấp, mẫu ba cho port sang platform mới. Điểm chung là mình luôn cung cấp đủ 4 thông tin bên dưới.</p>
+
+    <pre class="code-block"><span class="comment"># Mẫu 1: Port app sang platform mới</span>
+/ck:plan --deep --tdd
+"Port desktop app từ Tauri (Rust) sang Wails (Go).
+13 module: auth, storage, sync, export, settings...
+Ràng buộc: giữ nguyên UX, không break existing shortcuts.
+Tooling: Go 1.22, Wails v2, existing SQLite schema."</pre>
+
+    <pre class="code-block"><span class="comment"># Mẫu 2: Refactor legacy code có test coverage thấp</span>
+/ck:plan --deep --tdd
+"Refactor payment module: tách business logic ra khỏi HTTP handler.
+Coverage hiện tại: 23%. Target sau refactor: 80%+.
+Không thay đổi public API, chỉ internal structure."</pre>
+
+    <pre class="code-block"><span class="comment"># Mẫu 3: Khi chỉ cần plan, không cần task list chi tiết</span>
+/ck:plan --deep --no-tasks
+"Thiết kế lại data layer: từ ActiveRecord pattern sang Repository.
+8 entity types, 3 service boundaries cần rõ ràng hơn.
+Chưa cần implementation steps, chỉ cần architecture decision."</pre>
+
+    <p>Bốn thông tin mình luôn cung cấp trong prompt:</p>
+    <ul>
+      <li><strong>Phạm vi:</strong> số module, số file, số team member liên quan</li>
+      <li><strong>Ràng buộc:</strong> backward compatibility, performance budget, deadline</li>
+      <li><strong>Tooling:</strong> ngôn ngữ, framework, phiên bản cụ thể</li>
+      <li><strong>Kết quả mong muốn:</strong> plan thôi hay cả task list, cần test hay không</li>
+    </ul>
+  </section>
+
+  <!-- ── SECTION 08 ── -->
+  <section class="section" id="s08">
+    <div class="section-label">08</div>
+    <h2 class="section-title">Best practices mình rút ra</h2>
+
+    <ol class="list-ordered">
+      <li>
+        <strong>Scope rõ trước khi gọi plan.</strong> Mình học được bài này theo cách cứng nhất. Prompt mơ hồ tạo ra plan mơ hồ — không phải lỗi của tool mà là input thiếu context. Dành 5 phút viết scope rõ ràng luôn tiết kiệm được nhiều hơn về sau.
+      </li>
+      <li>
+        <strong>--deep không phải cho mọi task.</strong> Mode này tốn token và thời gian. Với task nhỏ hơn 2-3 module, <code>--fast</code> hoặc <code>--hard</code> là đủ. Dùng <code>--deep</code> khi thực sự cần per-phase context, không phải vì muốn chắc chắn hơn nói chung.
+      </li>
+      <li>
+        <strong>--tdd yêu cầu codebase có behavior đúng.</strong> Nếu code đang chứa bug tiềm ẩn, test viết trước sẽ bảo tồn cả bug đó. Mình luôn verify behavior hiện tại bằng tay trước khi chạy <code>--tdd</code> trên code cũ.
+      </li>
+      <li>
+        <strong>Đọc phase file trước khi cook.</strong> Plan dù tốt đến đâu cũng có thể bỏ sót domain knowledge mà chỉ mình biết. Một lần đọc nhanh phase file trước khi <code>/ck:cook</code> giúp mình catch được những chỗ cần adjust.
+      </li>
+      <li>
+        <strong>--parallel cần ownership rõ.</strong> Khi kết hợp <code>--deep --tdd --parallel</code>, mỗi branch cần được assign file ownership rõ ràng. Không có ownership thì parallel execution dễ tạo conflict mà chỉ phát hiện được ở bước merge.
+      </li>
+    </ol>
+  </section>
+
+  <!-- ── SECTION 09 ── -->
+  <section class="section" id="s09">
+    <div class="section-label">09</div>
+    <h2 class="section-title">Pitfalls ⚠</h2>
+
+    <div class="callout callout--warning">
+      <div class="callout__title">P1 — Quên --tdd ở /ck:cook</div>
+      <p>Plan được tạo với <code>--tdd</code> nhưng khi cook lại không truyền flag tương ứng. Kết quả là implementation đi thẳng vào code mà không có bước test trước — toàn bộ regression gate bị bỏ qua một cách lặng lẽ. Cách nhớ: nếu plan có bước <code>.T</code>, cook cũng phải biết về nó.</p>
+    </div>
+
+    <div class="callout callout--warning">
+      <div class="callout__title">P2 — --deep cho task nhỏ</div>
+      <p>Dùng <code>--deep</code> cho một task chỉ chạm 1-2 file là overkill rõ ràng. Per-phase scouting sẽ tốn thêm 3-5 phút mà không cho thêm insight gì hữu ích. Với task nhỏ, overhead của <code>--deep</code> lớn hơn benefit — đây là dấu hiệu chọn nhầm mode.</p>
+    </div>
+
+    <div class="callout callout--warning">
+      <div class="callout__title">P3 — --tdd cho greenfield</div>
+      <p>Flag <code>--tdd</code> được thiết kế để bảo vệ behavior đang tồn tại. Với code mới hoàn toàn, không có gì để bảo vệ — test được viết trước sẽ fail theo định nghĩa. Greenfield nên dùng TDD theo nghĩa truyền thống (write failing test → implement → pass), không phải <code>--tdd</code> flag của <code>/ck:plan</code>.</p>
+    </div>
+
+    <div class="callout callout--warning">
+      <div class="callout__title">P4 — Tin 100% phase file</div>
+      <p>Phase file là điểm khởi đầu, không phải bản thiết kế cuối cùng. Plan không biết được những dependency ẩn, business logic chỉ nằm trong đầu mình, hoặc gotcha của thư viện bên thứ ba. Luôn đọc và điều chỉnh trước khi delegate cho cook agent.</p>
+    </div>
+
+    <div class="callout callout--warning">
+      <div class="callout__title">P5 — --tdd chụp test cho code có bug sẵn</div>
+      <p>Nếu function hiện tại có edge case sai và mình chạy <code>--tdd</code>, test sẽ encode cái sai đó như là expected behavior. Sau khi refactor xong, test vẫn pass vì behavior không đổi — nhưng bug vẫn còn đó. Verify behavior trước là bước không thể bỏ qua.</p>
+    </div>
+
+    <div class="callout callout--warning">
+      <div class="callout__title">P6 — --deep --tdd --parallel không ownership rõ</div>
+      <p>Kết hợp ba flag này là powerful nhất nhưng cũng fragile nhất. Parallel branches có thể đụng nhau ở shared file, và khi mỗi branch đã có test riêng thì conflict resolution trở nên rất phức tạp. Phải define file ownership rõ ràng cho từng branch trước khi start — không có ngoại lệ.</p>
+    </div>
+  </section>
+
+  <!-- ── SECTION 10 ── -->
+  <section class="section" id="s10">
+    <div class="section-label">10</div>
+    <h2 class="section-title">Tóm lại</h2>
+
+    <p>Mode và flag trong <code>/ck:plan</code> là hai lớp điều khiển độc lập nhau. Chọn đúng mode (pipeline depth) và đúng flag (behavior modifier) giúp mình ra khỏi planning với một plan đủ chắc để implement — không phải plan đẹp trên giấy nhưng đổ vỡ ở giữa chừng.</p>
+
+    <p><code>--deep</code> giải quyết vấn đề context staleness trong refactor lớn. <code>--tdd</code> giải quyết vấn đề regression khi thay đổi code đang chạy. Hai cái này phục vụ hai lo ngại khác nhau và thường xuất hiện cùng nhau trong cùng một task quan trọng.</p>
+
+    <p>Bài học đắt nhất mình học được từ port Tauri → Wails: plan thiếu context ở phase 4 sẽ không hiện ra ngay lúc planning mà chỉ lộ ra ở implementation khi đã đi được 60%. Từ đó mình không bao giờ bỏ qua <code>--deep</code> cho bất kỳ task nào chạm trên 4 module.</p>
+
+    <h3 class="section-subtitle">Ghi chú kỹ thuật</h3>
+    <ul>
+      <li>Skill <code>/ck:plan</code> nằm tại <code>~/.claude/skills/ck-plan/</code></li>
+      <li>Flag <code>--tdd</code> được implement như một composable behavior injected vào skill runtime</li>
+      <li>Per-phase scouting của <code>--deep</code> dùng lại agent infrastructure của <code>/ck:scout</code></li>
+      <li>Regression gate template có thể override bằng cách thêm <code>ck-test-command</code> vào project <code>CLAUDE.md</code></li>
+      <li>Kết hợp <code>--parallel</code> với <code>--tdd</code> yêu cầu file ownership declaration để tránh test conflict giữa các branch</li>
+    </ul>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="post-footer">
+    INSIDE CLAUDEKIT · 22/04/2026
+  </footer>
+
+</div><!-- /.page-wrap -->
+
+<script>
+(function () {
+  /* Scroll-spy: highlight active TOC link in both sidebar and inline TOC */
+  var sections = Array.from(document.querySelectorAll('section[id^="s"]'));
+  /* Collect all TOC links from both sidebar and inline nav */
+  var allLinks = Array.from(document.querySelectorAll('.toc__list a[href^="#"]'));
+
+  if (!sections.length || !allLinks.length) return;
+
+  function setActive(id) {
+    allLinks.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + id) {
+        a.classList.add('is-active');
+      } else {
+        a.classList.remove('is-active');
+      }
+    });
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        setActive(entry.target.id);
+      }
+    });
+  }, {
+    rootMargin: '-20% 0px -70% 0px'
+  });
+
+  sections.forEach(function (s) { observer.observe(s); });
+})();
+</script>
+</body>
+</html>

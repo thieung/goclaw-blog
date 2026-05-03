@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khai phá /ck:plan --deep và --tdd | Inside ClaudeKit</title>
+
+  <!-- Theme: read before first paint, avoid flash -->
+  <script>
+    (function () {
+      var stored = localStorage.getItem('theme');
+      var prefer = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', stored || prefer);
+    })();
+  </script>
+
+  <!-- Google Fonts preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Triple stack: Playfair Display (headings) + Source Serif 4 (body) + JetBrains Mono (code/labels) -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — two complete themes
+       Palette: "Notes & Writing App" from ui-ux-pro-max catalog
+       Warm ink + amber accent on cream (light) / dark slate (dark)
+    ============================================================ */
+    :root,
+    [data-theme="light"] {
+      --bg:             #fffbeb;
+      --surface:        #ffffff;
+      --surface2:       #fef9e7;
+      --surface-raised: #fdf6d3;
+      --border:         rgba(120, 113, 108, 0.13);
+      --border-bright:  rgba(120, 113, 108, 0.24);
+
+      --text:           #0f172a;
+      --text-dim:       #78716c;   /* warm stone, belongs to amber family */
+      --text-muted:     #a8a29e;
+
+      --accent:         #d97706;   /* amber-600 */
+      --accent-dim:     rgba(217, 119, 6, 0.10);
+      --accent-text:    #92400e;   /* amber-800, used on light surfaces */
+
+      --code-bg:        #f6f0e0;
+      --code-text:      #44403c;
+
+      /* semantic */
+      --green:          #059669;
+      --green-dim:      rgba(5, 150, 105, 0.10);
+      --red:            #dc2626;
+      --red-dim:        rgba(220, 38, 38, 0.08);
+      --amber:          #d97706;
+      --amber-dim:      rgba(217, 119, 6, 0.10);
+      --amber-border:   rgba(217, 119, 6, 0.28);
+      --sage:           #65a30d;
+      --teal:           #0891b2;
+      --blue:           #2563eb;
+      --blue-dim:       rgba(37, 99, 235, 0.08);
+
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body:    'Source Serif 4', Georgia, serif;
+      --font-mono:    'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg:             #1c1a16;
+      --surface:        #252118;
+      --surface2:       #2e2920;
+      --surface-raised: #39332a;
+
+      --border:         rgba(200, 185, 150, 0.09);
+      --border-bright:  rgba(200, 185, 150, 0.18);
+
+      --text:           #f0e8d8;
+      --text-dim:       #a89880;
+      --text-muted:     #7a6e60;
+
+      --accent:         #f59e0b;   /* amber-400, brighter for dark bg */
+      --accent-dim:     rgba(245, 158, 11, 0.12);
+      --accent-text:    #fcd34d;   /* amber-300 */
+
+      --code-bg:        #0f0e0b;
+      --code-text:      #d8c8a8;
+
+      --green:          #34d399;
+      --green-dim:      rgba(52, 211, 153, 0.10);
+      --red:            #f87171;
+      --red-dim:        rgba(248, 113, 113, 0.10);
+      --amber:          #f59e0b;
+      --amber-dim:      rgba(245, 158, 11, 0.12);
+      --amber-border:   rgba(245, 158, 11, 0.24);
+      --sage:           #86efac;
+      --teal:           #22d3ee;
+      --blue:           #60a5fa;
+      --blue-dim:       rgba(96, 165, 250, 0.10);
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      font-size: 18px;
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-weight: 400;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    /* ============================================================
+       THEME TOGGLE — fixed top-right, first child of body
+    ============================================================ */
+    .theme-toggle {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 9999;
+      background: var(--surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 2rem;
+      padding: 0.35rem 0.75rem;
+      cursor: pointer;
+      font-size: 1.05rem;
+      line-height: 1;
+      color: var(--text-dim);
+      transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 2px 8px var(--accent-dim);
+    }
+    .theme-toggle .icon { font-size: 1rem; }
+
+    /* ============================================================
+       LAYOUT — reading measure UX guideline: 65ch max
+    ============================================================ */
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Narrow reading measure for body text — UX guideline #1 */
+    .prose {
+      max-width: 65ch;
+    }
+
+    /* ============================================================
+       SITE HEADER
+    ============================================================ */
+    .site-header {
+      padding: 1.5rem 0 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .site-header .inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 1rem;
+    }
+    .site-wordmark {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .site-wordmark strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ============================================================
+       ARTICLE HEADER
+    ============================================================ */
+    .article-header {
+      padding: 4rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+
+    .kicker {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+    }
+    .kicker::before {
+      content: '— ';
+      color: var(--text-muted);
+    }
+
+    .article-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 900;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 1.1rem;
+      max-width: 20ch;
+    }
+    /* Accent the command name */
+    .article-title .cmd {
+      color: var(--accent);
+      font-style: normal;
+    }
+
+    .article-subtitle {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 1.15rem;
+      font-weight: 300;
+      color: var(--text-dim);
+      max-width: 55ch;
+      line-height: 1.6;
+      margin-bottom: 1.75rem;
+    }
+
+    .article-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .article-meta .sep {
+      color: var(--border-bright);
+    }
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      background: var(--accent-dim);
+      color: var(--accent-text);
+      border-radius: 2px;
+      padding: 0.15em 0.55em;
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      letter-spacing: 0.08em;
+      border: 1px solid var(--amber-border);
+    }
+    [data-theme="dark"] .tag {
+      color: var(--accent);
+    }
+
+    /* ============================================================
+       LEAD PARAGRAPH
+    ============================================================ */
+    .lead {
+      font-size: 1.1rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 3rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .lead p + p { margin-top: 1.1em; }
+
+    /* ============================================================
+       TOC — inline chips (mobile default) + sticky sidebar (desktop)
+       Mobile: horizontal chip row below lead paragraph
+       Desktop (≥1100px): sticky left sidebar, scroll-spy active
+    ============================================================ */
+
+    /* ── Inline chips (mobile / shared base) ── */
+    .toc-block {
+      background: var(--surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 3.5rem;
+      border-left: 3px solid var(--accent);
+    }
+    .toc-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .toc-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .toc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3em;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.3em 0.7em;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .toc-chip:hover {
+      background: var(--accent-dim);
+      border-color: var(--amber-border);
+      color: var(--accent-text);
+    }
+    [data-theme="dark"] .toc-chip:hover {
+      color: var(--accent);
+    }
+    .toc-chip .num {
+      color: var(--text-muted);
+      font-size: 0.6rem;
+    }
+    /* active chip (mobile scroll-spy) */
+    .toc-chip.is-active {
+      background: var(--accent-dim);
+      border-color: var(--amber-border);
+      color: var(--accent-text);
+    }
+    [data-theme="dark"] .toc-chip.is-active {
+      color: var(--accent);
+    }
+
+    /* ── Desktop layout wrapper — always block, TOC is a floating rail ── */
+    .page-layout {
+      display: block;
+    }
+
+    /* ── Floating rail TOC (hidden by default, shown at wide viewports) ── */
+    .toc-sidebar {
+      display: none; /* hidden on mobile and narrow desktop */
+    }
+
+    /* Sidebar link styles — available at all breakpoints for reuse */
+    .toc-sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      padding-left: 0.75rem;
+    }
+
+    .toc-sidebar-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .toc-sidebar-list li {
+      margin: 0;
+    }
+
+    .toc-sidebar-link {
+      display: flex;
+      align-items: baseline;
+      gap: 0.55em;
+      padding: 0.38rem 0.75rem;
+      border-left: 2px solid transparent;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .toc-sidebar-link:hover {
+      border-left-color: var(--amber-border);
+      background: var(--accent-dim);
+    }
+
+    .toc-sidebar-link .toc-num {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: color 0.15s;
+      letter-spacing: 0.04em;
+    }
+
+    .toc-sidebar-link .toc-title {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--text-dim);
+      line-height: 1.4;
+      transition: color 0.15s;
+    }
+
+    /* Active state — amber accent + left border */
+    .toc-sidebar-link.is-active {
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .toc-sidebar-link.is-active .toc-num {
+      color: var(--accent);
+    }
+    .toc-sidebar-link.is-active .toc-title {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    [data-theme="dark"] .toc-sidebar-link.is-active .toc-num {
+      color: var(--accent);
+    }
+    [data-theme="dark"] .toc-sidebar-link.is-active .toc-title {
+      color: var(--text);
+    }
+
+    /* ── Wide viewport: floating rail TOC (≥1400px) ── */
+    @media (min-width: 1400px) {
+      /* Hide inline chips — sidebar takes over wayfinding */
+      .toc-block {
+        display: none;
+      }
+
+      /* Floating rail: position fixed, outside main content column */
+      .toc-sidebar {
+        display: block;
+        position: fixed;
+        top: 48px;
+        left: 24px;
+        width: 240px;
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+        /* Subtle scrollbar */
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-bright) transparent;
+      }
+
+      .toc-sidebar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .toc-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .toc-sidebar::-webkit-scrollbar-thumb {
+        background: var(--border-bright);
+        border-radius: 2px;
+      }
+    }
+
+    /* ============================================================
+       SECTION — reading rhythm: generous top margin, section label
+       UX guideline #2: section label as wayfinding device
+    ============================================================ */
+    .section {
+      margin-bottom: 4rem;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+    }
+    .section-num {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--amber-border);
+      border-radius: 2px;
+      padding: 0.18em 0.55em;
+    }
+    .section-rule {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-heading {
+      font-family: var(--font-display);
+      font-size: 1.65rem;
+      font-weight: 700;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+    .section-heading-sm {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 1.75rem 0 0.8rem;
+    }
+
+    /* Body paragraphs */
+    .prose p {
+      margin-bottom: 1.2em;
+    }
+    .prose p:last-child { margin-bottom: 0; }
+
+    /* Inline code */
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: 2px;
+      padding: 0.1em 0.4em;
+      border: 1px solid var(--border);
+    }
+
+    /* ============================================================
+       CODE BLOCKS — no three-dot chrome
+    ============================================================ */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      margin: 1.5rem 0;
+      overflow: hidden;
+    }
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-raised);
+    }
+    .code-lang {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    pre {
+      margin: 0;
+      padding: 1.25rem 1.25rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: var(--code-text);
+      background: transparent;
+      tab-size: 2;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      color: inherit;
+    }
+
+    /* ============================================================
+       TABLES — reading-first, not data-dense
+    ============================================================ */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border-radius: 4px;
+      border: 1px solid var(--border-bright);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      font-family: var(--font-body);
+    }
+    thead tr {
+      background: var(--surface-raised);
+      border-bottom: 2px solid var(--border-bright);
+    }
+    th {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 0.7rem 1rem;
+      text-align: left;
+    }
+    td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+
+    /* Combo rows — visually distinct */
+    .combo-row td {
+      background: var(--accent-dim);
+      border-color: var(--amber-border);
+    }
+    .combo-row td:first-child {
+      border-left: 3px solid var(--accent);
+    }
+    [data-theme="dark"] .combo-row td {
+      background: rgba(245, 158, 11, 0.07);
+    }
+
+    /* ============================================================
+       BLOCKQUOTE
+    ============================================================ */
+    blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.75rem 0;
+      padding: 0.75rem 1.5rem;
+      background: var(--surface);
+      border-radius: 0 4px 4px 0;
+    }
+    blockquote p {
+      font-style: italic;
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text-dim);
+      margin: 0;
+      line-height: 1.7;
+    }
+    blockquote cite {
+      display: block;
+      margin-top: 0.5em;
+      font-style: normal;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       ORDERED / UNORDERED LISTS
+    ============================================================ */
+    .prose ol,
+    .prose ul {
+      padding-left: 1.4em;
+      margin: 1em 0;
+    }
+    .prose li {
+      margin-bottom: 0.5em;
+      line-height: 1.65;
+    }
+    .prose ol { list-style: decimal; }
+    .prose ul { list-style: disc; }
+    .prose li::marker {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+    }
+
+    /* ============================================================
+       SUBSECTION NUMBERING
+    ============================================================ */
+    .subsection {
+      margin-top: 2.5rem;
+    }
+    .subsec-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .subsec-heading {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ============================================================
+       PITFALL CALLOUTS — UX guideline #3: warning callout system
+       structured: numbered chip + amber accent + scannable pattern
+       Not alarmist (no full-red), but immediately recognizable
+    ============================================================ */
+    .pitfall-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    @media (min-width: 640px) {
+      .pitfall-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .pitfall-card {
+      background: var(--surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      padding: 1.1rem 1.25rem 1.25rem;
+      border-top: 3px solid var(--amber);
+      transition: box-shadow 0.15s;
+    }
+    .pitfall-card:hover {
+      box-shadow: 0 2px 12px var(--accent-dim);
+    }
+    .pitfall-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      margin-bottom: 0.6rem;
+    }
+    .pitfall-num {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      background: var(--amber-dim);
+      border: 1px solid var(--amber-border);
+      color: var(--accent-text);
+      border-radius: 2px;
+      padding: 0.2em 0.5em;
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+    }
+    [data-theme="dark"] .pitfall-num { color: var(--accent); }
+    .pitfall-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .pitfall-body {
+      font-size: 0.87rem;
+      color: var(--text-dim);
+      line-height: 1.62;
+      font-family: var(--font-body);
+    }
+
+    /* ============================================================
+       BEST PRACTICES — numbered sections
+    ============================================================ */
+    .bp-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .bp-num {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--amber-border);
+      border-radius: 50%;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.15rem;
+    }
+    .bp-content {}
+    .bp-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+    .bp-desc {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+
+    /* ============================================================
+       TECH REFS — footer subsection
+    ============================================================ */
+    .tech-refs {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .tech-refs-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .tech-refs ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .tech-refs li {
+      font-size: 0.84rem;
+      color: var(--text-dim);
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 0.5em;
+    }
+    .tech-refs li:last-child { border-bottom: none; }
+    .tech-refs li::before {
+      content: '↳';
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       ARTICLE FOOTER
+    ============================================================ */
+    .article-footer {
+      margin-top: 5rem;
+      padding: 2rem 0;
+      border-top: 2px solid var(--border-bright);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-kicker {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .footer-kicker strong {
+      color: var(--accent);
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 640px) {
+      html { font-size: 16px; }
+      .article-title { font-size: 1.75rem; }
+      .container { padding: 0 1.1rem; }
+      .article-header { padding: 3rem 0 2rem; }
+      .toc-block { padding: 1.1rem 1.25rem; }
+      pre { padding: 1rem; font-size: 0.77rem; }
+      th, td { padding: 0.55rem 0.75rem; }
+      .pitfall-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 390px) {
+      html { font-size: 15px; }
+      .article-meta { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+    }
+
+    /* ============================================================
+       ACCESSIBILITY — reduced motion
+    ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+
+    /* Focus styles */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 2px;
+    }
+
+    /* Link affordance — UX guideline: underline on links within prose */
+    .prose a {
+      color: var(--accent-text);
+      text-decoration-line: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      transition: color 0.15s;
+    }
+    [data-theme="dark"] .prose a { color: var(--accent); }
+    .prose a:hover { color: var(--accent); }
+
+    /* Horizontal rule between major blocks */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Theme toggle: MANDATORY first child of body -->
+  <button
+    class="theme-toggle"
+    id="theme-toggle"
+    aria-label="Chuyển giao diện sáng / tối"
+    title="Toggle theme"
+  >
+    <span class="icon" id="theme-icon">☀</span>
+    <span id="theme-label">light</span>
+  </button>
+
+  <div class="container">
+
+    <!-- ── SITE HEADER ────────────────────────────────────────── -->
+    <header class="site-header" role="banner">
+      <div class="inner">
+        <a class="site-wordmark" href="/">
+          <strong>Inside</strong> ClaudeKit
+        </a>
+      </div>
+    </header>
+
+    <!-- ── ARTICLE HEADER ─────────────────────────────────────── -->
+    <header class="article-header">
+      <span class="kicker">Inside ClaudeKit</span>
+      <h1 class="article-title">
+        Khai phá sức mạnh của <span class="cmd">/ck:plan</span> với <span class="cmd">--deep</span> và <span class="cmd">--tdd</span>
+      </h1>
+      <p class="article-subtitle">
+        Mode mới --deep cho per-phase scouting và flag mới --tdd cho tests-first
+      </p>
+      <div class="article-meta">
+        <time datetime="2026-04-22">22/04/2026</time>
+        <span class="sep">·</span>
+        <span>19 phút đọc</span>
+        <span class="sep">·</span>
+        <div class="tag-list">
+          <span class="tag">claudekit</span>
+          <span class="tag">planning</span>
+          <span class="tag">tdd</span>
+          <span class="tag">refactor</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── LEAD PARAGRAPH ────────────────────────────────────── -->
+    <div class="lead prose">
+      <p>
+        Mình đã dùng <code>/ck:plan</code> hàng ngày được vài tháng rồi, nhưng gần đây mới bắt đầu hiểu sâu hơn về hai thứ mà bao lâu nay vẫn hay bỏ qua: flag <code>--deep</code> và flag <code>--tdd</code>. Trước đây mình cứ chạy plan với mặc định rồi thôi, thấy nó generate ra các file phase là xong.
+      </p>
+      <p>
+        Đến lúc dự án lớn lên, các phase bắt đầu có sự phụ thuộc chéo phức tạp, mình mới nhận ra mình đang dùng công cụ sai cách. <code>--deep</code> không chỉ là "plan kỹ hơn" — nó thay đổi hoàn toàn cách sub-agent tiếp cận từng phase. Còn <code>--tdd</code> thì buộc cả pipeline phải bắt đầu từ test trước, không phải implementation trước rồi viết test sau.
+      </p>
+      <p>
+        Bài này mình sẽ đi từ cơ chế bên trong, qua decision matrix thực tế, đến những cái bẫy mà mình đã vấp phải. Không phải tutorial từ đầu — giả định bạn đã dùng ClaudeKit một thời gian rồi.
+      </p>
+    </div>
+
+    <!-- ── TOC inline chips (mobile) ────────────────────────── -->
+    <nav class="toc-block" aria-label="Mục lục" id="toc-chips-block">
+      <div class="toc-label">Mục lục · 10 phần</div>
+      <div class="toc-chips">
+        <a href="#s01" class="toc-chip" data-toc="s01"><span class="num">01</span> Mode vs Flag</a>
+        <a href="#s02" class="toc-chip" data-toc="s02"><span class="num">02</span> --deep (đại tu)</a>
+        <a href="#s03" class="toc-chip" data-toc="s03"><span class="num">03</span> --tdd flag</a>
+        <a href="#s04" class="toc-chip" data-toc="s04"><span class="num">04</span> /ck:brainstorm trước</a>
+        <a href="#s05" class="toc-chip" data-toc="s05"><span class="num">05</span> Decision matrix</a>
+        <a href="#s06" class="toc-chip" data-toc="s06"><span class="num">06</span> Cơ chế bên trong</a>
+        <a href="#s07" class="toc-chip" data-toc="s07"><span class="num">07</span> Cách chạy</a>
+        <a href="#s08" class="toc-chip" data-toc="s08"><span class="num">08</span> Best practices</a>
+        <a href="#s09" class="toc-chip" data-toc="s09"><span class="num">09</span> Pitfalls P1–P6</a>
+        <a href="#s10" class="toc-chip" data-toc="s10"><span class="num">10</span> Tóm lại</a>
+      </div>
+    </nav>
+
+    <!-- ── Page layout: sidebar (desktop) + article body ─────── -->
+    <div class="page-layout">
+
+      <!-- Sticky sidebar TOC (desktop ≥1100px only) -->
+      <nav class="toc-sidebar" aria-label="Mục lục" id="toc-sidebar">
+        <div class="toc-sidebar-label">Mục lục</div>
+        <ul class="toc-sidebar-list">
+          <li><a href="#s01" class="toc-sidebar-link" data-toc="s01"><span class="toc-num">01</span><span class="toc-title">Mode vs Flag</span></a></li>
+          <li><a href="#s02" class="toc-sidebar-link" data-toc="s02"><span class="toc-num">02</span><span class="toc-title">--deep (đại tu)</span></a></li>
+          <li><a href="#s03" class="toc-sidebar-link" data-toc="s03"><span class="toc-num">03</span><span class="toc-title">--tdd flag</span></a></li>
+          <li><a href="#s04" class="toc-sidebar-link" data-toc="s04"><span class="toc-num">04</span><span class="toc-title">/ck:brainstorm trước</span></a></li>
+          <li><a href="#s05" class="toc-sidebar-link" data-toc="s05"><span class="toc-num">05</span><span class="toc-title">Decision matrix</span></a></li>
+          <li><a href="#s06" class="toc-sidebar-link" data-toc="s06"><span class="toc-num">06</span><span class="toc-title">Cơ chế bên trong</span></a></li>
+          <li><a href="#s07" class="toc-sidebar-link" data-toc="s07"><span class="toc-num">07</span><span class="toc-title">Cách chạy</span></a></li>
+          <li><a href="#s08" class="toc-sidebar-link" data-toc="s08"><span class="toc-num">08</span><span class="toc-title">Best practices</span></a></li>
+          <li><a href="#s09" class="toc-sidebar-link" data-toc="s09"><span class="toc-num">09</span><span class="toc-title">Pitfalls P1–P6</span></a></li>
+          <li><a href="#s10" class="toc-sidebar-link" data-toc="s10"><span class="toc-num">10</span><span class="toc-title">Tóm lại</span></a></li>
+        </ul>
+      </nav>
+
+      <!-- Article body column -->
+      <div class="article-body">
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 01 — Mode vs Flag
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s01">
+      <div class="section-label">
+        <span class="section-num">01</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Mode vs Flag</h2>
+      <div class="prose">
+        <p>
+          Khi mình lần đầu thấy <code>--deep</code> và <code>--tdd</code> trong docs, mình nghĩ cả hai đều là kiểu "bật thêm tính năng". Thực ra chúng hoạt động ở hai tầng khác nhau hoàn toàn: <code>--deep</code> là mode thay đổi cách plan được tạo ra, còn <code>--tdd</code> là flag thay đổi cách plan được thực thi. Nhầm lẫn hai cái này dẫn đến những kết hợp vô nghĩa hoặc kém hiệu quả.
+        </p>
+        <p>
+          Để phân biệt rõ hơn: mode ảnh hưởng đến output artifact (file phase, file research), còn flag ảnh hưởng đến pipeline behavior khi <code>/ck:cook</code> chạy sau đó. Một mode có thể dùng độc lập, một flag cần mode tương thích để phát huy tác dụng đúng nghĩa.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Khái niệm</th>
+                <th>Tầng tác động</th>
+                <th>Thay đổi gì</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--deep</code> (mode)</td>
+                <td>Plan generation</td>
+                <td>Per-phase scout, deeper context per phase file</td>
+              </tr>
+              <tr>
+                <td><code>--tdd</code> (flag)</td>
+                <td>Cook execution</td>
+                <td>Tests-first template, regression gate ở cuối</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-lang">bash</span>
+          </div>
+          <pre><code># Kết hợp đúng: deep plan + tdd execution
+/ck:plan --deep --tdd "refactor auth module"</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 02 — --deep
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s02">
+      <div class="section-label">
+        <span class="section-num">02</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">--deep — "mode đại tu"</h2>
+      <div class="prose">
+        <p>
+          Mình gọi <code>--deep</code> là "mode đại tu" vì nó không chỉ generate thêm nội dung — nó spawn một sub-agent scout riêng cho mỗi phase. Thay vì một scout chạy toàn bộ codebase một lần rồi chia thông tin cho các phase, mỗi phase nhận được một lần scouting riêng với context window tập trung vào đúng phần code liên quan đến phase đó.
+        </p>
+
+        <h3 class="section-heading-sm">Pipeline của --deep</h3>
+        <ol>
+          <li>Planner agent phân tích yêu cầu và tạo skeleton các phase</li>
+          <li>Với mỗi phase, một scout sub-agent được spawn độc lập</li>
+          <li>Scout đọc các file liên quan theo scope của phase đó</li>
+          <li>Scout báo cáo về: dependencies, risk points, existing patterns</li>
+          <li>Planner tổng hợp báo cáo, viết phase file với context cụ thể</li>
+          <li>Các phase file được cross-check về dependency order</li>
+          <li>Researcher agents chạy song song cho các topic kỹ thuật phức tạp</li>
+          <li>Final plan.md được tạo với đủ link đến research và phase files</li>
+        </ol>
+
+        <blockquote>
+          <p>
+            Per-phase scouting tốn nhiều token hơn nhưng đổi lại là các phase file chứa context thực sự hữu ích cho cook agent — thay vì generic instructions, cook agent nhận được thông tin về đúng function, đúng interface, đúng pattern cần thay đổi.
+          </p>
+          <cite>— Từ internal design notes của ClaudeKit</cite>
+        </blockquote>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Chế độ</th>
+                <th>Scout strategy</th>
+                <th>Thích hợp cho</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Default plan</td>
+                <td>Single scout, toàn codebase</td>
+                <td>Feature mới, greenfield</td>
+              </tr>
+              <tr>
+                <td><code>--deep</code></td>
+                <td>Per-phase scout, focused scope</td>
+                <td>Refactor, migration, codebase phức tạp</td>
+              </tr>
+              <tr>
+                <td><code>--deep --parallel</code></td>
+                <td>Per-phase scout + parallel cook</td>
+                <td>Large refactor với isolated phases</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 03 — --tdd flag
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s03">
+      <div class="section-label">
+        <span class="section-num">03</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">--tdd flag</h2>
+      <div class="prose">
+        <p>
+          Flag <code>--tdd</code> thay đổi template của phase file và thêm một bước regression gate vào cuối pipeline. Khi không có <code>--tdd</code>, phase file có cấu trúc: research → implementation → tests. Khi có <code>--tdd</code>, template đảo ngược: tests spec trước, rồi mới đến implementation để pass tests đó.
+        </p>
+        <p>
+          Điều quan trọng là <code>--tdd</code> không chỉ là thứ tự viết code — nó buộc cook agent phải định nghĩa behavior trước thông qua test cases, rồi mới implement. Đây là sự khác biệt về tư duy: thay vì "code xong rồi test xem có đúng không", cook agent phải "định nghĩa đúng là gì trước, rồi code để đạt được đó".
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Nội dung</th>
+                <th>Sub-agent</th>
+                <th>Gate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Tests Before</td>
+                <td>Viết unit/integration tests từ spec</td>
+                <td>Tester</td>
+                <td>Compile pass</td>
+              </tr>
+              <tr>
+                <td>Refactor</td>
+                <td>Implement để pass tests vừa viết</td>
+                <td>Dev</td>
+                <td>Tests green</td>
+              </tr>
+              <tr>
+                <td>Tests After</td>
+                <td>Bổ sung edge case tests nếu cần</td>
+                <td>Tester</td>
+                <td>Coverage ≥ threshold</td>
+              </tr>
+              <tr>
+                <td>Regression Gate</td>
+                <td>Chạy toàn bộ test suite</td>
+                <td>CI runner</td>
+                <td>No regressions</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-lang">typescript</span>
+          </div>
+          <pre><code>// Ví dụ test-first với --tdd
+// Bước 1: Viết test TRƯỚC khi có implementation
+describe('AuthService.refreshToken', () => {
+  it('should return new token pair when refresh token is valid', async () => {
+    const result = await authService.refreshToken(validRefreshToken);
+    expect(result).toHaveProperty('accessToken');
+    expect(result.expiresIn).toBeLessThanOrEqual(3600);
+  });
+
+  it('should throw UnauthorizedException for expired refresh token', async () => {
+    await expect(
+      authService.refreshToken(expiredToken)
+    ).rejects.toThrow(UnauthorizedException);
+  });
+});
+// Bước 2: Implement AuthService.refreshToken để pass 2 tests trên</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 04 — /ck:brainstorm trước
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s04">
+      <div class="section-label">
+        <span class="section-num">04</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">/ck:brainstorm trước khi plan</h2>
+      <div class="prose">
+        <p>
+          Trước khi chạy <code>/ck:plan --deep</code>, mình thường chạy <code>/ck:brainstorm</code> để làm rõ scope. <code>--deep</code> tốn token đáng kể, và nếu bạn chưa biết mình muốn refactor theo hướng nào thì per-phase scouting sẽ chỉ tạo ra nhiều context không nhất quán. Brainstorm giúp bạn converge về một approach trước rồi mới invest vào deep planning.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Bước</th>
+                <th>Lệnh</th>
+                <th>Mục tiêu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Khám phá</td>
+                <td><code>/ck:brainstorm "vấn đề X"</code></td>
+                <td>Hiểu không gian giải pháp</td>
+              </tr>
+              <tr>
+                <td>Lên kế hoạch</td>
+                <td><code>/ck:plan --deep "approach Y"</code></td>
+                <td>Deep plan với approach đã chọn</td>
+              </tr>
+              <tr>
+                <td>Thực thi</td>
+                <td><code>/ck:cook --tdd &lt;phase&gt;</code></td>
+                <td>Cook với TDD pipeline</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 05 — Decision matrix
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s05">
+      <div class="section-label">
+        <span class="section-num">05</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Decision matrix</h2>
+      <div class="prose">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tình huống</th>
+                <th>Lệnh khuyến nghị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Feature mới, codebase sạch, spec rõ</td>
+                <td><code>/ck:plan "feature X"</code></td>
+              </tr>
+              <tr>
+                <td>Feature mới, codebase phức tạp, nhiều dependencies</td>
+                <td><code>/ck:plan --deep "feature X"</code></td>
+              </tr>
+              <tr>
+                <td>Refactor module đang có test coverage</td>
+                <td><code>/ck:plan --tdd "refactor Y"</code></td>
+              </tr>
+              <tr>
+                <td>Refactor lớn, nhiều module liên quan</td>
+                <td><code>/ck:plan --deep "refactor Y"</code></td>
+              </tr>
+              <tr>
+                <td>Migration (v1 → v2 API, DB schema)</td>
+                <td><code>/ck:plan --deep "migrate Z"</code></td>
+              </tr>
+              <tr>
+                <td>Bug fix cần regression test rõ ràng</td>
+                <td><code>/ck:plan --tdd "fix bug #123"</code></td>
+              </tr>
+              <tr>
+                <td>Task nhỏ, ít rủi ro, 1-2 file</td>
+                <td><code>/ck:cook --fast</code> (bỏ qua plan)</td>
+              </tr>
+              <tr class="combo-row">
+                <td><strong>Refactor lớn cần TDD nghiêm ngặt</strong></td>
+                <td><code>/ck:plan --deep --tdd "refactor auth"</code></td>
+              </tr>
+              <tr class="combo-row">
+                <td><strong>Migration phức tạp, parallel safe</strong></td>
+                <td><code>/ck:plan --deep --parallel "migrate to v3"</code></td>
+              </tr>
+              <tr class="combo-row">
+                <td><strong>Legacy cleanup với coverage tăng dần</strong></td>
+                <td><code>/ck:brainstorm → /ck:plan --deep --tdd</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 06 — Cơ chế bên trong
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s06">
+      <div class="section-label">
+        <span class="section-num">06</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Inside — cơ chế bên trong</h2>
+      <div class="prose">
+
+        <div class="subsection">
+          <div class="subsec-label">6.1</div>
+          <div class="subsec-heading">Sub-agent counts</div>
+          <p>
+            Số lượng sub-agent phụ thuộc vào số phase và mode. Với <code>--deep</code>, số scout agents bằng số phase. Bảng dưới tổng hợp cho plan có 5 phase điển hình.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mode</th>
+                  <th>Scout</th>
+                  <th>Researcher</th>
+                  <th>Cook</th>
+                  <th>Tổng</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Default</td>
+                  <td>1</td>
+                  <td>0–2</td>
+                  <td>5</td>
+                  <td>6–8</td>
+                </tr>
+                <tr>
+                  <td><code>--deep</code></td>
+                  <td>5</td>
+                  <td>0–4</td>
+                  <td>5</td>
+                  <td>10–14</td>
+                </tr>
+                <tr>
+                  <td><code>--tdd</code></td>
+                  <td>1</td>
+                  <td>0–2</td>
+                  <td>5 + tester</td>
+                  <td>7–10</td>
+                </tr>
+                <tr>
+                  <td><code>--deep --tdd</code></td>
+                  <td>5</td>
+                  <td>0–4</td>
+                  <td>5 + tester</td>
+                  <td>11–15</td>
+                </tr>
+                <tr>
+                  <td><code>--deep --tdd --parallel</code></td>
+                  <td>5</td>
+                  <td>0–4</td>
+                  <td>5 parallel + tester</td>
+                  <td>11–15 concurrent</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsec-label">6.2</div>
+          <div class="subsec-heading">--tdd là template-only ở plan stage</div>
+          <p>
+            Điều mà docs không nói rõ: ở giai đoạn <code>/ck:plan</code>, <code>--tdd</code> chỉ thay đổi template của phase file — không có tester agent nào được spawn ở đây. Tester agent chỉ xuất hiện khi bạn chạy <code>/ck:cook --tdd</code>. Nghĩa là nếu bạn plan với <code>--tdd</code> nhưng cook không có <code>--tdd</code>, phase file có cấu trúc TDD nhưng cook agent sẽ ignore nó và implement theo flow thông thường.
+          </p>
+        </div>
+
+        <div class="subsection">
+          <div class="subsec-label">6.3</div>
+          <div class="subsec-heading">Regression gate</div>
+          <p>
+            Regression gate không phải là CI pipeline — nó là bước cuối của cook agent, chạy toàn bộ test suite của project và block merge nếu có regression. Khác với "Tests After" (chỉ kiểm tra tests của feature đang làm), regression gate kiểm tra toàn bộ. Đây là lý do <code>--tdd</code> nên dùng cho refactor chứ không phải greenfield: greenfield không có test suite sẵn để run regression.
+          </p>
+        </div>
+
+        <div class="subsection">
+          <div class="subsec-label">6.4</div>
+          <div class="subsec-heading">Tóm tắt flow</div>
+          <p>
+            Flow đầy đủ khi dùng <code>--deep --tdd</code>: planner → N scouts (song song) → researcher (song song với scouts) → planner tổng hợp → phase files với TDD template → cook nhận phase → tester viết tests → dev implement → tester bổ sung → regression gate. Toàn bộ flow này transparent trong <code>plans/</code> directory — bạn có thể trace từng step.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 07 — Cách chạy
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s07">
+      <div class="section-label">
+        <span class="section-num">07</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Cách chạy và mẫu prompt</h2>
+      <div class="prose">
+        <p>Khi viết task description cho <code>/ck:plan --deep</code>, cần cung cấp đủ 4 yếu tố sau:</p>
+        <ul>
+          <li><strong>Phạm vi</strong> — file/module nào nằm trong scope của plan này</li>
+          <li><strong>Ràng buộc</strong> — backward compatibility, không được break API nào</li>
+          <li><strong>Tooling</strong> — test framework, build tool, deployment target</li>
+          <li><strong>Kết quả mong đợi</strong> — metric cụ thể: coverage %, performance budget, migration %</li>
+        </ul>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-lang">bash · ví dụ 1 — refactor với tdd</span>
+          </div>
+          <pre><code>/ck:plan --deep --tdd "Refactor auth module
+Scope: src/auth/**, không đụng đến src/user/**
+Constraints: giữ nguyên public API của AuthService
+Tooling: Jest + Supertest, NestJS
+Expected: coverage >= 85%, tất cả existing tests vẫn pass"</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-lang">bash · ví dụ 2 — migration</span>
+          </div>
+          <pre><code>/ck:plan --deep "Migrate từ Prisma v4 sang v5
+Scope: src/**, database/schema/**
+Constraints: không thay đổi data model, zero downtime migration
+Tooling: Prisma CLI, PostgreSQL 15
+Expected: 100% feature parity, migration script tested on staging"</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-lang">bash · ví dụ 3 — parallel với ownership rõ</span>
+          </div>
+          <pre><code>/ck:plan --deep --parallel "Split monolith thành services
+Phase 1 owns: src/auth/** → service-auth/
+Phase 2 owns: src/billing/** → service-billing/
+Phase 3 owns: src/notification/** → service-notification/
+Shared: packages/core/** (read-only for phases 1-3)"</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 08 — Best practices
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s08">
+      <div class="section-label">
+        <span class="section-num">08</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Best practices</h2>
+      <div class="prose">
+
+        <div class="bp-item">
+          <div class="bp-num">1</div>
+          <div class="bp-content">
+            <div class="bp-title">Luôn đọc phase file trước khi cook</div>
+            <div class="bp-desc">
+              Phase file từ <code>--deep</code> có context cụ thể mà planner đã research. Đọc kỹ trước khi chạy <code>/ck:cook</code> giúp bạn catch được các assumption sai hoặc scope creep trước khi mất thời gian cook. Đặc biệt kiểm tra phần "Key Insights" và "Risk Assessment".
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">2</div>
+          <div class="bp-content">
+            <div class="bp-title">Dùng --tdd chỉ khi có test infrastructure sẵn</div>
+            <div class="bp-desc">
+              <code>--tdd</code> giả định bạn có test runner, test utilities, và một test suite hiện có để chạy regression. Nếu project chưa có test setup thì nên dùng <code>/ck:cook</code> thông thường trước để setup infrastructure, rồi mới bật <code>--tdd</code> cho các phase sau.
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">3</div>
+          <div class="bp-content">
+            <div class="bp-title">Giữ ownership rõ ràng khi dùng --parallel</div>
+            <div class="bp-desc">
+              Khi kết hợp <code>--deep --tdd --parallel</code>, mỗi phase PHẢI có file ownership rõ ràng trong task description. Không có ownership rõ thì parallel agents sẽ edit cùng file và tạo conflict. Viết glob patterns cụ thể vào prompt, không để planner tự suy luận.
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">4</div>
+          <div class="bp-content">
+            <div class="bp-title">Review research reports trước khi approve plan</div>
+            <div class="bp-desc">
+              Trong <code>--deep</code> mode, researcher agents tạo reports trong <code>plans/{slug}/research/</code>. Đọc các reports này trước khi approve plan vì đôi khi researcher phát hiện constraint mà planner không incorporate vào phase files. Bạn có thể edit phase file trực tiếp trước khi cook.
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">5</div>
+          <div class="bp-content">
+            <div class="bp-title">Kết hợp /ck:brainstorm khi scope không rõ</div>
+            <div class="bp-desc">
+              <code>--deep</code> tốn nhiều token. Đầu tư token vào brainstorm trước để làm rõ approach, sau đó plan với scope đã converge sẽ tiết kiệm hơn nhiều. Pattern: <code>/ck:brainstorm</code> (làm rõ "làm gì") → <code>/ck:plan --deep</code> (làm rõ "làm thế nào") → <code>/ck:cook</code> (thực thi).
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 09 — Pitfalls P1–P6 (SHOWCASE SECTION)
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s09">
+      <div class="section-label">
+        <span class="section-num">09</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Pitfalls</h2>
+      <div class="prose">
+        <p>
+          Sáu bẫy phổ biến mà mình — và những người mình biết dùng ClaudeKit — đã vấp phải. Không phải lỗi của tool, mà là lỗi của mental model khi dùng tool.
+        </p>
+      </div>
+
+      <div class="pitfall-grid">
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P1</span>
+            <div class="pitfall-title">Quên --tdd ở /ck:cook</div>
+          </div>
+          <div class="pitfall-body">
+            Plan với <code>--tdd</code> tạo phase file có TDD template, nhưng nếu bạn cook mà không truyền <code>--tdd</code>, cook agent sẽ implement theo thứ tự thông thường. Phase file có structure TDD nhưng không ai enforce nó. Luôn nhất quán: plan <code>--tdd</code> thì cook cũng phải <code>--tdd</code>.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P2</span>
+            <div class="pitfall-title">--deep cho task nhỏ</div>
+          </div>
+          <div class="pitfall-body">
+            Dùng <code>--deep</code> cho task 1–2 file là lãng phí token. Per-phase scouting sinh lợi khi scope rộng, có nhiều dependencies, và phase files cần context riêng biệt nhau. Với task nhỏ, default plan + một lần scout là đủ.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P3</span>
+            <div class="pitfall-title">--tdd cho greenfield</div>
+          </div>
+          <div class="pitfall-body">
+            Greenfield không có test suite để run regression — regression gate sẽ pass trivially (không có gì để break). Hơn nữa, viết tests trước khi có bất kỳ interface nào buộc tester agent phải đoán API design. Dùng <code>--tdd</code> khi refactor, không phải khi build từ đầu.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P4</span>
+            <div class="pitfall-title">Tin 100% phase file</div>
+          </div>
+          <div class="pitfall-body">
+            Dù <code>--deep</code> cho context tốt hơn, phase file vẫn là output của AI agent — có thể có assumption sai về codebase. Luôn review phase file trước khi cook. Chỉnh sửa trực tiếp nếu cần. Phase file là <em>living document</em>, không phải contract cứng.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P5</span>
+            <div class="pitfall-title">--tdd chụp test cho code có bug sẵn</div>
+          </div>
+          <div class="pitfall-body">
+            Nếu bạn dùng <code>--tdd</code> để refactor code đang có bug, tester agent có thể viết tests mirror behavior có bug của code hiện tại. Tests pass, nhưng behavior vẫn sai. Trước khi refactor với TDD, hãy fix bug trước — hoặc viết failing test cho bug đó như một phần của TDD spec.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P6</span>
+            <div class="pitfall-title">--deep --tdd --parallel không ownership rõ</div>
+          </div>
+          <div class="pitfall-body">
+            Kết hợp cả ba flags mà không define file ownership rõ ràng là công thức để conflict. Parallel agents viết tests cho cùng shared module, rồi cook agents implement khác nhau cho cùng file. Kết quả là merge conflict hoặc tệ hơn: silently broken behavior.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 10 — Tóm lại
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s10">
+      <div class="section-label">
+        <span class="section-num">10</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Tóm lại</h2>
+      <div class="prose">
+        <p>
+          <code>--deep</code> và <code>--tdd</code> không phải "tính năng thêm vào cho chắc" — chúng là tool cho những tình huống cụ thể. <code>--deep</code> khi scope rộng và context per-phase matter, <code>--tdd</code> khi bạn đang refactor existing code và cần regression safety. Dùng đúng tình huống thì chúng thực sự mạnh; dùng sai thì chỉ tốn thêm token mà không thêm giá trị.
+        </p>
+        <p>
+          Mental model mình hay dùng: <code>--deep</code> là "đầu tư vào sự hiểu biết trước khi làm", còn <code>--tdd</code> là "đầu tư vào sự an toàn trong khi làm". Nếu bạn confident về codebase (đã làm nhiều), không cần <code>--deep</code>. Nếu bạn làm feature mới (không có regression risk), không cần <code>--tdd</code>.
+        </p>
+        <p>
+          Cuối cùng, ClaudeKit chỉ là tool. Chất lượng của plan phụ thuộc nhiều vào chất lượng của task description bạn viết. <code>--deep</code> giúp agent hiểu codebase tốt hơn, nhưng nếu bạn mô tả sai problem thì agent vẫn sẽ plan sai — chỉ là sẽ plan sai một cách kỹ lưỡng hơn mà thôi.
+        </p>
+
+        <div class="tech-refs">
+          <div class="tech-refs-label">Ghi chú kỹ thuật</div>
+          <ul>
+            <li>Per-phase scouting dùng context window riêng — không shared giữa các scout agents</li>
+            <li>Researcher agents trong <code>--deep</code> mode bị cap ở max 4 agents chạy song song</li>
+            <li>Regression gate chạy <code>pnpm test</code> (hoặc <code>npm test</code>) trong project root — cần test script sẵn</li>
+            <li><code>--tdd</code> template require: test framework config, test utilities, ít nhất 1 existing test file</li>
+            <li>File ownership trong <code>--parallel</code> dùng glob patterns theo gitignore syntax</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+      </div><!-- /.article-body -->
+    </div><!-- /.page-layout -->
+
+    <!-- ── ARTICLE FOOTER ─────────────────────────────────────── -->
+    <footer class="article-footer">
+      <div class="footer-kicker">
+        <strong>Inside</strong> ClaudeKit · 22/04/2026
+      </div>
+      <div class="footer-kicker">
+        claudekit · planning · tdd · refactor
+      </div>
+    </footer>
+
+  </div><!-- /.container -->
+
+  <!-- Scroll-spy: highlights active TOC entry on sidebar (desktop) and chips (mobile) -->
+  <script>
+    (function () {
+      var sections = Array.from(document.querySelectorAll('section[id]'));
+      var sidebarLinks = document.querySelectorAll('.toc-sidebar-link[data-toc]');
+      var chips = document.querySelectorAll('.toc-chip[data-toc]');
+
+      function setActive(id) {
+        sidebarLinks.forEach(function (el) {
+          el.classList.toggle('is-active', el.getAttribute('data-toc') === id);
+        });
+        chips.forEach(function (el) {
+          el.classList.toggle('is-active', el.getAttribute('data-toc') === id);
+        });
+      }
+
+      if (!sections.length) return;
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            setActive(entry.target.id);
+          }
+        });
+      }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+
+      sections.forEach(function (sec) { observer.observe(sec); });
+    })();
+  </script>
+
+  <!-- Theme toggle script -->
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      var icon = document.getElementById('theme-icon');
+      var label = document.getElementById('theme-label');
+      var html = document.documentElement;
+
+      function applyTheme(t) {
+        html.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        icon.textContent = t === 'dark' ? '☾' : '☀';
+        label.textContent = t === 'dark' ? 'dark' : 'light';
+      }
+
+      // Sync display with current theme on load
+      var current = html.getAttribute('data-theme') || 'light';
+      applyTheme(current);
+
+      btn.addEventListener('click', function () {
+        var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+      });
+    })();
+  </script>
+
+</body>
+</html>
+
+<!--
+=======================================================================
+  DESIGN DOCUMENTATION
+=======================================================================
+
+  Palette: "Notes & Writing App" (ui-ux-pro-max catalog)
+  ─────────────────────────────────────────────────────────────
+  Warm ink + amber accent on cream. Light: #fffbeb bg + #d97706 amber +
+  #78716c warm stone text-dim. Dark: #1c1a16 bg + #f59e0b amber.
+  Chosen because: blog + inside-ck = personal technical journal aesthetic.
+  Amber evokes "planning/strategy" warmth without the coldness of
+  typical dev-docs blue. Cream bg reduces eye strain for 19-min reads.
+
+  Font Pairing: "Minimalist Monochrome Editorial"
+  ─────────────────────────────────────────────────────────────
+  Playfair Display (headings, 700–900) +
+  Source Serif 4 (body, 300–600) +
+  JetBrains Mono (labels, code, meta)
+  Justified because: Source Serif 4 reduces eye strain in sustained
+  reading vs. sans-serif; Playfair gives editorial gravitas appropriate
+  for a deep-dive technical piece; JetBrains Mono provides immediate
+  code/label distinction without a separate UI font.
+
+  Blog UX Guidelines Applied (from 99-guideline catalog)
+  ─────────────────────────────────────────────────────────────
+  1. Reading measure: 65ch max-width on prose — prevents line fatigue
+     on wide viewports, upheld at every body text container.
+  2. Inline TOC chips (not floating sidebar): 10-section article needs
+     upfront wayfinding; sidebar harms mobile reading experience and
+     adds persistent chrome. Inline chips are skimmable and scroll away.
+  3. Structured warning callout pattern: P1–P6 pitfall cards use amber
+     top-border + numbered chip for rapid scanning. Not alarmist (no
+     red/destructive), but unmistakably advisory.
+
+  Aesthetic summary:
+  A warm-ink editorial journal — amber-accented cream surfaces with
+  serif hierarchy, designed for sustained long-form reading rather
+  than dashboard scanning.
+
+=======================================================================
+-->

@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khai phá sức mạnh của /ck:plan với --deep và --tdd · Inside ClaudeKit</title>
+
+  <!-- Theme: read before first paint -->
+  <script>
+    (function() {
+      var stored = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = stored || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=Source+Code+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── CSS Variables ───────────────────────────────────────────── */
+    :root {
+      /* Light mode — warm parchment + cranberry ink */
+      --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+      --font-body: 'Source Sans 3', Georgia, serif;
+      --font-mono: 'Source Code Pro', 'SF Mono', Consolas, monospace;
+
+      --bg:              #faf5f0;
+      --bg-warm:         #f5ede4;
+      --surface:         #ffffff;
+      --surface2:        #fdf8f4;
+      --surface-elevated:#ffffff;
+      --surface-recessed:#f0e8e0;
+
+      --border:          rgba(120, 60, 40, 0.10);
+      --border-bright:   rgba(120, 60, 40, 0.20);
+      --border-strong:   rgba(120, 60, 40, 0.35);
+
+      --text:            #1e1410;
+      --text-secondary:  #4a3228;
+      --text-dim:        #8a6b5a;
+      --text-faint:      #b89484;
+
+      --accent:          #be123c;   /* cranberry */
+      --accent-dim:      rgba(190, 18, 60, 0.08);
+      --accent-hover:    #9f1239;
+      --accent-muted:    #fce7f3;
+
+      --gold:            #b45309;
+      --gold-dim:        rgba(180, 83, 9, 0.08);
+
+      --green:           #15803d;
+      --green-dim:       rgba(21, 128, 61, 0.08);
+      --red:             #b91c1c;
+      --red-dim:         rgba(185, 28, 28, 0.08);
+      --amber:           #b45309;
+      --amber-dim:       rgba(180, 83, 9, 0.10);
+      --sage:            #4a7c59;
+      --sage-dim:        rgba(74, 124, 89, 0.08);
+      --plum:            #7c3d6e;
+      --plum-dim:        rgba(124, 61, 110, 0.08);
+      --teal:            #0f766e;
+      --teal-dim:        rgba(15, 118, 110, 0.08);
+
+      --rule-color:      rgba(120, 60, 40, 0.15);
+      --selection-bg:    rgba(190, 18, 60, 0.12);
+
+      --shadow-sm:       0 1px 3px rgba(30, 10, 5, 0.06), 0 1px 2px rgba(30, 10, 5, 0.04);
+      --shadow-md:       0 4px 12px rgba(30, 10, 5, 0.08), 0 2px 4px rgba(30, 10, 5, 0.04);
+      --shadow-lg:       0 8px 30px rgba(30, 10, 5, 0.10), 0 3px 8px rgba(30, 10, 5, 0.06);
+
+      --reading-width:   720px;
+      --column-pad:      clamp(1.25rem, 5vw, 3rem);
+    }
+
+    [data-theme="dark"] {
+      /* Dark mode — deep wine + parchment text */
+      --bg:              #140c0a;
+      --bg-warm:         #1c1210;
+      --surface:         #221612;
+      --surface2:        #2c1e18;
+      --surface-elevated:#362420;
+      --surface-recessed:#180e0c;
+
+      --border:          rgba(200, 140, 100, 0.08);
+      --border-bright:   rgba(200, 140, 100, 0.16);
+      --border-strong:   rgba(200, 140, 100, 0.30);
+
+      --text:            #f0e4d8;
+      --text-secondary:  #d4b8a8;
+      --text-dim:        #9a7868;
+      --text-faint:      #6a5048;
+
+      --accent:          #f43f6e;
+      --accent-dim:      rgba(244, 63, 110, 0.10);
+      --accent-hover:    #fb7185;
+      --accent-muted:    rgba(244, 63, 110, 0.08);
+
+      --gold:            #fbbf24;
+      --gold-dim:        rgba(251, 191, 36, 0.08);
+
+      --green:           #4ade80;
+      --green-dim:       rgba(74, 222, 128, 0.08);
+      --red:             #f87171;
+      --red-dim:         rgba(248, 113, 113, 0.10);
+      --amber:           #fbbf24;
+      --amber-dim:       rgba(251, 191, 36, 0.10);
+      --sage:            #6ee7a0;
+      --sage-dim:        rgba(110, 231, 160, 0.08);
+      --plum:            #d8b4fe;
+      --plum-dim:        rgba(216, 180, 254, 0.08);
+      --teal:            #5eead4;
+      --teal-dim:        rgba(94, 234, 212, 0.08);
+
+      --rule-color:      rgba(200, 140, 100, 0.12);
+      --selection-bg:    rgba(244, 63, 110, 0.15);
+
+      --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.30), 0 1px 2px rgba(0, 0, 0, 0.20);
+      --shadow-md:       0 4px 12px rgba(0, 0, 0, 0.40), 0 2px 4px rgba(0, 0, 0, 0.20);
+      --shadow-lg:       0 8px 30px rgba(0, 0, 0, 0.50), 0 3px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg:              #140c0a;
+        --bg-warm:         #1c1210;
+        --surface:         #221612;
+        --surface2:        #2c1e18;
+        --surface-elevated:#362420;
+        --surface-recessed:#180e0c;
+        --border:          rgba(200, 140, 100, 0.08);
+        --border-bright:   rgba(200, 140, 100, 0.16);
+        --border-strong:   rgba(200, 140, 100, 0.30);
+        --text:            #f0e4d8;
+        --text-secondary:  #d4b8a8;
+        --text-dim:        #9a7868;
+        --text-faint:      #6a5048;
+        --accent:          #f43f6e;
+        --accent-dim:      rgba(244, 63, 110, 0.10);
+        --accent-hover:    #fb7185;
+        --accent-muted:    rgba(244, 63, 110, 0.08);
+        --gold:            #fbbf24;
+        --gold-dim:        rgba(251, 191, 36, 0.08);
+        --green:           #4ade80;
+        --green-dim:       rgba(74, 222, 128, 0.08);
+        --red:             #f87171;
+        --red-dim:         rgba(248, 113, 113, 0.10);
+        --amber:           #fbbf24;
+        --amber-dim:       rgba(251, 191, 36, 0.10);
+        --sage:            #6ee7a0;
+        --sage-dim:        rgba(110, 231, 160, 0.08);
+        --rule-color:      rgba(200, 140, 100, 0.12);
+        --selection-bg:    rgba(244, 63, 110, 0.15);
+        --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.30), 0 1px 2px rgba(0, 0, 0, 0.20);
+        --shadow-md:       0 4px 12px rgba(0, 0, 0, 0.40), 0 2px 4px rgba(0, 0, 0, 0.20);
+        --shadow-lg:       0 8px 30px rgba(0, 0, 0, 0.50), 0 3px 8px rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    /* ─── Reset & Base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 18px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.75;
+      color: var(--text);
+      background-color: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--selection-bg); }
+
+    /* ─── Theme Toggle ─────────────────────────────────────────── */
+    #theme-toggle {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 1000;
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      border: 1px solid var(--border-bright);
+      background: var(--surface-elevated);
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    #theme-toggle:hover {
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────────── */
+    .page-wrap {
+      max-width: var(--reading-width);
+      margin: 0 auto;
+      padding: 0 var(--column-pad);
+    }
+
+    /* ─── Article body — centered, full reading width ───────────── */
+    .article-body-wrap {
+      max-width: var(--reading-width);
+      margin: 0 auto;
+      padding: 0 var(--column-pad);
+    }
+
+    /* ─── Floating Rail TOC (fixed, outside content column) ─────── */
+    /* Hidden by default; only shown at wide viewports */
+    .sidebar-toc {
+      display: none;
+    }
+
+    /* Show floating rail at ≥1380px so there is comfortable clearance:
+       At 1380px: center = 690px. Content starts at 690 - 360 = 330px.
+       Rail occupies 24 + 240 = 264px. Gap ≈ 66px. Comfortable. */
+    @media (min-width: 1380px) {
+      .sidebar-toc {
+        display: block;
+        position: fixed;
+        top: 48px;
+        left: 24px;
+        width: 240px;
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+        /* subtle scrollbar */
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-bright) transparent;
+      }
+      .sidebar-toc::-webkit-scrollbar { width: 3px; }
+      .sidebar-toc::-webkit-scrollbar-track { background: transparent; }
+      .sidebar-toc::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+    }
+
+    .sidebar-toc__label {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-toc__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .sidebar-toc__list li {
+      margin-bottom: 0;
+    }
+
+    .sidebar-toc__list a {
+      display: flex;
+      align-items: baseline;
+      gap: 0.55rem;
+      padding: 0.3rem 0.5rem 0.3rem 0.35rem;
+      border-left: 2px solid transparent;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .sidebar-toc__list a:hover {
+      color: var(--text-secondary);
+      border-left-color: var(--border-bright);
+    }
+
+    /* Active state — cranberry accent with left-border bar */
+    .sidebar-toc__list a.is-active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+      font-weight: 500;
+    }
+
+    .sidebar-toc__num {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      color: var(--text-faint);
+      flex-shrink: 0;
+      min-width: 1.4rem;
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+
+    .sidebar-toc__list a.is-active .sidebar-toc__num {
+      color: var(--accent);
+    }
+
+    .sidebar-toc__text {
+      font-family: 'Fraunces', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    /* ─── Inline TOC (fallback below floating-rail breakpoint) ──── */
+    /* Visible until the floating rail kicks in */
+    .toc-block--inline {
+      display: block;
+    }
+
+    @media (min-width: 1380px) {
+      .toc-block--inline {
+        display: none;
+      }
+    }
+
+    /* ─── Running Header ──────────────────────────────────────── */
+    .running-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: color-mix(in srgb, var(--bg) 92%, transparent 8%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.55rem var(--column-pad);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .running-header__series {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 0.15em 0.6em;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .running-header__sep {
+      width: 1px;
+      height: 1rem;
+      background: var(--border-bright);
+    }
+    .running-header__title {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.02em;
+    }
+    .running-header__progress {
+      flex: 1;
+    }
+    .progress-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    .progress-bar__fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 1px;
+      transition: width 0.1s linear;
+    }
+
+    /* ─── Hero ────────────────────────────────────────────────── */
+    .hero {
+      padding: 5rem 0 3.5rem;
+      border-bottom: 1px solid var(--rule-color);
+    }
+    .hero__kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+    }
+    .hero__kicker-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.1rem, 5.5vw, 3rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin-bottom: 1.1rem;
+    }
+    .hero__title em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+    .hero__subtitle {
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 58ch;
+      margin-bottom: 2.5rem;
+    }
+    .hero__meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+    .hero__meta-sep { color: var(--border-strong); }
+    .hero__tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.06em;
+      color: var(--text-faint);
+      background: var(--surface-recessed);
+      border: 1px solid var(--border);
+      padding: 0.1em 0.55em;
+      border-radius: 2px;
+    }
+
+    /* ─── Inline Code (hero command) ─────────────────────────── */
+    .hero__cmd {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.75em;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent 75%);
+      padding: 0.1em 0.45em;
+      border-radius: 3px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── Lead ────────────────────────────────────────────────── */
+    .lead {
+      padding: 3rem 0 2.5rem;
+      border-bottom: 1px solid var(--rule-color);
+    }
+    .lead p {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 400;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      max-width: 60ch;
+    }
+    .lead p + p { margin-top: 1.2em; }
+    .lead strong {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ─── TOC ─────────────────────────────────────────────────── */
+    .toc-block {
+      margin: 3rem 0;
+      padding: 1.75rem 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+    .toc-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .toc-block__label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-bright);
+    }
+    .toc-list {
+      list-style: none;
+      columns: 2;
+      column-gap: 2rem;
+    }
+    @media (max-width: 540px) {
+      .toc-list { columns: 1; }
+    }
+    .toc-list li {
+      margin-bottom: 0.45rem;
+      break-inside: avoid;
+    }
+    .toc-list a {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      transition: color 0.15s;
+    }
+    .toc-list a:hover { color: var(--accent); }
+    .toc-list a.is-active { color: var(--accent); font-weight: 500; }
+    .toc-list a.is-active .toc-num { color: var(--accent); }
+    .toc-num {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: var(--text-faint);
+      min-width: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    /* ─── Sections ───────────────────────────────────────────── */
+    .section {
+      padding: 3.5rem 0;
+      border-bottom: 1px solid var(--rule-color);
+    }
+    .section:last-of-type { border-bottom: none; }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .section-label__num {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .section-label__bar {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--border-bright), var(--border));
+    }
+
+    .section h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+    .section h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 500;
+      line-height: 1.3;
+      color: var(--text);
+      margin: 2rem 0 0.85rem;
+    }
+    .section h3:first-child { margin-top: 0; }
+
+    .section p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 1.15em;
+    }
+    .section p:last-child { margin-bottom: 0; }
+
+    /* ─── Inline elements ─────────────────────────────────────── */
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      font-weight: 400;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 0.1em 0.4em;
+      border-radius: 2px;
+      letter-spacing: 0.02em;
+    }
+    strong { font-weight: 600; color: var(--text); }
+    em { font-style: italic; color: var(--text-secondary); }
+
+    /* ─── Tables ──────────────────────────────────────────────── */
+    .table-wrap {
+      margin: 1.75rem 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      min-width: 0;
+    }
+    thead {
+      background: color-mix(in srgb, var(--surface) 60%, var(--surface2) 40%);
+      border-bottom: 1px solid var(--border-bright);
+    }
+    th {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.65rem 1rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.5;
+      overflow-wrap: break-word;
+      min-width: 0;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td {
+      background: color-mix(in srgb, var(--surface2) 50%, transparent 50%);
+    }
+    td strong { font-weight: 600; color: var(--text); }
+    td code { font-size: 0.78em; }
+
+    /* Highlighted rows (combo rows at bottom of decision matrix) */
+    tr.row-highlight td {
+      background: color-mix(in srgb, var(--accent-dim) 80%, transparent 20%);
+      border-left: 2px solid var(--accent);
+    }
+    tr.row-highlight td:first-child { border-left-width: 2px; }
+
+    /* ─── Code Blocks ─────────────────────────────────────────── */
+    .code-block {
+      margin: 1.75rem 0;
+      background: var(--surface-recessed);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .code-block__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      background: color-mix(in srgb, var(--surface) 60%, var(--surface2) 40%);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-block__lang {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .code-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: var(--text-faint);
+      letter-spacing: 0.04em;
+    }
+    .code-block pre {
+      margin: 0;
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .code-block pre code {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.65;
+      color: var(--text);
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      letter-spacing: 0.01em;
+      white-space: pre;
+      min-width: 0;
+    }
+    .code-block pre code .c-comment { color: var(--text-dim); font-style: italic; }
+    .code-block pre code .c-string { color: var(--sage); }
+    .code-block pre code .c-flag { color: var(--accent); font-weight: 500; }
+    .code-block pre code .c-kw { color: var(--gold); }
+    .code-block pre code .c-path { color: var(--teal); }
+
+    /* ─── Blockquote ──────────────────────────────────────────── */
+    blockquote {
+      margin: 2rem 0;
+      padding: 1.5rem 1.75rem;
+      background: var(--surface);
+      border-top: 2px solid var(--accent);
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+    blockquote::before {
+      content: '\201C';
+      position: absolute;
+      top: -0.1rem;
+      left: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--accent);
+      opacity: 0.25;
+      pointer-events: none;
+    }
+    blockquote p {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.7;
+      color: var(--text);
+      margin: 0;
+    }
+    blockquote footer {
+      margin-top: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-faint);
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── Ordered / Unordered Lists ─────────────────────────── */
+    .section ol, .section ul {
+      padding-left: 1.5rem;
+      margin: 1rem 0 1.25rem;
+    }
+    .section li {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 0.5rem;
+    }
+    .section li::marker {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.75em;
+    }
+    .section li strong { color: var(--text); }
+
+    /* ─── Pipeline List (Section 02) ────────────────────────── */
+    .pipeline-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.75rem 0;
+      counter-reset: pipeline;
+    }
+    .pipeline-list li {
+      counter-increment: pipeline;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.93rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .pipeline-list li:last-child { border-bottom: none; }
+    .pipeline-list li::before {
+      content: counter(pipeline, decimal-leading-zero);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      min-width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── Pitfall Callouts (Section 09) ────────────────────── */
+    .pitfalls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 2rem 0;
+    }
+    @media (max-width: 560px) {
+      .pitfalls-grid { grid-template-columns: 1fr; }
+    }
+    .pitfall {
+      background: var(--surface);
+      border: 1px solid color-mix(in srgb, var(--amber) 25%, var(--border) 75%);
+      border-top: 2px solid var(--amber);
+      padding: 1.25rem 1.25rem 1.25rem 3.75rem;
+      position: relative;
+      min-height: 0;
+    }
+    .pitfall__num {
+      position: absolute;
+      top: 1.1rem;
+      left: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--amber);
+      background: var(--amber-dim);
+      width: 1.9rem;
+      height: 1.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+    }
+    .pitfall__title {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .pitfall__body {
+      font-size: 0.82rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+    .pitfall__body strong { color: var(--text); }
+
+    /* ─── Decision Matrix (Section 05) ─────────────────────── */
+    .decision-intro {
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      color: var(--text-faint);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ─── Inside Subsections (Section 06) ──────────────────── */
+    .subsection {
+      margin-bottom: 2.5rem;
+    }
+    .subsection__label {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.85rem;
+    }
+    .subsection__num {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: var(--text-faint);
+      letter-spacing: 0.08em;
+    }
+    .subsection h3 {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+    .subsection p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.75;
+      margin-bottom: 0.85em;
+    }
+
+    /* ─── Best Practices (Section 08) ──────────────────────── */
+    .bp-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+      counter-reset: bp;
+    }
+    .bp-list li {
+      counter-increment: bp;
+      display: flex;
+      gap: 1.25rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .bp-list li:last-child { border-bottom: none; }
+    .bp-num {
+      font-family: var(--font-display);
+      font-size: 1.85rem;
+      font-weight: 700;
+      font-style: italic;
+      color: var(--accent);
+      opacity: 0.2;
+      line-height: 1;
+      flex-shrink: 0;
+      min-width: 2rem;
+      text-align: right;
+    }
+    .bp-content h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 0.4rem;
+    }
+    .bp-content p {
+      font-size: 0.87rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* ─── Summary (Section 10) ──────────────────────────────── */
+    .summary-box {
+      margin-top: 2rem;
+      padding: 1.75rem 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+    }
+    .summary-box h3 {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .summary-box ul {
+      list-style: none;
+      padding: 0;
+    }
+    .summary-box li {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      padding: 0.4rem 0;
+      font-size: 0.87rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .summary-box li::before {
+      content: '·';
+      font-family: var(--font-mono);
+      color: var(--gold);
+      flex-shrink: 0;
+      margin-top: 0.05em;
+    }
+
+    /* ─── Article Footer ─────────────────────────────────────── */
+    .article-footer {
+      padding: 3rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+    .article-footer__rule {
+      width: 100%;
+      height: 1px;
+      background: var(--rule-color);
+    }
+    .article-footer__kicker {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+    }
+    .article-footer__kicker strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ─── Utilities ──────────────────────────────────────────── */
+    .mt-sm { margin-top: 1rem; }
+    .mt-md { margin-top: 1.75rem; }
+    .mt-lg { margin-top: 2.5rem; }
+
+    /* ─── Smooth theme transitions (skip bg flash on load) ─── */
+    body.theme-ready * {
+      transition: background-color 0.25s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ THEME TOGGLE — first child of body ═══ -->
+<button id="theme-toggle" aria-label="Toggle theme" title="Toggle light / dark">
+  <span id="theme-icon">☾</span>
+</button>
+
+<!-- ═══ RUNNING HEADER ═══ -->
+<div class="running-header">
+  <span class="running-header__series">Inside ClaudeKit</span>
+  <span class="running-header__sep"></span>
+  <span class="running-header__title">/ck:plan --deep &amp;&amp; --tdd</span>
+  <div class="running-header__progress">
+    <div class="progress-bar"><div class="progress-bar__fill" id="progress-fill"></div></div>
+  </div>
+</div>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main>
+  <!-- Hero + lead use standard page-wrap (full width, no sidebar offset) -->
+  <div class="page-wrap">
+
+    <!-- ── Hero ── -->
+    <header class="hero" id="top">
+      <div class="hero__kicker">
+        <span class="hero__kicker-dot"></span>
+        Inside ClaudeKit
+      </div>
+
+      <h1 class="hero__title">
+        Khai phá sức mạnh của<br>
+        <em>/ck:plan</em> với <span class="hero__cmd">--deep</span> và <span class="hero__cmd">--tdd</span>
+      </h1>
+
+      <p class="hero__subtitle">
+        Mode mới <code>--deep</code> cho per-phase scouting và flag mới <code>--tdd</code>
+        cho tests-first — ghi lại từ trải nghiệm port VividKit Desktop từ Tauri Rust sang Wails Go.
+      </p>
+
+      <div class="hero__meta">
+        <span>22/04/2026</span>
+        <span class="hero__meta-sep">·</span>
+        <span>19 phút đọc</span>
+        <span class="hero__meta-sep">·</span>
+        <span class="hero__tag">claudekit</span>
+        <span class="hero__tag">planning</span>
+        <span class="hero__tag">tdd</span>
+        <span class="hero__tag">refactor</span>
+        <span class="hero__tag">inside-ck</span>
+      </div>
+    </header>
+
+    <!-- ── Lead ── -->
+    <section class="lead" id="lead">
+      <p>
+        Mấy tuần qua mình đụng phải một trong những quyết định khó nhất khi build sản phẩm một mình:
+        port toàn bộ <strong>VividKit Desktop</strong> — từ stack <strong>Tauri v2 + Rust</strong> sang
+        <strong>Wails v3 + Go</strong>. Không phải refactor vài file, mà là viết lại toàn bộ backend —
+        13 module, 40 giờ effort ước tính, đụng SQLite, git worktree, PTY spawn, NDJSON streaming.
+      </p>
+      <p>
+        Cảm giác lúc ngồi gõ mô tả task: <em>"nếu plan thiếu một góc nào đó, implementation sẽ đổ đèo
+        rất nhanh."</em> Đó là lúc mình thử <code>--deep</code> và <code>--tdd</code> — hai additions mới
+        nhất vào <code>ck-plan</code> skill. Bài này ghi lại cách chúng hoạt động, khi nào dùng, và
+        mình đã kết hợp chúng như thế nào trong project thực tế.
+      </p>
+    </section>
+
+    <!-- ── Inline TOC (mobile only — hidden ≥1100px) ── -->
+    <nav class="toc-block toc-block--inline" aria-label="Mục lục">
+      <div class="toc-block__label">Mục lục bài viết</div>
+      <ol class="toc-list">
+        <li><a href="#s01"><span class="toc-num">01</span> Mode vs Flag</a></li>
+        <li><a href="#s02"><span class="toc-num">02</span> --deep: khi scope là "đại tu"</a></li>
+        <li><a href="#s03"><span class="toc-num">03</span> --tdd: khi sợ phá hành vi</a></li>
+        <li><a href="#s04"><span class="toc-num">04</span> Khi nào dùng /ck:brainstorm trước</a></li>
+        <li><a href="#s05"><span class="toc-num">05</span> Decision matrix</a></li>
+        <li><a href="#s06"><span class="toc-num">06</span> Cơ chế bên trong</a></li>
+        <li><a href="#s07"><span class="toc-num">07</span> Cách chạy và mẫu prompt</a></li>
+        <li><a href="#s08"><span class="toc-num">08</span> Best practices</a></li>
+        <li><a href="#s09"><span class="toc-num">09</span> Pitfalls</a></li>
+        <li><a href="#s10"><span class="toc-num">10</span> Tóm lại</a></li>
+      </ol>
+    </nav>
+
+  </div><!-- /page-wrap (hero + lead + inline-toc) -->
+
+  <!-- ── Floating rail TOC (fixed, outside content column, ≥1380px) ── -->
+  <aside class="sidebar-toc" aria-label="Mục lục sidebar">
+        <div class="sidebar-toc__label">Mục lục</div>
+        <ol class="sidebar-toc__list">
+          <li><a href="#s01" data-toc="s01"><span class="sidebar-toc__num">01</span><span class="sidebar-toc__text">Mode vs Flag</span></a></li>
+          <li><a href="#s02" data-toc="s02"><span class="sidebar-toc__num">02</span><span class="sidebar-toc__text">--deep: khi scope là "đại tu"</span></a></li>
+          <li><a href="#s03" data-toc="s03"><span class="sidebar-toc__num">03</span><span class="sidebar-toc__text">--tdd: khi sợ phá hành vi</span></a></li>
+          <li><a href="#s04" data-toc="s04"><span class="sidebar-toc__num">04</span><span class="sidebar-toc__text">Khi nào dùng /ck:brainstorm trước</span></a></li>
+          <li><a href="#s05" data-toc="s05"><span class="sidebar-toc__num">05</span><span class="sidebar-toc__text">Decision matrix</span></a></li>
+          <li><a href="#s06" data-toc="s06"><span class="sidebar-toc__num">06</span><span class="sidebar-toc__text">Cơ chế bên trong</span></a></li>
+          <li><a href="#s07" data-toc="s07"><span class="sidebar-toc__num">07</span><span class="sidebar-toc__text">Cách chạy và mẫu prompt</span></a></li>
+          <li><a href="#s08" data-toc="s08"><span class="sidebar-toc__num">08</span><span class="sidebar-toc__text">Best practices</span></a></li>
+          <li><a href="#s09" data-toc="s09"><span class="sidebar-toc__num">09</span><span class="sidebar-toc__text">Pitfalls</span></a></li>
+          <li><a href="#s10" data-toc="s10"><span class="sidebar-toc__num">10</span><span class="sidebar-toc__text">Tóm lại</span></a></li>
+        </ol>
+      </aside>
+
+  <!-- ── Article body — centered at reading width ── -->
+  <div class="article-body-wrap">
+    <div class="article-body">
+
+    <!-- ══ SECTION 01 ══ -->
+    <section class="section" id="s01">
+      <div class="section-label">
+        <span class="section-label__num">§ 01</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Mode vs Flag — hai khái niệm khác nhau</h2>
+
+      <p>
+        Trước khi đi vào từng tính năng, cần phân biệt một điểm dễ nhầm. <code>/ck:plan</code> nhận
+        hai loại tham số hoàn toàn khác nhau về cách chúng tương tác: <strong>mode</strong> (chọn
+        pipeline) và <strong>composable flag</strong> (add-on ghép vào mode). Nhầm lẫn hai cái này
+        dẫn đến những lệnh không hợp lệ hoặc kết quả không như kỳ vọng.
+      </p>
+      <p>
+        Cụ thể: <code>--deep</code> là <em>mode</em>, còn <code>--tdd</code> là <em>flag</em>.
+        Điều này có nghĩa <code>--deep --tdd</code> hoàn toàn hợp lệ (mình dùng combo này),
+        nhưng <code>--deep --hard</code> thì không — hai mode loại trừ nhau.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Loại</th>
+              <th>Ví dụ</th>
+              <th>Tác dụng</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Mode</strong></td>
+              <td><code>--fast</code>, <code>--hard</code>, <code>--deep</code>, <code>--parallel</code>, <code>--two</code></td>
+              <td>Chọn toàn bộ pipeline. Chỉ 1 mode per lệnh, mutual exclusive.</td>
+            </tr>
+            <tr>
+              <td><strong>Composable flag</strong></td>
+              <td><code>--tdd</code>, <code>--no-tasks</code></td>
+              <td>Add-on. Ghép được với bất kỳ mode, không thay đổi pipeline — chỉ thay đổi nội dung output.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__lang">argument-hint</span>
+          <span class="code-block__label">ck-plan/SKILL.md</span>
+        </div>
+        <pre><code><span class="c-comment"># Format chính thức từ skill definition</span>
+argument-hint: <span class="c-string">"[task] [--fast|--hard|--deep|--parallel|--two] [--tdd|--no-tasks]"</span>
+
+<span class="c-comment"># Dấu | giữa modes = exclusive. --tdd đứng ở block riêng = composable.</span>
+<span class="c-comment"># Combo hợp lệ:</span>
+/ck:plan <span class="c-string">"port vividkit"</span> <span class="c-flag">--deep</span> <span class="c-flag">--tdd</span>
+
+<span class="c-comment"># Combo KHÔNG hợp lệ:</span>
+/ck:plan <span class="c-string">"port vividkit"</span> <span class="c-flag">--deep</span> <span class="c-flag">--hard</span>  <span class="c-comment"># ← 2 modes cùng lúc</span></code></pre>
+      </div>
+    </section>
+
+    <!-- ══ SECTION 02 ══ -->
+    <section class="section" id="s02">
+      <div class="section-label">
+        <span class="section-label__num">§ 02</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2><code>--deep</code> — khi scope là "đại tu" chứ không phải "sửa"</h2>
+
+      <p>
+        <code>--deep</code> không phải là <code>--hard</code> "xịn hơn". Đây là mode được thiết
+        kế riêng cho một tình huống cụ thể: task chạm vào 5+ vùng code độc lập, có quyết định
+        kiến trúc mới phải đưa ra ở mỗi phase, và sợ rằng một cái nhìn tổng lúc đầu sẽ không
+        đủ chi tiết khi cần implementation.
+      </p>
+      <p>
+        Điểm khác biệt cốt lõi so với <code>--hard</code>: thay vì scout <em>một lần</em> cho
+        toàn bộ codebase, <code>--deep</code> chạy thêm một vòng scout riêng cho <em>từng phase</em>.
+        Đắt về token, nhưng output là phase file đủ chi tiết để cook không phải tự đoán.
+      </p>
+
+      <h3>Pipeline của <code>--deep</code></h3>
+
+      <ol class="pipeline-list">
+        <li>Spawn <strong>2–3 researcher agents</strong> cho high-level architecture analysis song song</li>
+        <li>Đọc docs liên quan + chạy <code>/ck:scout</code> qua tất cả affected areas</li>
+        <li><strong>Per-phase scout</strong> — điểm cốt lõi: với mỗi phase đã plan, chạy focused scout: inventory files create/modify/delete, count existing tests, list functions cần test protection</li>
+        <li>Planner embed toàn bộ scout data trực tiếp vào từng phase file</li>
+        <li>Red-team review để bắt missing risk hoặc assumption sai</li>
+        <li>Post-plan validation chéo giữa phases</li>
+        <li>Hydrate tasks (trừ khi bật <code>--no-tasks</code>)</li>
+        <li>Output lệnh cook: <code>/ck:cook {path}/plan.md</code></li>
+      </ol>
+
+      <blockquote>
+        <p>
+          <code>--deep</code> không giúp code nhanh hơn. Nó giúp cook biết chính xác file nào
+          đụng, pattern nào dùng, parallel group nào chạy được song song. Với port đa-stack như
+          Rust → Go, đây là ROI thật.
+        </p>
+        <footer>— Từ notes viết lại sau khi port xong Phase 4</footer>
+      </blockquote>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Điều kiện</th><th>--hard</th><th>--deep</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Touch 1–4 vùng code</td>
+              <td>Đủ dùng</td>
+              <td>Overkill</td>
+            </tr>
+            <tr>
+              <td>Touch 5+ vùng, kiến trúc mới</td>
+              <td>Thiếu depth</td>
+              <td><strong>Đúng lựa chọn</strong></td>
+            </tr>
+            <tr>
+              <td>Codebase đang có user data</td>
+              <td>Rủi ro bỏ sót</td>
+              <td>Per-phase scout bắt được</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ SECTION 03 ══ -->
+    <section class="section" id="s03">
+      <div class="section-label">
+        <span class="section-label__num">§ 03</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2><code>--tdd</code> — khi sợ refactor phá hành vi đang chạy</h2>
+
+      <p>
+        Default flow của <code>/ck:cook</code>: AI đọc plan, execute phase tasks, viết test
+        <em>sau</em> khi code đã sửa. Với greenfield — hoàn toàn ổn. Với refactor hoặc port từ
+        stack khác — nguy hiểm. Behavior đang tồn tại trong code cũ có thể bị thay đổi vô tình,
+        và test viết sau không bắt được điều này vì test sẽ bám theo behavior mới.
+      </p>
+      <p>
+        <code>--tdd</code> đảo ngược thứ tự: phase file được tạo ra với 4 section bổ sung,
+        trong đó <em>Tests Before</em> phải viết xong và pass <em>trước</em> khi bất kỳ dòng
+        refactor nào được gõ. Tests đó document behavior hiện tại — khi refactor xong, chúng
+        trở thành regression gate.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Section</th><th>Vai trò trong phase file</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tests Before</strong></td>
+              <td>Regression coverage viết <em>trước</em> khi refactor. Document hành vi hiện tại bằng cách assert output cụ thể.</td>
+            </tr>
+            <tr>
+              <td><strong>Refactor</strong></td>
+              <td>Mô tả code changes được bảo vệ bởi Tests Before. Cook không được làm Tests Before fail.</td>
+            </tr>
+            <tr>
+              <td><strong>Tests After</strong></td>
+              <td>Test cho hành vi mới được thêm vào trong phase này (nếu có). Optional.</td>
+            </tr>
+            <tr>
+              <td><strong>Regression Gate</strong></td>
+              <td>Lệnh compile + test cụ thể phải pass sau refactor. Hard requirement — phase không hoàn thành nếu gate fail.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__lang">bash</span>
+          <span class="code-block__label">Lệnh mình đã gõ</span>
+        </div>
+        <pre><code><span class="c-comment"># Port Wails — plan + tdd cho phases có Rust equivalent</span>
+/ck:plan <span class="c-flag">--deep</span> <span class="c-flag">--tdd</span> <span class="c-path">plans/260412-0239-port-vividkit-wails3/plan.md</span>
+
+<span class="c-comment"># Refactor UI đã live — regression gate bắt buộc</span>
+/ck:cook <span class="c-path">plans/260414-1247-brainstorm-ui-redesign/</span> <span class="c-flag">--tdd</span></code></pre>
+      </div>
+    </section>
+
+    <!-- ══ SECTION 04 ══ -->
+    <section class="section" id="s04">
+      <div class="section-label">
+        <span class="section-label__num">§ 04</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Một lưu ý — khi nào dùng <code>/ck:brainstorm</code> trước</h2>
+
+      <p>
+        <code>--deep</code> giỏi trong việc <em>lập kế hoạch chi tiết</em> khi bạn đã biết mình
+        muốn gì. Nhưng nếu bạn chưa chắc về hướng đi — kiến trúc nào, trade-off nào, thư viện
+        nào — thì <code>--deep</code> sẽ tạo ra một plan rất chi tiết cho một quyết định chưa
+        đúng. Trong trường hợp đó, <code>/ck:brainstorm</code> trước là lựa chọn tốt hơn.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Tình huống</th><th>Luồng nên dùng</th><th>Lý do</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Biết rõ muốn gì, cần plan chi tiết</td>
+              <td><code>--deep</code> trực tiếp</td>
+              <td>Plan sẽ accurate ngay từ đầu</td>
+            </tr>
+            <tr>
+              <td>Chưa chắc về kiến trúc / trade-off</td>
+              <td><code>/ck:brainstorm</code> → <code>--deep</code></td>
+              <td>Brainstorm làm rõ hướng trước khi plan đốt token</td>
+            </tr>
+            <tr>
+              <td>Cần compare 2 approach cụ thể</td>
+              <td><code>/ck:brainstorm</code> → <code>--two</code> → <code>--deep</code></td>
+              <td>--two tạo 2 plan song song để so sánh, rồi chọn cái đi sâu</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ SECTION 05 ══ -->
+    <section class="section" id="s05">
+      <div class="section-label">
+        <span class="section-label__num">§ 05</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Decision matrix — chọn mode và flag nào</h2>
+
+      <p class="decision-intro">
+        Ba dòng cuối (★) là combo recommendations — dùng khi cần kết hợp mode + flag.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tình huống</th>
+              <th>Lệnh</th>
+              <th>Token cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Task nhỏ, scope rõ ràng, 1–2 file</td>
+              <td><code>--fast</code></td>
+              <td>Thấp</td>
+            </tr>
+            <tr>
+              <td>Feature trung bình, 3–4 area</td>
+              <td><code>--hard</code></td>
+              <td>Trung bình</td>
+            </tr>
+            <tr>
+              <td>Greenfield lớn, nhiều unknowns</td>
+              <td><code>--hard</code></td>
+              <td>Trung bình</td>
+            </tr>
+            <tr>
+              <td>Refactor nhỏ, behavior quan trọng</td>
+              <td><code>--fast --tdd</code></td>
+              <td>Thấp</td>
+            </tr>
+            <tr>
+              <td>Refactor feature đang live, user đã dùng</td>
+              <td><code>--hard --tdd</code></td>
+              <td>Trung bình</td>
+            </tr>
+            <tr>
+              <td>Major refactor, 5+ area, architectural debt</td>
+              <td><code>--deep</code></td>
+              <td>Cao</td>
+            </tr>
+            <tr>
+              <td>Port đa-stack, không biết Go idiom map thế nào</td>
+              <td><code>--deep</code></td>
+              <td>Cao</td>
+            </tr>
+            <tr class="row-highlight">
+              <td>★ Port đa-stack + giữ behavior cũ</td>
+              <td><code>--deep --tdd</code></td>
+              <td>Cao nhất</td>
+            </tr>
+            <tr class="row-highlight">
+              <td>★ Parallel team, risk ownership conflict</td>
+              <td><code>--deep --parallel --tdd</code></td>
+              <td>Rất cao</td>
+            </tr>
+            <tr class="row-highlight">
+              <td>★ Chưa chắc hướng → explore trước</td>
+              <td><code>/ck:brainstorm</code> → <code>--deep --tdd</code></td>
+              <td>Cao (2 bước)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ SECTION 06 ══ -->
+    <section class="section" id="s06">
+      <div class="section-label">
+        <span class="section-label__num">§ 06</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Inside — cơ chế bên trong</h2>
+
+      <p>
+        Phần này đào sâu vào cách <code>--deep</code> và <code>--tdd</code> thực sự được
+        implement trong skill. Không bắt buộc phải đọc để dùng được, nhưng giúp hiểu tại sao
+        output lại có cấu trúc như vậy và tại sao token cost cao đến thế.
+      </p>
+
+      <!-- 6.1 -->
+      <div class="subsection">
+        <div class="subsection__label">
+          <span class="subsection__num">6.1</span>
+          <h3>Mode activation table</h3>
+        </div>
+        <p>
+          Mỗi mode kích hoạt một tập agent và sub-process khác nhau. Bảng dưới so sánh các
+          thành phần được spawn theo mode — đây là lý do chi phí token khác nhau đáng kể.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Researcher</th>
+                <th>Red Team</th>
+                <th>Validation</th>
+                <th>Per-phase scout</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--fast</code></td>
+                <td>–</td>
+                <td>–</td>
+                <td>–</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><code>--hard</code></td>
+                <td>1</td>
+                <td>–</td>
+                <td>Post-plan</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><code>--deep</code></td>
+                <td>2–3</td>
+                <td>✓</td>
+                <td>Post-plan</td>
+                <td><strong>✓ per phase</strong></td>
+              </tr>
+              <tr>
+                <td><code>--parallel</code></td>
+                <td>2–3</td>
+                <td>✓</td>
+                <td>Cross-team</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><code>--two</code></td>
+                <td>1 per plan</td>
+                <td>Compare</td>
+                <td>Diff output</td>
+                <td>–</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 6.2 -->
+      <div class="subsection">
+        <div class="subsection__label">
+          <span class="subsection__num">6.2</span>
+          <h3>Per-phase scout — scout data embed vào phase file</h3>
+        </div>
+        <p>
+          Với mỗi phase đã draft, <code>--deep</code> spawn một scout agent chạy
+          <code>/ck:scout</code> focused vào đúng files/dirs thuộc phase đó. Scout output được
+          embed trực tiếp vào phase file dưới dạng structured sections: file inventory table,
+          existing test count, function/interface checklist cần test bảo vệ. Cook đọc những
+          thông tin này thay vì phải tự suy luận từ codebase.
+        </p>
+      </div>
+
+      <!-- 6.3 -->
+      <div class="subsection">
+        <div class="subsection__label">
+          <span class="subsection__num">6.3</span>
+          <h3>--tdd injection vào phase template</h3>
+        </div>
+        <p>
+          Khi flag <code>--tdd</code> được bật, planner không chỉ thêm 4 section vào phase file.
+          Nó còn thay đổi thứ tự của <em>cook's execution plan</em>: <code>cook/references/workflow-steps.md</code>
+          Step 3 được replace bởi một "TDD loop" — viết Tests Before → run → assert pass →
+          refactor → assert Tests Before vẫn pass → viết Tests After.
+        </p>
+      </div>
+
+      <!-- 6.4 -->
+      <div class="subsection">
+        <div class="subsection__label">
+          <span class="subsection__num">6.4</span>
+          <h3>Tại sao --deep không có trong --fast hoặc --hard</h3>
+        </div>
+        <p>
+          Per-phase scout về cơ bản là một nested planning loop: plan toàn cục tạo ra N phases,
+          rồi N sub-plan được tạo ra cho từng phase. Mỗi sub-plan cần scout context riêng.
+          Chi phí là O(N) lần scout thay vì O(1). Với task nhỏ (1–3 phase), overhead này
+          không đáng. Với 9-phase port như mình, nó là investment đáng.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══ SECTION 07 ══ -->
+    <section class="section" id="s07">
+      <div class="section-label">
+        <span class="section-label__num">§ 07</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Cách chạy và vài mẫu prompt</h2>
+
+      <p>
+        Ba pattern mình dùng nhiều nhất trong thực tế — từ simple đến phức tạp.
+        Tất cả đều test được ngay trong terminal.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__lang">bash</span>
+          <span class="code-block__label">Pattern 1 — Fresh plan với --deep --tdd</span>
+        </div>
+        <pre><code>/ck:plan <span class="c-string">"port vividkit desktop từ Tauri v2 + Rust sang Wails v3 + Go,
+giữ nguyên React frontend, chỉ rewrite backend và IPC adapter.
+13 module, có PTY, NDJSON streaming, SQLite, git worktree."</span> <span class="c-flag">--deep</span> <span class="c-flag">--tdd</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__lang">bash</span>
+          <span class="code-block__label">Pattern 2 — Refine plan đã có</span>
+        </div>
+        <pre><code><span class="c-comment"># Nếu đã có plan.md từ --hard nhưng muốn deep-dive thêm</span>
+/ck:plan <span class="c-flag">--deep</span> <span class="c-flag">--tdd</span> <span class="c-path">plans/260412-0239-port-vividkit-wails3/plan.md</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__lang">bash</span>
+          <span class="code-block__label">Pattern 3 — Cook với --tdd override</span>
+        </div>
+        <pre><code><span class="c-comment"># Plan không có --tdd nhưng muốn cook dùng TDD flow</span>
+<span class="c-comment"># --tdd ở cook level override plan-level setting</span>
+/ck:cook <span class="c-path">plans/260414-1247-brainstorm-ui-redesign/</span> <span class="c-flag">--tdd</span></code></pre>
+      </div>
+
+      <ul>
+        <li>Task description càng cụ thể, researcher agents càng ít phải đoán context</li>
+        <li>Mention explicitly các constraint quan trọng: "backward compat với user data cũ", "giữ API contract"</li>
+        <li>Nếu dùng <code>--deep</code> lần đầu cho project, expect 10–20 phút wait time cho per-phase scout</li>
+        <li>Phase file output sẽ có file inventory table — review trước khi chạy cook để đảm bảo scope đúng</li>
+      </ul>
+    </section>
+
+    <!-- ══ SECTION 08 ══ -->
+    <section class="section" id="s08">
+      <div class="section-label">
+        <span class="section-label__num">§ 08</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Best practices</h2>
+
+      <ol class="bp-list">
+        <li>
+          <span class="bp-num">1</span>
+          <div class="bp-content">
+            <h3>Đặt task description trước mode</h3>
+            <p>
+              Thứ tự argument matter. <code>/ck:plan "task mô tả" --deep --tdd</code> cho
+              kết quả tốt hơn <code>/ck:plan --deep --tdd "task mô tả"</code> vì parser
+              của skill đọc theo thứ tự. Task description là input chính — đừng hy sinh nó
+              vì ngại gõ dài.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="bp-num">2</span>
+          <div class="bp-content">
+            <h3>Review file inventory trước khi cook</h3>
+            <p>
+              <code>--deep</code> tạo ra file inventory table trong mỗi phase file. Đọc qua
+              cột "action" (create/modify/delete) và verify không có file nào bị scope sai.
+              Sửa sai ở plan dễ hơn rollback sau khi cook đã chạy xong.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="bp-num">3</span>
+          <div class="bp-content">
+            <h3>Không bật --tdd cho greenfield module</h3>
+            <p>
+              <code>--tdd</code> designed cho "bảo vệ behavior hiện tại". Với code mới 100%,
+              Tests Before section sẽ trống hoặc trivial — cook mất thời gian viết test cho
+              code chưa tồn tại. Dùng <code>--hard</code> cho greenfield, reserve <code>--tdd</code>
+              cho phases có code cũ cần giữ behavior.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="bp-num">4</span>
+          <div class="bp-content">
+            <h3>Kiểm tra regression gate sau mỗi phase</h3>
+            <p>
+              Mỗi phase file có Regression Gate command cụ thể. Chạy nó ngay sau khi phase
+              hoàn thành, trước khi sang phase tiếp. Nếu đợi đến cuối để chạy hết một lần —
+              debug sẽ khó hơn vì không biết phase nào introduce regression.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="bp-num">5</span>
+          <div class="bp-content">
+            <h3>Token budget: tính trước khi commit</h3>
+            <p>
+              <code>--deep --tdd</code> cho một plan 9 phases có thể tốn 80–120k tokens.
+              Nếu budget tight, consider <code>--hard --tdd</code> cho 3–4 phases critical nhất,
+              <code>--fast</code> cho phases còn lại. Selective depth hơn là apply đồng đều.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ══ SECTION 09 ══ -->
+    <section class="section" id="s09">
+      <div class="section-label">
+        <span class="section-label__num">§ 09</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Pitfalls</h2>
+
+      <p>
+        Sáu pattern sai mình quan sát thấy — một số từ chính mình, một số từ codebase review.
+        Mỗi cái có một dấu hiệu nhận biết rõ ràng.
+      </p>
+
+      <div class="pitfalls-grid">
+
+        <div class="pitfall">
+          <div class="pitfall__num">P1</div>
+          <div class="pitfall__title">Quên --tdd ở /ck:cook</div>
+          <div class="pitfall__body">
+            Plan được tạo với <code>--tdd</code> nhưng cook được gọi không có flag. Cook đọc
+            phase file có 4 TDD sections nhưng không biết phải follow TDD flow — thực hiện
+            theo default flow. <strong>Dấu hiệu:</strong> Tests Before section bị skip, refactor
+            chạy trước khi regression coverage được viết.
+          </div>
+        </div>
+
+        <div class="pitfall">
+          <div class="pitfall__num">P2</div>
+          <div class="pitfall__title">--deep cho task nhỏ</div>
+          <div class="pitfall__body">
+            Dùng <code>--deep</code> cho task 1–2 file hoặc bug fix. Per-phase scout chạy
+            nhưng không có gì đáng scout. <strong>Dấu hiệu:</strong> Phase file dày nhưng
+            file inventory table chỉ có 1–2 dòng. Thời gian plan 4× so với thực thi.
+          </div>
+        </div>
+
+        <div class="pitfall">
+          <div class="pitfall__num">P3</div>
+          <div class="pitfall__title">--tdd cho greenfield</div>
+          <div class="pitfall__body">
+            Bật <code>--tdd</code> cho module viết mới hoàn toàn. Tests Before section trống
+            hoặc cook tự phịa behavior để fill vào. <strong>Dấu hiệu:</strong> Tests Before
+            chứa test cho hàm chưa tồn tại, assertion arbitrary không gắn với spec.
+          </div>
+        </div>
+
+        <div class="pitfall">
+          <div class="pitfall__num">P4</div>
+          <div class="pitfall__title">Tin 100% phase file</div>
+          <div class="pitfall__body">
+            Phase file từ <code>--deep</code> rất chi tiết — nhưng không phải oracle.
+            Per-phase scout đọc code, không đọc được intent. <strong>Dấu hiệu:</strong>
+            File inventory table có file listed nhưng thực tế không cần modify — scout đọc
+            import graph nhưng không hiểu scope thật.
+          </div>
+        </div>
+
+        <div class="pitfall">
+          <div class="pitfall__num">P5</div>
+          <div class="pitfall__title">--tdd chụp test cho code có bug sẵn</div>
+          <div class="pitfall__body">
+            Tests Before "document behavior hiện tại" — kể cả khi behavior đó là bug.
+            Refactor xong, Tests Before pass nhưng bug vẫn còn vì test assert behavior
+            sai. <strong>Trước khi viết Tests Before:</strong> verify behavior hiện tại có
+            đúng không, không phải chỉ assert output.
+          </div>
+        </div>
+
+        <div class="pitfall">
+          <div class="pitfall__num">P6</div>
+          <div class="pitfall__title">--deep --tdd --parallel không ownership rõ</div>
+          <div class="pitfall__body">
+            Combo mạnh nhất nhưng cũng nguy hiểm nhất khi file ownership không được define
+            rõ trong phase file. <strong>Dấu hiệu:</strong> Hai parallel agents cùng modify
+            một file — merge conflict hoặc tệ hơn là silent overwrite. Luôn verify ownership
+            matrix trước khi chạy <code>--parallel</code>.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ SECTION 10 ══ -->
+    <section class="section" id="s10">
+      <div class="section-label">
+        <span class="section-label__num">§ 10</span>
+        <span class="section-label__bar"></span>
+      </div>
+      <h2>Tóm lại</h2>
+
+      <p>
+        <code>--deep</code> và <code>--tdd</code> không phải silver bullets — chúng là
+        tools có chi phí thật và trade-off thật. <code>--deep</code> đắt, nhưng với task
+        đủ lớn và phức tạp, nó là khoản đầu tư: cook không phải đoán, phase file là bản
+        đồ chi tiết, per-phase scout embed context trực tiếp vào nơi cần dùng.
+      </p>
+      <p>
+        <code>--tdd</code> giải quyết một lo âu rất cụ thể: "refactor này có phá behavior
+        không?" Nó không làm code tốt hơn tự nhiên — nó tạo ra cấu trúc buộc bạn phải
+        document behavior hiện tại trước khi thay đổi. Giá trị nằm ở kỷ luật đó.
+      </p>
+      <p>
+        Với port Rust → Go của mình, combo <code>--deep --tdd</code> là quyết định đúng
+        nhìn lại. Không phải vì nó magic, mà vì project đúng với cả hai điều kiện:
+        scope đủ lớn để <code>--deep</code> không overkill, và có behavior cụ thể cần bảo
+        vệ để <code>--tdd</code> không trivial.
+      </p>
+
+      <div class="summary-box">
+        <h3>Ghi chú kỹ thuật</h3>
+        <ul>
+          <li>Per-phase scout là sub-feature của <code>--deep</code>, không available độc lập</li>
+          <li><code>--tdd</code> có thể pass vào cả <code>/ck:plan</code> và <code>/ck:cook</code> — hai level independent</li>
+          <li>Token cost estimate: <code>--fast</code> ≈ 5k · <code>--hard</code> ≈ 20k · <code>--deep</code> ≈ 60–120k per plan</li>
+          <li>Regression Gate command được embed trong phase file — không cần nhớ, cook đọc trực tiếp</li>
+          <li>File inventory table format: <code>action | path | rough_size | test_impact</code> — reviewable trước khi execute</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ── Article Footer ── -->
+    <footer class="article-footer">
+      <div class="article-footer__rule"></div>
+      <p class="article-footer__kicker">
+        <strong>Inside ClaudeKit</strong> · Ghi chép kỹ thuật từ thực tế build · 2026
+      </p>
+    </footer>
+
+    </div><!-- /article-body -->
+  </div><!-- /article-body-wrap -->
+</main>
+
+<!-- ─── Scripts ─────────────────────────────────────────────────────────── -->
+<script>
+  // Theme toggle
+  const btn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+
+  function getTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'light';
+  }
+
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    icon.textContent = t === 'dark' ? '☀' : '☾';
+  }
+
+  // Set initial icon
+  applyTheme(getTheme());
+
+  btn.addEventListener('click', function() {
+    applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  });
+
+  // Enable smooth transitions after first paint to avoid flash
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      document.body.classList.add('theme-ready');
+    });
+  });
+
+  // Reading progress bar
+  const fill = document.getElementById('progress-fill');
+  function updateProgress() {
+    var scrolled = window.scrollY;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docHeight > 0 ? Math.min(100, (scrolled / docHeight) * 100) : 0;
+    fill.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  // ── Scroll-spy: highlight active TOC entry (sidebar rail + inline) ──
+  (function() {
+    var sections = Array.from(document.querySelectorAll('section.section[id]'));
+    // Sidebar rail links (data-toc attribute)
+    var sidebarLinks = Array.from(document.querySelectorAll('.sidebar-toc__list a[data-toc]'));
+    // Inline TOC links (href="#sXX" pattern)
+    var inlineLinks  = Array.from(document.querySelectorAll('.toc-block--inline .toc-list a[href]'));
+
+    if (!sections.length) return;
+
+    function setActive(id) {
+      // Sidebar rail
+      sidebarLinks.forEach(function(a) {
+        if (a.getAttribute('data-toc') === id) {
+          a.classList.add('is-active');
+        } else {
+          a.classList.remove('is-active');
+        }
+      });
+      // Inline TOC — match by href="#<id>"
+      inlineLinks.forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href === '#' + id) {
+          a.classList.add('is-active');
+        } else {
+          a.classList.remove('is-active');
+        }
+      });
+    }
+
+    var activeId = null;
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          activeId = entry.target.id;
+          setActive(activeId);
+        }
+      });
+    }, {
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0
+    });
+
+    sections.forEach(function(s) { observer.observe(s); });
+  })();
+</script>
+
+</body>
+</html>
+<!-- Aesthetic: Fraunces (warm optical-size serif) paired with Source Code Pro and Source Sans 3 on a deep-wine dark / parchment-cream light palette — cranberry accent (#be123c / #f43f6e) with amber highlights for the summary rail; pitfall callouts use amber top-border "warning panel" instead of generic left-border box; section dividers use a numbered monospace label + fading rule instead of decorative icons; blockquote uses large translucent opening-quote glyph instead of color-band; code blocks avoid three-dot chrome with a text-label tab header. -->

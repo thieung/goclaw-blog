@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khám phá sức mạnh của /ck:plan với --deep và --tdd · Ops Map</title>
+  <script>
+    (function () {
+      var stored = localStorage.getItem('ck-plan-ops-map-theme');
+      document.documentElement.dataset.theme = stored || 'dark';
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap&amp;subset=vietnamese" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #171b1a;
+      --panel: #202725;
+      --panel-2: #27302d;
+      --panel-3: #303a36;
+      --ink: #eff3e7;
+      --muted: #9da79c;
+      --faint: #747f75;
+      --line: rgba(239, 243, 231, .12);
+      --line-strong: rgba(239, 243, 231, .26);
+      --mint: #8fcf9d;
+      --copper: #d28a54;
+      --blue: #8aa8c8;
+      --red: #df776f;
+      --amber: #d9b76e;
+      --shadow: rgba(0, 0, 0, .28);
+      --display: 'Chakra Petch', system-ui, sans-serif;
+      --body: 'IBM Plex Sans', system-ui, sans-serif;
+      --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+
+    [data-theme="light"] {
+      --bg: #eef0e8;
+      --panel: #fbfcf2;
+      --panel-2: #dfe4d7;
+      --panel-3: #d2d9c9;
+      --ink: #1b211f;
+      --muted: #606a61;
+      --faint: #7d887e;
+      --line: rgba(27, 33, 31, .13);
+      --line-strong: rgba(27, 33, 31, .27);
+      --mint: #2f7d52;
+      --copper: #9a572b;
+      --blue: #456a8c;
+      --red: #aa443b;
+      --amber: #9b6b22;
+      --shadow: rgba(64, 56, 39, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 17px/1.65 var(--body);
+      background-image:
+        radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--copper) 14%, transparent), transparent 30rem),
+        linear-gradient(135deg, transparent 0 49.5%, var(--line) 49.5% 50.5%, transparent 50.5%);
+      background-size: auto, 34px 34px;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: color-mix(in srgb, var(--mint) 28%, transparent); }
+    a { color: inherit; }
+    code { font-family: var(--mono); color: var(--mint); overflow-wrap: anywhere; }
+    strong { color: var(--ink); }
+
+    .theme-toggle {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      z-index: 40;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line-strong);
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      color: var(--ink);
+      border-radius: 8px;
+      font: 600 11px var(--mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      box-shadow: 0 14px 34px var(--shadow);
+    }
+    .theme-toggle:hover { border-color: var(--mint); }
+    .theme-toggle .icon::before { content: "◐"; color: var(--mint); }
+
+    .scroll-toc {
+      position: fixed;
+      left: 50%;
+      top: 16px;
+      transform: translate(-50%, -140%);
+      z-index: 30;
+      width: min(920px, calc(100vw - 112px));
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      overflow-x: auto;
+      padding: 8px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      box-shadow: 0 18px 46px var(--shadow);
+      opacity: 0;
+      transition: transform .2s ease, opacity .2s ease;
+    }
+    .scroll-toc.is-visible { opacity: 1; transform: translate(-50%, 0); }
+    .scroll-toc-label { flex: 0 0 auto; color: var(--copper); font: 700 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; padding: 0 8px; }
+    .scroll-toc-link { flex: 0 0 auto; color: var(--muted); text-decoration: none; font: 12px var(--mono); padding: 7px 9px; border-radius: 7px; }
+    .scroll-toc-link:hover, .scroll-toc-link.is-active { background: var(--panel-2); color: var(--mint); }
+
+    .container { max-width: 1240px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 48px) 80px; }
+    .site-header .inner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 20px;
+      color: var(--muted);
+      font: 12px var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .site-header .inner::before, .site-header .inner::after { content: ""; height: 1px; background: var(--line-strong); }
+    .site-wordmark { text-decoration: none; white-space: nowrap; }
+    .site-wordmark strong { color: var(--mint); }
+    .site-eyebrow { display: none; }
+
+    .article-header {
+      min-height: 78dvh;
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(320px, 1.05fr);
+      gap: clamp(24px, 5vw, 70px);
+      align-items: center;
+      padding: clamp(54px, 9vw, 118px) 0 46px;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .kicker, .label {
+      display: block;
+      font: 700 12px var(--mono);
+      color: var(--copper);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .article-title {
+      margin: 0 0 22px;
+      font: 700 clamp(44px, 7.4vw, 108px)/.88 var(--display);
+      letter-spacing: -.02em;
+      max-width: 11ch;
+      color: var(--ink);
+    }
+    .article-title .cmd { color: var(--mint); }
+    .article-subtitle, .lead p {
+      max-width: 64ch;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.65;
+      margin: 0 0 18px;
+    }
+    .article-meta, .tag-list, .hero-gates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      color: var(--faint);
+      font: 12px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .sep { color: var(--line-strong); }
+    .tag, .hero-gate, .toc-chip, .chip {
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      padding: 8px 11px;
+      border-radius: 999px;
+      font: 12px var(--mono);
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .hero-visual {
+      position: relative;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .hero-visual-label, .hero-flow, .hero-gates { grid-column: 1 / -1; }
+    .hero-visual-label { color: var(--copper); font: 700 12px var(--mono); letter-spacing: .16em; text-transform: uppercase; }
+    .hero-flow, .hero-stack-row {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 18px 40px var(--shadow);
+    }
+    .hero-flow { color: var(--muted); font: 18px/1.7 var(--display); }
+    .hero-stack { display: contents; }
+    .hero-stack-row {
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .hero-stack-row:nth-child(2) { transform: translateY(34px); }
+    .hero-stack-row:nth-child(3) { transform: translateY(-12px); }
+    .hero-stack-row span:first-child {
+      display: inline-grid;
+      place-items: center;
+      width: max-content;
+      min-width: 44px;
+      height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--mint) 18%, transparent);
+      color: var(--mint);
+      font: 700 12px var(--mono);
+      text-transform: uppercase;
+    }
+    .hero-stack-row span:last-child { color: var(--muted); font-size: 15px; }
+
+    .lead {
+      margin: 42px 0;
+      padding: 22px 24px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--panel) 66%, transparent);
+    }
+    .lead p:last-child { margin-bottom: 0; }
+
+    .toc-block { margin: 36px 0 42px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--panel) 76%, transparent); }
+    .toc-label, .toc-sidebar-label { color: var(--copper); font: 700 12px var(--mono); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 10px; }
+    .toc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .toc-chip:hover, .toc-chip.is-active { background: var(--panel-2); color: var(--mint); }
+
+    .page-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: clamp(26px, 4vw, 56px); align-items: start; }
+    .toc-sidebar {
+      position: sticky;
+      top: 78px;
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      background: color-mix(in srgb, var(--panel) 76%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      max-height: calc(100dvh - 100px);
+      overflow: auto;
+    }
+    .toc-sidebar-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+    .toc-sidebar-link { display: grid; grid-template-columns: 32px 1fr; gap: 8px; color: var(--muted); text-decoration: none; font: 12px var(--mono); padding: 8px 10px; border-radius: 6px; }
+    .toc-sidebar-link:hover, .toc-sidebar-link.is-active { background: var(--panel-2); color: var(--mint); }
+    .toc-num { color: var(--copper); }
+
+    .section { padding: 52px 0; border-top: 1px solid var(--line-strong); }
+    .section-label { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .section-num, .subsec-label, .bp-num, .pitfall-num { color: var(--copper); font: 700 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .section-rule { height: 1px; flex: 1; background: var(--line); }
+    .section-heading {
+      margin: 10px 0 24px;
+      font: 700 clamp(30px, 5vw, 62px)/.98 var(--display);
+      max-width: 16ch;
+      color: var(--ink);
+    }
+    .section-heading-sm, .subsec-heading, .bp-title, .pitfall-title {
+      margin: 32px 0 12px;
+      font: 700 clamp(21px, 2.5vw, 30px)/1.16 var(--display);
+      color: var(--ink);
+    }
+    .prose { max-width: 78ch; }
+    .prose p, .prose li, .bp-desc, .pitfall-body, .tech-refs li {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+    .prose p { margin: 0 0 18px; }
+    .prose ul, .prose ol { padding-left: 1.35rem; margin: 10px 0 20px; }
+    .prose li + li { margin-top: 8px; }
+    blockquote {
+      margin: 26px 0;
+      padding: 20px 22px;
+      border: 1px solid var(--line-strong);
+      border-left: 4px solid var(--mint);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--mint) 7%, var(--panel));
+    }
+
+    .metric-grid, .combo-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 26px 0; }
+    .metric, .subsection, .bp-item, .tech-refs {
+      background: color-mix(in srgb, var(--panel) 78%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .metric b { display: block; color: var(--mint); font: 700 26px var(--display); }
+    .metric span { color: var(--muted); font: 12px var(--mono); }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line-strong); border-radius: 12px; margin: 22px 0; }
+    table { width: 100%; border-collapse: collapse; min-width: 620px; background: color-mix(in srgb, var(--panel) 70%, transparent); }
+    th, td { padding: 15px 18px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; color: var(--muted); }
+    thead th { border-top: 0; color: var(--copper); font: 700 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    td:first-child { color: var(--ink); }
+
+    .code-block { margin: 22px 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #101412; }
+    .code-block-header { display: flex; justify-content: flex-end; padding: 8px 12px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
+    .code-lang { color: var(--copper); font: 700 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    pre { margin: 0; overflow-x: auto; padding: 18px; color: var(--ink); font: 14px/1.65 var(--mono); }
+    pre code { color: inherit; background: transparent; }
+
+    .subsection { margin: 22px 0; }
+    .subsec-heading { margin-top: 6px; }
+    .bp-item { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 16px; margin: 16px 0; }
+    .bp-title { margin-top: 0; }
+
+    .pitfall-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+    .pitfall-card {
+      border: 1px solid color-mix(in srgb, var(--red) 35%, var(--line));
+      background: color-mix(in srgb, var(--red) 8%, var(--panel));
+      border-radius: 10px;
+      padding: 16px;
+      color: var(--muted);
+    }
+    .pitfall-header { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; margin-bottom: 10px; }
+    .pitfall-num, .pitfall-card b { color: var(--red); }
+    .pitfall-title { margin: 0; font-size: 18px; }
+    .pitfall-body { font-size: 15px; line-height: 1.65; }
+
+    .tech-refs { margin-top: 28px; }
+    .tech-refs-label { color: var(--copper); font: 700 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 12px; }
+    .article-footer { margin-top: 42px; padding-top: 24px; border-top: 1px solid var(--line-strong); color: var(--muted); font: 13px var(--mono); display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+    .footer-kicker strong { color: var(--mint); }
+
+    @media (max-width: 1080px) {
+      .article-header, .page-layout, .hero-visual { grid-template-columns: 1fr; }
+      .hero-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .hero-stack-row:nth-child(2), .hero-stack-row:nth-child(3) { transform: none; }
+      .toc-sidebar { position: static; max-height: none; }
+      .metric-grid, .combo-row, .pitfall-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      body { font-size: 16px; }
+      .container { padding-inline: 16px; }
+      .theme-toggle { right: 12px; top: 12px; }
+      .scroll-toc { width: calc(100vw - 24px); top: 66px; }
+      .site-header .inner { grid-template-columns: 1fr; }
+      .site-header .inner::before, .site-header .inner::after { display: none; }
+      .article-header { min-height: auto; padding-top: 86px; }
+      .article-title { font-size: clamp(38px, 16vw, 62px); max-width: 100%; }
+      .article-subtitle, .lead p { font-size: 18px; }
+      .hero-stack, .metric-grid, .combo-row, .pitfall-grid { grid-template-columns: 1fr; }
+      .toc-chips { flex-direction: column; }
+      .toc-chip { border-radius: 8px; }
+      .section { padding: 40px 0; }
+      .section-heading { max-width: 100%; }
+      table { min-width: 560px; }
+      pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+      .bp-item { grid-template-columns: 1fr; }
+      .article-footer { display: grid; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+      .hero-stack-row { transform: none !important; }
+    }
+
+  </style>
+</head>
+<body>
+<!-- Theme toggle: MANDATORY first child of body -->
+  <button
+    class="theme-toggle"
+    id="theme-toggle"
+    aria-label="Chuyển giao diện sáng / tối"
+    title="Toggle theme"
+  >
+    <span class="icon" id="theme-icon" aria-hidden="true"></span>
+    <span id="theme-label">dark</span>
+  </button>
+
+  <nav class="scroll-toc" aria-label="Mục lục nhanh" id="scroll-toc">
+    <span class="scroll-toc-label">Sections</span>
+    <a href="#s01" class="scroll-toc-link" data-toc="s01">01 Mode vs Flag</a>
+    <a href="#s02" class="scroll-toc-link" data-toc="s02">02 --deep</a>
+    <a href="#s03" class="scroll-toc-link" data-toc="s03">03 --tdd</a>
+    <a href="#s04" class="scroll-toc-link" data-toc="s04">04 Brainstorm</a>
+    <a href="#s05" class="scroll-toc-link" data-toc="s05">05 Matrix</a>
+    <a href="#s06" class="scroll-toc-link" data-toc="s06">06 Inside</a>
+    <a href="#s07" class="scroll-toc-link" data-toc="s07">07 Runbook</a>
+    <a href="#s08" class="scroll-toc-link" data-toc="s08">08 Practices</a>
+    <a href="#s09" class="scroll-toc-link" data-toc="s09">09 Pitfalls</a>
+    <a href="#s10" class="scroll-toc-link" data-toc="s10">10 Tóm lại</a>
+  </nav>
+
+  <div class="container">
+
+    <!-- ── SITE HEADER ── -->
+    <header class="site-header" role="banner">
+      <div class="inner">
+        <a class="site-wordmark" href="/"><strong>Inside</strong> ClaudeKit</a>
+        <span class="site-eyebrow">ClaudeKit Engineer</span>
+      </div>
+    </header>
+
+    <!-- ── ARTICLE HEADER ── -->
+    <header class="article-header">
+      <span class="kicker">✦ ClaudeKit · Mode Note · N° 02 ✦</span>
+      <h1 class="article-title">
+        Khám phá sức mạnh của <span class="cmd">/ck:plan</span> với 2 option mới: <span class="cmd">--deep</span> và <span class="cmd">--tdd</span>
+      </h1>
+      <p class="article-subtitle">
+        Thông qua case port VividKit Desktop, mình breakdown khi nào nên dùng <code>--deep</code>, khi nào bật <code>--tdd</code>, và khi nào không nên lạm dụng.
+      </p>
+      <div class="article-meta">
+        <time datetime="2026-04-22">22/04/2026</time>
+        <span class="sep">·</span>
+        <div class="tag-list">
+          <span class="tag">claudekit</span>
+          <span class="tag">planning</span>
+          <span class="tag">tdd</span>
+          <span class="tag">refactor</span>
+        </div>
+      </div>
+      <aside class="hero-visual" aria-label="Mode planning summary">
+        <div class="hero-visual-label">Use-case map</div>
+        <div class="hero-flow"><code>--deep</code> để soi kiến trúc theo phase<br><code>--tdd</code> để khóa behavior trước khi port</div>
+        <div class="hero-stack">
+          <div class="hero-stack-row"><span>mode</span><span><code>--deep</code> khi scope là port/refactor lớn</span></div>
+          <div class="hero-stack-row"><span>flag</span><span><code>--tdd</code> khi behavior cũ cần được giữ chặt</span></div>
+          <div class="hero-stack-row"><span>combo</span><span><code>--deep --tdd</code> cho migration nhiều runtime risk</span></div>
+          <div class="hero-stack-row"><span>skip</span><span>Task nhỏ hoặc greenfield thì đừng dùng quá tay</span></div>
+        </div>
+        <div class="hero-gates" aria-label="Mode use cases">
+          <span class="hero-gate">mode vs flag</span>
+          <span class="hero-gate">decision matrix</span>
+          <span class="hero-gate">regression gate</span>
+          <span class="hero-gate">pitfalls</span>
+        </div>
+      </aside>
+    </header>
+
+    <!-- ── LEAD PARAGRAPH ── -->
+    <div class="lead prose">
+      <p>
+        Mình đang port <strong>VividKit Desktop</strong> từ <strong>Tauri v2 + Rust</strong> sang <strong>Wails v3 + Go</strong>. Backend gần như viết lại; frontend vẫn là React nhưng IPC adapter phải thay. Scope đụng tới SQLite, git, PTY spawn, file watching, NDJSON streaming, process registry.
+      </p>
+      <p>
+        Context ngắn: VividKit là project mình đã vài lần muốn bỏ. Ban đầu tưởng chỉ cần wrap ClaudeKit thành desktop app rồi vibe một chút; thực tế phức tạp hơn nhiều, trong khi Claude Code Desktop, Codex App và các coding interface khác tiến rất nhanh. Mình vẫn làm vì muốn đưa ClaudeKit tới non-tech users: founder, PM, operator, designer không muốn sống trong CLI/Terminal hay phải học agent orchestration.
+      </p>
+      <p>
+        Với scope này, prompt kiểu "chuyển backend sang Go" rồi để AI tự chạy rất dễ đi sai. Rust → Go không chỉ là đổi syntax: <code>lifecycle</code>, <code>stream</code>, <code>cancellation</code>, <code>process cleanup</code>, <code>Lifetime</code>, <code>ownership</code>, <code>trait system</code>, <code>tokio runtime</code>, <code>portable-pty</code>... đều phải map lại sang Go idiom như <code>goroutines</code>, <code>channels</code>, <code>sync.Map</code>, <code>map + RWMutex</code>, <code>creack/pty</code>. Sai một chỗ thì nhẹ là không build, nặng hơn là runtime mới lộ race condition.
+      </p>
+      <p>
+        Vì vậy mình dùng <code>/ck:plan --deep --tdd</code>. Bài này không phải hướng dẫn port VividKit; nó là ghi chú thực chiến về cách khai phá mode mới của <code>ck-plan</code>: khi nào dùng <code>--deep</code>, khi nào thêm <code>--tdd</code>, combo này giúp gì, và lúc nào nên tránh dùng quá tay.
+      </p>
+    </div>
+
+    <!-- ── TOC inline chips (mobile / <1400px) ── -->
+    <nav class="toc-block" aria-label="Mục lục" id="toc-chips-block">
+      <div class="toc-label">Mục lục · 10 phần</div>
+      <div class="toc-chips">
+        <a href="#s01" class="toc-chip" data-toc="s01"><span class="num">01</span> Mode vs Flag</a>
+        <a href="#s02" class="toc-chip" data-toc="s02"><span class="num">02</span> --deep (đại tu)</a>
+        <a href="#s03" class="toc-chip" data-toc="s03"><span class="num">03</span> --tdd flag</a>
+        <a href="#s04" class="toc-chip" data-toc="s04"><span class="num">04</span> /ck:brainstorm trước</a>
+        <a href="#s05" class="toc-chip" data-toc="s05"><span class="num">05</span> Decision matrix</a>
+        <a href="#s06" class="toc-chip" data-toc="s06"><span class="num">06</span> Cơ chế bên trong</a>
+        <a href="#s07" class="toc-chip" data-toc="s07"><span class="num">07</span> Cách chạy</a>
+        <a href="#s08" class="toc-chip" data-toc="s08"><span class="num">08</span> Best practices</a>
+        <a href="#s09" class="toc-chip" data-toc="s09"><span class="num">09</span> Pitfalls P1–P6</a>
+        <a href="#s10" class="toc-chip" data-toc="s10"><span class="num">10</span> Tóm lại</a>
+      </div>
+    </nav>
+
+    <!-- ── Page layout ── -->
+    <div class="page-layout">
+
+      <!-- Floating rail TOC (desktop ≥1400px) -->
+      <nav class="toc-sidebar" aria-label="Mục lục" id="toc-sidebar">
+        <div class="toc-sidebar-label">Mục lục</div>
+        <ul class="toc-sidebar-list">
+          <li><a href="#s01" class="toc-sidebar-link" data-toc="s01"><span class="toc-num">01</span><span class="toc-title">Mode vs Flag</span></a></li>
+          <li><a href="#s02" class="toc-sidebar-link" data-toc="s02"><span class="toc-num">02</span><span class="toc-title">--deep (đại tu)</span></a></li>
+          <li><a href="#s03" class="toc-sidebar-link" data-toc="s03"><span class="toc-num">03</span><span class="toc-title">--tdd flag</span></a></li>
+          <li><a href="#s04" class="toc-sidebar-link" data-toc="s04"><span class="toc-num">04</span><span class="toc-title">/ck:brainstorm trước</span></a></li>
+          <li><a href="#s05" class="toc-sidebar-link" data-toc="s05"><span class="toc-num">05</span><span class="toc-title">Decision matrix</span></a></li>
+          <li><a href="#s06" class="toc-sidebar-link" data-toc="s06"><span class="toc-num">06</span><span class="toc-title">Cơ chế bên trong</span></a></li>
+          <li><a href="#s07" class="toc-sidebar-link" data-toc="s07"><span class="toc-num">07</span><span class="toc-title">Cách chạy</span></a></li>
+          <li><a href="#s08" class="toc-sidebar-link" data-toc="s08"><span class="toc-num">08</span><span class="toc-title">Best practices</span></a></li>
+          <li><a href="#s09" class="toc-sidebar-link" data-toc="s09"><span class="toc-num">09</span><span class="toc-title">Pitfalls P1–P6</span></a></li>
+          <li><a href="#s10" class="toc-sidebar-link" data-toc="s10"><span class="toc-num">10</span><span class="toc-title">Tóm lại</span></a></li>
+        </ul>
+      </nav>
+
+      <!-- Article body -->
+      <div class="article-body">
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 01 — Mode vs Flag
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s01">
+      <div class="section-label">
+        <span class="section-num">01</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Mode vs Flag — hai khái niệm khác nhau</h2>
+      <div class="prose">
+        <p>Trước khi đi tiếp, cần tách bạch một điểm dễ nhầm.</p>
+        <p><code>/ck:plan</code> nhận 2 loại tham số:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Loại</th>
+                <th>Ví dụ</th>
+                <th>Tác dụng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Mode</strong></td>
+                <td><code>--fast</code>, <code>--hard</code>, <code>--deep</code>, <code>--parallel</code>, <code>--two</code></td>
+                <td>Chọn pipeline. Mỗi lệnh chỉ dùng một mode</td>
+              </tr>
+              <tr>
+                <td><strong>Composable flag</strong></td>
+                <td><code>--tdd</code>, <code>--no-tasks</code></td>
+                <td>Phần cộng thêm. Có thể đi cùng bất kỳ mode nào</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Điểm quan trọng:</p>
+        <ul>
+          <li><code>--deep</code> là <strong>mode</strong>: đổi pipeline, thêm researcher và per-phase scout</li>
+          <li><code>--tdd</code> là <strong>flag</strong>: không đổi mode, nhưng thêm phần tests-first vào phase file và cook flow</li>
+        </ul>
+
+        <p>Source format trong <code>ck-plan/SKILL.md</code>:</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">text</span></div>
+          <pre><code>argument-hint: "[task] [--fast|--hard|--deep|--parallel|--two] [--tdd|--no-tasks]"</code></pre>
+        </div>
+
+        <p>Dấu <code>|</code> giữa các mode nghĩa là chọn một. <code>--tdd</code> đứng ở block riêng nên có thể compose.</p>
+        <p>Nói cách khác: <code>--deep --tdd</code> hợp lệ (mình dùng chính combo này). <code>--deep --hard</code> thì không.</p>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 02 — --deep
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s02">
+      <div class="section-label">
+        <span class="section-num">02</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading"><code>--deep</code> — khi scope là "đại tu" chứ không phải "sửa"</h2>
+      <div class="prose">
+
+        <h3 class="section-heading-sm">Port này thực sự khó ở đâu</h3>
+
+        <p>Ở bản cũ, backend chạy trên Tauri/Rust. Nó có async runtime, SQLite wrapper, git integration, PTY spawn, file watcher, NDJSON streaming, process registry. Frontend gọi backend qua IPC của Tauri.</p>
+
+        <p>Ở bản mới, mình chuyển sang Wails/Go. Nghe như đổi framework, nhưng phần khó không nằm ở syntax. Cái khó là giữ behavior trong một runtime khác: process cleanup, stream buffering, SQLite migration, cancellation, event emission, lifecycle của subprocess.</p>
+
+        <p>Vì vậy đây không phải task "port code". Nó là task <strong>giữ hành vi cũ trong runtime mới</strong>.</p>
+
+        <p>Những vùng bị đụng gồm:</p>
+        <ol>
+          <li>App scaffold và build config</li>
+          <li>Models, database, migrations</li>
+          <li>CRUD services cho các domain chính</li>
+          <li>Process manager và streaming</li>
+          <li>Git, filesystem, worktree</li>
+          <li>Frontend IPC adapter</li>
+          <li>Frontend stores, hooks, pages</li>
+          <li>Integration test</li>
+        </ol>
+
+        <p>Khoảng 8-9 vùng code lớn, trong đó có vài vùng không thể port theo kiểu search-replace. Go concurrency khác Rust khá nhiều. PTY + streaming cũng là nhóm dễ có lỗi chạy được một lúc mới lộ.</p>
+        <p>
+          <code>/ck:plan --hard</code> vẫn có thể dùng. Mình chọn <code>--deep</code> vì cần <strong>bản đồ từng phase</strong> trước khi code. Ví dụ: Phase 4 về streaming nên dùng <code>sync.Map</code> hay <code>map + RWMutex</code> cho process registry? Câu hỏi kiểu này không chỉ là implementation detail; nó ảnh hưởng cách cleanup process, cách emit event, và cách tránh race. <code>--deep</code> ép plan phải scout sâu đến mức đó.
+        </p>
+
+        <h3 class="section-heading-sm"><code>--deep</code> khác <code>--hard</code> ở đâu</h3>
+
+        <p>Source <code>workflow-modes.md</code>:</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">text</span></div>
+          <pre><code>Major refactor, 5+ areas, architectural debt → deep → Need per-phase scouting</code></pre>
+        </div>
+
+        <p>Trong lần port này, cả ba điều kiện đều xuất hiện:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Điều kiện</th>
+                <th>Trong case này</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Touch 5+ vùng code</td>
+                <td>8-9 vùng code, nhiều sub-module mỗi vùng</td>
+              </tr>
+              <tr>
+                <td>Có quyết định kiến trúc mới</td>
+                <td>Rust patterns → Go idioms</td>
+              </tr>
+              <tr>
+                <td>Sợ ảnh hưởng code đang chạy</td>
+                <td>App đang phát triển, schema/SQLite data dev vẫn cần giữ backward compat khi migrate</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Nếu chỉ đụng ít file, hoặc kiến trúc đã rõ, <code>--hard</code> thường đủ. <code>--deep</code> tốn token hơn nhiều, nên mình chỉ dùng khi plan sai sẽ kéo theo sửa sai lớn.</p>
+
+        <h3 class="section-heading-sm">Pipeline của <code>--deep</code></h3>
+
+        <p>8 bước (<code>workflow-modes.md</code>):</p>
+        <ol>
+          <li>Spawn <strong>2-3 researcher agents</strong> cho high-level architecture analysis</li>
+          <li>Đọc docs + chạy <code>/ck:scout</code> qua affected areas</li>
+          <li>
+            <strong>Per-phase scout</strong> — điểm khác biệt so với <code>--hard</code>: với MỖI phase đã plan, chạy focused scout:
+            <ul>
+              <li>Inventory file sẽ create/modify/delete</li>
+              <li>Count existing tests + identify missing coverage</li>
+              <li>List functions/interfaces cần test protection</li>
+              <li>Identify duplicated code hoặc risky dependency edges</li>
+            </ul>
+          </li>
+          <li>Planner embed scout data vào từng phase file</li>
+          <li>Red-team review</li>
+          <li>Post-plan validation</li>
+          <li>Hydrate tasks (trừ khi <code>--no-tasks</code>)</li>
+          <li>Output cook command: <code>/ck:cook {path}/plan.md</code></li>
+        </ol>
+
+        <p>
+          So với <code>--hard</code>, thường scout một vòng cho toàn plan, <code>--deep</code> đi thêm một lượt cho từng phase. Tốn hơn, nhưng đổi lại phase file cụ thể hơn: file nào đụng, test nào thiếu, dependency nào đáng chú ý.
+        </p>
+
+        <h3 class="section-heading-sm">Kết quả với project mình</h3>
+
+        <p>Lệnh đã gõ (chạy trên plan port đã có sẵn để refine):</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:plan --deep --tdd path/to/port-plan.md</code></pre>
+        </div>
+
+        <p>Output phase file quan trọng nhất — <strong>Phase 4 (Process &amp; Streaming)</strong> — tự document 2 spawn path rõ ràng:</p>
+
+        <blockquote>
+          <p>- <strong>Path A (PTY):</strong> Rust <code>portable-pty</code> → xterm.js. Events: <code>ccs_run_event</code></p>
+          <p>- <strong>Path B (stdio pipes):</strong> <code>tokio::process::Command</code> → NDJSON. Events: <code>stream:chunk</code></p>
+          <p>Go equivalents:</p>
+          <ul>
+            <li><strong>Path A:</strong> <code>creack/pty</code> → same xterm.js. Events: <code>app.EmitEvent("ccs_run_event", ...)</code></li>
+            <li><strong>Path B:</strong> <code>os/exec.CommandContext</code> + StdoutPipe/StdinPipe → same NDJSON parsing</li>
+            <li>Process registry: Rust <code>HashMap&lt;String, Child&gt;</code> → Go <code>sync.Map</code> or map with <code>sync.RWMutex</code></li>
+          </ul>
+        </blockquote>
+
+        <p>
+          Đoạn này không phải mình tự viết tay. Scout đọc Rust source, map pattern sang Go idiom, rồi planner đưa thẳng vào phase file. Khi cook chạy Phase 4, nó không phải đoán lại từ đầu "Rust dùng HashMap thì Go nên dùng gì".
+        </p>
+        <p>Plan cũng chia ownership theo domain thay vì chỉ nói chung chung "port backend":</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Ownership</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>3</td>
+                <td>CRUD services và domain APIs</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Process manager, streaming, session watcher</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Git, filesystem, worktree</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Dependency graph cũng được plan tự vẽ — Phase 1 → Phase 2 → (3, 4, 5 parallel group A) → Phase 6 → (7, 8 parallel group B) → Phase 9.
+        </p>
+        <p>
+          Điểm đáng nói: <code>--deep</code> không làm code nhanh hơn theo nghĩa từng dòng code sinh ra nhanh hơn. Nó giảm số lần cook phải dừng lại để đoán scope. Với một port đa-stack như Rust → Go, phần tiết kiệm nằm ở chỗ ít đi sai nhánh.
+        </p>
+
+        <h3 class="section-heading-sm">Phase file yêu cầu gì thêm ở <code>--deep</code></h3>
+
+        <p>Source <code>plan-organization.md</code>:</p>
+        <ul>
+          <li><strong>File inventory table</strong> — action (create/modify/delete), rough size, test impact</li>
+          <li><strong>Test scenario matrix</strong> — critical/high/medium paths</li>
+          <li><strong>Dependency map</strong> — phase này link đến phase nào khác</li>
+        </ul>
+        <p>Và source <code>workflow-modes.md</code> Deep Phase Requirements bổ sung:</p>
+        <ul>
+          <li><strong>Function/interface checklist</strong> — hàm nào cần test bảo vệ</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 03 — --tdd
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s03">
+      <div class="section-label">
+        <span class="section-num">03</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading"><code>--tdd</code> — khi sợ refactor phá hành vi đang chạy</h2>
+      <div class="prose">
+
+        <h3 class="section-heading-sm">Vấn đề mà flag này giải quyết</h3>
+
+        <p>
+          Flow mặc định của cook khá quen thuộc: đọc plan, implement từng task, type check sau mỗi file, rồi đến bước testing riêng sau đó.
+        </p>
+        <p>
+          Với greenfield thì ổn. Với một lần port, mình không muốn như vậy. Có nhiều behavior đang tồn tại trong Rust code và bản Go phải giữ lại:
+        </p>
+        <ul>
+          <li>Process cleanup order: Rust <code>Drop</code> trait tự động; Go phải explicit qua goroutine + context cancellation</li>
+          <li>Database connection pool: Rust <code>rusqlite</code> single-threaded + mutex; Go <code>database/sql</code> có pool built-in</li>
+          <li>NDJSON line buffering: Rust tokio <code>Lines</code>; Go <code>bufio.Scanner</code> có max token size khác</li>
+        </ul>
+        <p>
+          Nếu bản Go vô tình đổi behavior, có thể không lỗi ngay ở happy path. Nó thường lộ ở edge case: process bị cancel giữa chừng, NDJSON line dài, hoặc DB đang có connection cũ. <code>--tdd</code> giúp bắt các drift kiểu đó sớm hơn.
+        </p>
+
+        <h3 class="section-heading-sm">Mình dùng <code>--tdd</code> lúc nào</h3>
+
+        <p>Không phải mọi phase của port đều cần <code>--tdd</code>.</p>
+        <ul>
+          <li><strong>Phase 1 (scaffold)</strong>, <strong>Phase 2 (models/DB)</strong>: greenfield Go code, không có behavior cũ để bảo vệ → <code>--hard</code> đủ</li>
+          <li><strong>Phase 3 (CRUD services)</strong>, <strong>Phase 4 (streaming)</strong>, <strong>Phase 5 (git/fs)</strong>: có tương đương Rust đang work → <code>--tdd</code> giúp document behavior hiện tại (bằng integration test chạy Rust version, capture output, rồi assert Go version output giống) → giảm drift</li>
+        </ul>
+        <p>
+          Mình dùng <code>--tdd</code> nhiều nhất ở các module có async pattern phức tạp, vì đó là nơi Go idiom khác Rust rõ nhất và dễ port lệch nhất.
+        </p>
+        <p>
+          Một use case khác mình áp thẳng trong project này: <strong>refactor brainstorm-ui sau khi đã có bản Wails nội bộ để dogfood</strong>. Plan: <code>plans/260414-1247-brainstorm-ui-redesign/</code>. Lệnh cook mình đã gõ:
+        </p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:cook plans/260414-1247-brainstorm-ui-redesign/ --tdd</code></pre>
+        </div>
+        <p>Component đã được mình dogfood và review trong app dev. Refactor phần đó mà không có regression gate thì hơi liều.</p>
+
+        <h3 class="section-heading-sm">Cơ chế ở plan-time</h3>
+
+        <p>Source <code>plan-organization.md</code> quy định phase file khi <code>--tdd</code> bật có 4 section bổ sung:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Vai trò</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Tests Before</strong></td>
+                <td>Regression coverage viết <strong>trước</strong> khi refactor. Document hành vi hiện tại</td>
+              </tr>
+              <tr>
+                <td><strong>Refactor</strong></td>
+                <td>Mô tả code changes được các test trên bảo vệ</td>
+              </tr>
+              <tr>
+                <td><strong>Tests After</strong></td>
+                <td>Test cho hành vi mới thêm trong phase (nếu có)</td>
+              </tr>
+              <tr>
+                <td><strong>Regression Gate</strong></td>
+                <td>Compile + test command cụ thể phải pass sau refactor</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Source <code>workflow-modes.md</code> format cấu trúc phase khi <code>--tdd</code> bật:</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">text</span></div>
+          <pre><code>Phase N: [Topic]
+├── Step A: Write tests for current behavior
+├── Step B: Add shared infrastructure or seams
+├── Step C: Refactor existing code
+└── Step D: Verify compile + tests</code></pre>
+        </div>
+
+        <p>
+          Step B là chỗ dễ bị xem nhẹ. Có khi code cũ không test trực tiếp được: một function dài tự gọi database bên trong, không inject được dependency, không isolate được output. Khi đó phải thêm một "seam" nhỏ trước, giữ behavior như cũ nhưng làm cho code test được. Sau đó mới refactor thật.
+        </p>
+
+        <h3 class="section-heading-sm">Cơ chế ở cook-time</h3>
+
+        <p>Khi <code>--tdd</code> active, Step 3 (Implementation) của cook tách thành 3 sub-step (<code>cook/references/workflow-steps.md</code>):</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">text</span></div>
+          <pre><code>Step 3.T: Write tests for CURRENT behavior  (regression safety net)
+Step 3.I: Implement changes                 (refactor, new code)
+Step 3.V: Verify all tests from 3.T still pass + compile gates</code></pre>
+        </div>
+
+        <p>
+          Cook spec viết rõ: <em>"Tests from Step 3.T document the current behavior. If any fail after Step 3.I, the refactor broke something and must be fixed before the workflow proceeds."</em>
+        </p>
+        <p>
+          Đây là regression gate thật, không chỉ là section trang trí trong plan. Nếu 3.V fail, cook phải dừng ở đó thay vì đi tiếp sang testing hoặc review.
+        </p>
+
+        <h3 class="section-heading-sm">Điểm dễ quên: <code>--tdd</code> phải có ở cả 2 lệnh</h3>
+
+        <p>Source <code>workflow-modes.md</code>:</p>
+        <blockquote>
+          <p><em>"If planning ran with <code>--tdd</code>, append <code>--tdd</code> to the reminder above so cook keeps the tests-first execution path."</em></p>
+        </blockquote>
+
+        <p>
+          Nếu plan với <code>--tdd</code> nhưng cook không có <code>--tdd</code>, cook đọc phase file có section Tests Before nhưng <strong>không enforce</strong> thứ tự 3.T/3.I/3.V. Kết quả: test vẫn được viết nhưng chạy sau code. Mất luôn regression safety.
+        </p>
+        <p>
+          Mình đã dính lỗi này vài lần: plan có <code>--tdd</code>, nhưng lúc cook lại gõ nhanh <code>/ck:cook plan.md</code> và quên flag. Đến khi thấy cook không đi qua sub-step 3.V mới nhận ra. Cách đơn giản nhất là copy đúng lệnh cook mà plan in ra cuối output.
+        </p>
+
+        <h3 class="section-heading-sm">Khi nào <strong>không</strong> dùng</h3>
+        <ul>
+          <li><strong>Greenfield</strong> — code mới hoàn toàn, không có hành vi hiện tại để test. Step Tests Before thành no-op → agent dễ viết test cho có thay vì TDD thật</li>
+          <li><strong>Prototype / throwaway</strong> — không đáng trade-off plan time</li>
+          <li><strong>Fix 1-2 dòng</strong> — overkill</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 04 — /ck:brainstorm trước
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s04">
+      <div class="section-label">
+        <span class="section-num">04</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Một lưu ý — khi nào dùng <code>/ck:brainstorm</code> trước</h2>
+      <div class="prose">
+        <p>
+          Một lỗi dễ gặp: dùng <code>--deep --tdd</code> khi approach còn mơ hồ. Plan mode không tự giải quyết ambiguity. Nó chỉ biến <strong>approach đã chọn</strong> thành các bước cụ thể hơn.
+        </p>
+        <p>Trong case port của mình, trước khi <code>/ck:plan</code> mình đã biết:</p>
+        <ul>
+          <li>Target stack là Wails v3 + Go (không còn đắn đo giữa Wails / Fyne / Slint)</li>
+          <li>Frontend giữ React (không rewrite sang Svelte dù có cám dỗ)</li>
+          <li>Git dùng <code>os/exec</code> gọi git CLI (không dùng <code>go-git</code>)</li>
+        </ul>
+        <p>
+          Nếu lúc đó mình vẫn chưa quyết git library, <code>/ck:plan --deep</code> sẽ dễ bị kéo sang hai hướng: <code>go-git</code> hay git CLI. Plan sẽ dài hơn, nhưng chưa chắc tốt hơn. Trường hợp đó nên dùng <code>/ck:brainstorm</code> trước để chốt approach, rồi mới plan.
+        </p>
+        <p>
+          Một layer nữa là <code>/ck:scout</code>. Mình xem nó như bước gom context, không phải bước ra quyết định. Scout hợp khi chính mình cũng chưa chắc code nằm ở đâu, module nào liên quan, test nào đang cover behavior hiện tại. Nó giúp AI có bản đồ project trước khi brainstorm.
+        </p>
+        <p>Flow lúc thiếu bối cảnh sẽ là:</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:scout "brainstorm-ui workflow, streaming state, report preview, Wails bindings"
+/ck:brainstorm "Refactor brainstorm-ui để giảm coupling nhưng giữ workflow hiện tại"
+/ck:plan --deep --tdd plans/...</code></pre>
+        </div>
+        <p>
+          Nếu đã biết rõ vùng code và trade-off chính, có thể bỏ <code>/ck:scout</code> riêng. <code>/ck:plan --deep</code> vẫn sẽ scout trong pipeline. Nhưng nếu brainstorm bắt đầu từ mô tả quá chung, scout trước giúp tránh một kiểu lỗi khá âm thầm: AI debate rất hay, nhưng debate trên bản đồ project sai.
+        </p>
+
+        <p>Quy tắc:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tình huống</th>
+                <th>Bắt đầu từ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Chưa rõ project context / chưa biết code nằm đâu</td>
+                <td><code>/ck:scout</code> → <code>/ck:brainstorm</code></td>
+              </tr>
+              <tr>
+                <td>Biết rõ <strong>làm gì</strong> và <strong>làm thế nào</strong></td>
+                <td><code>/ck:plan</code> trực tiếp</td>
+              </tr>
+              <tr>
+                <td>Biết <strong>làm gì</strong>, chưa chắc <strong>làm thế nào</strong></td>
+                <td><code>/ck:brainstorm</code> → <code>/ck:plan</code></td>
+              </tr>
+              <tr>
+                <td>Chưa biết <strong>có nên làm không</strong></td>
+                <td><code>/ck:brainstorm</code> → quyết → plan hoặc bỏ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          <code>--deep</code> và <code>--tdd</code> làm approach đã chọn trở nên chi tiết hơn. Nếu chọn sai hướng từ đầu, scout kỹ hơn chỉ làm sai hướng đó trông có vẻ thuyết phục hơn.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 05 — Decision matrix
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s05">
+      <div class="section-label">
+        <span class="section-num">05</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Decision matrix</h2>
+      <div class="prose">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tình huống</th>
+                <th>Lệnh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Chưa rõ project context</td>
+                <td><code>/ck:scout</code> trước, rồi brainstorm/plan</td>
+              </tr>
+              <tr>
+                <td>Chưa chắc approach</td>
+                <td><code>/ck:brainstorm</code> trước</td>
+              </tr>
+              <tr>
+                <td>Fix nhỏ 1-2 file</td>
+                <td><code>/ck:plan --fast</code></td>
+              </tr>
+              <tr>
+                <td>Feature mới trung bình</td>
+                <td><code>/ck:plan</code> (auto)</td>
+              </tr>
+              <tr>
+                <td>Feature phức tạp, domain lạ</td>
+                <td><code>/ck:plan --hard</code></td>
+              </tr>
+              <tr>
+                <td>3+ module độc lập, song song</td>
+                <td><code>/ck:plan --parallel</code></td>
+              </tr>
+              <tr>
+                <td>Phân vân 2 approach cụ thể</td>
+                <td><code>/ck:plan --two</code></td>
+              </tr>
+              <tr class="combo-row">
+                <td><strong>Refactor 5+ vùng, có nợ kiến trúc</strong></td>
+                <td><code>/ck:plan --deep</code></td>
+              </tr>
+              <tr class="combo-row">
+                <td><strong>Refactor code đang chạy/dogfood, sợ regression</strong></td>
+                <td>Any mode + <code>--tdd</code></td>
+              </tr>
+              <tr class="combo-row">
+                <td><strong>Major refactor / port trên codebase có behavior cần giữ</strong></td>
+                <td><code>/ck:plan --deep --tdd</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Combo <code>--deep --tdd</code> không phải một chiêu duy nhất, mà là hai việc khác nhau đi cùng nhau. <code>--deep</code> cho <strong>bản đồ</strong>: per-phase scout, file inventory, dependency map. <code>--tdd</code> cho <strong>safety net</strong>: test hành vi cũ trước khi refactor.
+        </p>
+        <p>
+          Với lần port Rust → Go này, mình thấy combo đó đáng thời gian bỏ ra. Plan lâu hơn, nhưng vẫn rẻ hơn nhiều so với việc port xong mới đi tìm race condition.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 06 — Cơ chế bên trong
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s06">
+      <div class="section-label">
+        <span class="section-num">06</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Inside — cơ chế bên trong</h2>
+      <div class="prose">
+        <p>Nếu chỉ cần dùng command, có thể nhảy qua Section 07.</p>
+
+        <!-- 6.1 -->
+        <div class="subsection">
+          <div class="subsec-label">6.1</div>
+          <div class="subsec-heading"><code>--deep</code> spawn nhiều sub-agent hơn</div>
+          <p>Bảng tổng hợp sub-agent per mode (đọc từ <code>workflow-modes.md</code>):</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mode</th>
+                  <th>Researcher</th>
+                  <th>Red Team</th>
+                  <th>Validation</th>
+                  <th>Per-phase scout</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>--fast</code></td>
+                  <td>0</td>
+                  <td>0</td>
+                  <td>0</td>
+                  <td>0</td>
+                </tr>
+                <tr>
+                  <td><code>--hard</code></td>
+                  <td>2</td>
+                  <td>Yes</td>
+                  <td>Optional</td>
+                  <td>0</td>
+                </tr>
+                <tr class="combo-row">
+                  <td><strong><code>--deep</code></strong></td>
+                  <td><strong>2-3</strong></td>
+                  <td><strong>Yes</strong></td>
+                  <td><strong>Yes</strong></td>
+                  <td><strong>1 per phase</strong></td>
+                </tr>
+                <tr>
+                  <td><code>--parallel</code></td>
+                  <td>2</td>
+                  <td>Yes</td>
+                  <td>Optional</td>
+                  <td>0</td>
+                </tr>
+                <tr>
+                  <td><code>--two</code></td>
+                  <td>2+</td>
+                  <td>Sau select</td>
+                  <td>Sau select</td>
+                  <td>0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Ước lượng với project port của mình (9 phase):</p>
+          <ul>
+            <li>3 researcher (high-level architecture: Wails 3, Go desktop patterns, source repomix)</li>
+            <li>Red-team reviewer (4 vì phase count lớn)</li>
+            <li>1 validation agent</li>
+            <li>9 per-phase scout</li>
+          </ul>
+          <p>
+            Tổng khoảng <strong>17 sub-agent spawn</strong> cho một lệnh plan. Đây là ước lượng từ mô tả pipeline; source không nói rõ per-phase scout luôn là agent riêng hay có thể là tool call trong planner context.
+          </p>
+          <p>
+            So với <code>--fast</code>, <code>--deep</code> đắt hơn rõ rệt. Nhưng với một task cỡ vài chục giờ, chi phí plan vẫn nhỏ hơn chi phí sửa lại nếu Phase 4 đi sai.
+          </p>
+        </div>
+
+        <!-- 6.2 -->
+        <div class="subsection">
+          <div class="subsec-label">6.2</div>
+          <div class="subsec-heading"><code>--tdd</code> không tạo sub-agent — chỉ là template injection</div>
+          <p>
+            Điểm dễ hiểu sai: <code>--tdd</code> không spawn agent mới và cũng không đổi mode detection. Trong <code>cook/references/intent-detection.md</code> có comment:
+          </p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-lang">text</span></div>
+            <pre><code># "--tdd" is composable and does not change mode selection</code></pre>
+          </div>
+          <p>Flag chỉ đổi <strong>2 thứ</strong>:</p>
+          <p>
+            <strong>(a)</strong> Template phase file ở plan-time. Phase thường có: Overview · Requirements · Architecture · Related Files · Implementation Steps · Success Criteria · Risk Assessment.
+          </p>
+          <p>
+            Khi <code>--tdd</code> bật, thêm 4 section: Tests Before · Refactor · Tests After · Regression Gate (<code>plan-organization.md</code>).
+          </p>
+          <p>
+            <strong>(b)</strong> Step 3 của cook ở cook-time. Từ monolithic "Implementation" tách thành 3.T → 3.I → 3.V (<code>cook/references/workflow-steps.md</code>).
+          </p>
+          <p>Chi phí của <code>--tdd</code> thấp hơn <code>--deep</code> nhiều. Nó chủ yếu thêm cấu trúc vào phase file và đổi thứ tự thực thi ở cook Step 3.</p>
+        </div>
+
+        <!-- 6.3 -->
+        <div class="subsection">
+          <div class="subsec-label">6.3</div>
+          <div class="subsec-heading">Regression Gate phụ thuộc command cụ thể</div>
+          <p>
+            Cook spec yêu cầu Regression Gate là <strong>compile/test command cụ thể</strong>. Với Go project, ví dụ:
+          </p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-lang">bash</span></div>
+            <pre><code>Regression Gate: go test ./... &amp;&amp; go vet ./...</code></pre>
+          </div>
+          <p>
+            Nếu phase file viết mơ hồ ("run tests to verify"), cook không biết exact command → sub-step 3.V không chạy được → TDD discipline rỗng. Flag <code>--tdd</code> không tự đoán đúng tool trong mọi repo. Nếu project dùng command riêng, nên ghi rõ ngay trong task description hoặc plan file.
+          </p>
+          <p>
+            Mình thường prepend vào task: <code>"Project dùng go test ./... + frontend dùng npm test"</code>. AI sẽ populate đúng vào Regression Gate của từng phase.
+          </p>
+        </div>
+
+        <!-- 6.4 -->
+        <div class="subsection">
+          <div class="subsec-label">6.4</div>
+          <div class="subsec-heading">Tóm lại</div>
+          <ul>
+            <li><strong><code>--deep</code></strong>: tốn hơn, vì thêm researcher và per-phase scout. Đổi lại phase file ít mơ hồ hơn.</li>
+            <li><strong><code>--tdd</code></strong>: nhẹ hơn, vì chủ yếu đổi template và Step 3 của cook. Điều kiện quan trọng là Regression Gate phải có command cụ thể.</li>
+            <li>Hai thứ này không overlap, nên dùng chung được.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 07 — Cách chạy
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s07">
+      <div class="section-label">
+        <span class="section-num">07</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Cách chạy và vài mẫu prompt</h2>
+      <div class="prose">
+        <p>Lệnh mình đã dùng cho port (refine plan có sẵn):</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:plan --deep --tdd plans/260412-0239-port-vividkit-wails3/plan.md</code></pre>
+        </div>
+
+        <p>Và cho các phase cook về sau:</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:cook plans/260412-0239-port-vividkit-wails3/ --tdd</code></pre>
+        </div>
+
+        <p>Một vài prompt khác theo cùng pattern:</p>
+
+        <p><strong><code>--deep</code> cho major refactor:</strong></p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:plan --deep "Tách auth logic từ Django monolith ra service riêng, expose
+qua gRPC, giữ backward compat cho internal clients đang gọi từ 3 team khác."</code></pre>
+        </div>
+
+        <p><strong><code>--hard --tdd</code> cho refactor code đang chạy/dogfood:</strong></p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:plan --hard --tdd "Refactor userRepository: split getUser() thành
+find/fetch/lookup, giữ exact behavior cho all callers hiện tại."</code></pre>
+        </div>
+
+        <p><strong>Combo <code>--deep --tdd</code> cho major refactor có behavior cần giữ (như port của mình):</strong></p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span></div>
+          <pre><code>/ck:plan --deep --tdd "Port desktop app từ Tauri v2 + Rust sang Wails v3 + Go,
+giữ React frontend, rewrite IPC adapter. Đụng: SQLite layer, git CLI calls,
+PTY spawning, NDJSON streaming, process registry. Project dùng go test ./...
+và frontend dùng npm test."</code></pre>
+        </div>
+
+        <p>Task description tốt thường có đủ:</p>
+        <ul>
+          <li><strong>Phạm vi</strong> — file/module/stack nào</li>
+          <li><strong>Ràng buộc</strong> — không được phá gì, giữ tương thích gì</li>
+          <li><strong>Tooling</strong> — test command, compile command (quan trọng cho <code>--tdd</code>)</li>
+          <li><strong>Kết quả mong muốn</strong> — ngắn gọn nhưng cụ thể</li>
+        </ul>
+
+        <p>Input quá mơ hồ, ví dụ <code>"port sang Go"</code>, sẽ cho ra plan mơ hồ. Scout không có anchor cụ thể thì output rất dễ chung chung.</p>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 08 — Best practices
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s08">
+      <div class="section-label">
+        <span class="section-num">08</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Best practices mình rút ra</h2>
+      <div class="prose">
+
+        <div class="bp-item">
+          <div class="bp-num">1</div>
+          <div class="bp-content">
+            <div class="bp-title">Worktree sạch trước khi plan</div>
+            <div class="bp-desc">
+              <p>Nếu working dir có uncommitted changes từ task khác, scout lẫn lộn code hiện tại với code đang dở. Trước plan lớn: commit hoặc stash. Tốt hơn: tạo worktree riêng qua <code>/ck:worktree</code>.</p>
+              <p>Mình port Tauri → Wails trong một workspace tách riêng. Source cũ vẫn để nguyên để scout đọc và đối chiếu behavior, còn phần ghi file chỉ nằm ở target mới. Cách này giúp plan có đủ context mà không làm bẩn code đang chạy.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">2</div>
+          <div class="bp-content">
+            <div class="bp-title">Review phase file trước khi cook</div>
+            <div class="bp-desc">
+              <p><code>--deep --tdd</code> plan chạy khá lâu. Đừng phí công đó bằng cách cook ngay mà không đọc lại.</p>
+              <p>Đọc <code>plan.md</code> và <code>phase-XX-*.md</code> với 5 câu hỏi 30-giây:</p>
+              <ol>
+                <li><strong>File inventory</strong> có file nào không muốn AI đụng? (production config, frozen migration, shared schema)</li>
+                <li><strong>Test scenario matrix</strong> có miss race condition hoặc business-critical edge case? (với port, đặc biệt quan tâm cancellation + goroutine leak)</li>
+                <li><strong>Phase order</strong> có thật độc lập? Phase N có ngầm phụ thuộc N-1?</li>
+                <li><strong>Regression Gate command</strong> đúng tool + đúng test subset?</li>
+                <li><strong>Known bugs</strong> cần fix hay cần preserve? (xem Pitfall 5)</li>
+              </ol>
+              <p>Có thể sửa thẳng các section như requirements, tests before, risk assessment. Cook đọc plan từ text, nên chỉnh ở đó là có tác dụng.</p>
+              <p>Không sửa frontmatter hay phase status (<code>pending</code>/<code>in-progress</code>/<code>completed</code>) — phần đó do <code>ck</code> CLI quản. Đổi status dùng <code>ck plan check/uncheck &lt;phase-id&gt;</code>.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">3</div>
+          <div class="bp-content">
+            <div class="bp-title">Với <code>--tdd</code>, khai báo test command trong task</div>
+            <div class="bp-desc">
+              <p>Repo dùng tool lạ (<code>bun</code> thay <code>npm</code>, <code>mise</code> thay <code>asdf</code>, <code>task</code> thay <code>make</code>)? Khai báo luôn:</p>
+              <div class="code-block" style="margin: 0.75rem 0;">
+                <div class="code-block-header"><span class="code-lang">text</span></div>
+                <pre><code>"Project dùng go test ./..., frontend dùng npm test, E2E dùng Playwright"</code></pre>
+              </div>
+              <p>Không khai báo thì AI sẽ đoán. Đoán sai command là Regression Gate hở.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">4</div>
+          <div class="bp-content">
+            <div class="bp-title"><code>/clear</code> giữa plan và cook</div>
+            <div class="bp-desc">
+              <p>Plan context trong task lớn thường rất nặng: research output, scout data, red-team feedback. Giữ nguyên context đó khi cook dễ làm agent lẫn giữa note cũ và code đang sửa.</p>
+              <p>Flow mình theo: plan xong → <code>/clear</code> → mở lại → <code>/ck:cook {absolute-path}/plan.md --tdd</code>. Cook đọc plan từ đĩa — không cần planning context cũ.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bp-item">
+          <div class="bp-num">5</div>
+          <div class="bp-content">
+            <div class="bp-title">Task description đủ phạm vi</div>
+            <div class="bp-desc">
+              <p>Như Section 07: phạm vi, ràng buộc, tooling, kết quả. Nếu mô tả gọn trong một câu quá chung chung, thường chưa đủ cho <code>--deep</code>.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 09 — Pitfalls P1-P6
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s09">
+      <div class="section-label">
+        <span class="section-num">09</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Pitfalls</h2>
+      <div class="prose">
+        <p>Một vài bẫy mình đã gặp hoặc thấy rất dễ gặp.</p>
+      </div>
+
+      <div class="pitfall-grid">
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P1</span>
+            <div class="pitfall-title">Quên <code>--tdd</code> ở <code>/ck:cook</code></div>
+          </div>
+          <div class="pitfall-body">
+            Plan có <code>--tdd</code>, cook không có → cook vẫn đọc được section Tests Before, nhưng không enforce thứ tự 3.T/3.I/3.V. Test có thể vẫn được viết, chỉ là viết sau code. Copy đúng cook command mà plan in ra cuối output.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P2</span>
+            <div class="pitfall-title"><code>--deep</code> cho task nhỏ</div>
+          </div>
+          <div class="pitfall-body">
+            Dưới khoảng 5 file thì thường không đáng. Dùng <code>--hard</code> hoặc <code>--fast</code> sẽ gọn hơn.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P3</span>
+            <div class="pitfall-title"><code>--tdd</code> cho greenfield</div>
+          </div>
+          <div class="pitfall-body">
+            Code mới không có hành vi hiện tại để test. Step Tests Before thành no-op → agent dễ viết test cho có thay vì TDD thật. Greenfield dùng <code>--hard</code>, để test được viết ở Step 4 như bình thường.<br /><br />
+            Với port của mình, Phase 1 (scaffold) và Phase 2 (models/DB) là greenfield Go → mình <strong>không</strong> dùng <code>--tdd</code> cho hai phase đó. Chỉ áp từ Phase 3 trở đi nơi có tương đương Rust đang work.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P4</span>
+            <div class="pitfall-title">Tin 100% phase file</div>
+          </div>
+          <div class="pitfall-body">
+            <code>--deep</code> scout kỹ hơn, nhưng vẫn có thể miss dependency ngầm. Trước khi cook, nên tự hỏi: <em>"nếu chạy phase N độc lập, nó có thiếu gì từ phase N-1 không?"</em><br /><br />
+            Với port của mình, dependency graph rất rõ (Phase 1 → 2 → parallel group A → 6 → parallel group B → 9). Nhưng nếu plan smaller-scale, dependency có thể ngầm.
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P5</span>
+            <div class="pitfall-title"><code>--tdd</code> chụp test cho code có bug sẵn</div>
+          </div>
+          <div class="pitfall-body">
+            Code cũ có bug tiềm ẩn (ví dụ Rust version có memory leak trong PTY cleanup). <code>--tdd</code> → Step A chụp luôn bug thành "hành vi hiện tại". Refactor Go vô tình fix bug → Step D fail → AI "sửa lại" cho đúng bug cũ. Giải pháp: khai báo known bugs trong task (<code>"KHÔNG preserve memory leak trong PTY cleanup của Rust version"</code>), hoặc tách 2 plan (plan 1 fix bug, plan 2 port).
+          </div>
+        </div>
+
+        <div class="pitfall-card">
+          <div class="pitfall-header">
+            <span class="pitfall-num">P6</span>
+            <div class="pitfall-title"><code>--deep --tdd --parallel</code> không ownership rõ</div>
+          </div>
+          <div class="pitfall-body">
+            <code>--parallel</code> chạy nhiều agent song song. Nếu thêm <code>--tdd</code>, mỗi agent cần test scope rõ. Test dùng chung DB hoặc fixture rất dễ đạp nhau. Chưa chắc ownership và test isolation thì bỏ <code>--parallel</code>, giữ <code>--deep --tdd</code>.<br /><br />
+            Port của mình có parallel group (Phase 3, 4, 5 song song) nhưng file ownership phân chia exclusive → không xung đột.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECTION 10 — Tóm lại
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="section" id="s10">
+      <div class="section-label">
+        <span class="section-num">10</span>
+        <div class="section-rule"></div>
+      </div>
+      <h2 class="section-heading">Tóm lại</h2>
+      <div class="prose">
+        <p>
+          Port Tauri/Rust → Wails/Go là một trong những task lớn nhất mình làm với ClaudeKit đến giờ. Không có <code>--deep</code>, plan rất dễ bỏ qua những quyết định kiểu "Rust <code>HashMap&lt;String, Child&gt;</code> nên map sang <code>sync.Map</code> hay <code>map + RWMutex</code>". Không có <code>--tdd</code> cho Phase 3-5, bản Go có thể chạy được nhưng lệch behavior ở edge case.
+        </p>
+        <p>
+          Với project như vậy, <code>--deep --tdd</code> không làm mọi thứ tự nhiên an toàn. Nhưng nó buộc mình viết rõ scope, test gate và dependency trước khi sửa code.
+        </p>
+        <p>
+          Cả hai đều làm planning chậm hơn. Đổi lại, implementation ít bất ngờ hơn. Với code đã có behavior cần giữ hoặc port đa-stack, mình thường chọn ít bất ngờ.
+        </p>
+        <p>
+          Nếu bạn ở vai trò PM/founder/product, chỉ cần biết hai option này tồn tại. Khi team chuẩn bị refactor module lớn hoặc port sang stack khác, hãy hỏi xem plan đã có per-phase scout và regression gate chưa.
+        </p>
+        <p>
+          Nếu bạn là dev, hãy thử ở task lớn kế tiếp. Lần đầu có thể thấy hơi chậm. Nhưng chỉ cần một lần Tests Before bắt được regression ngầm, bạn sẽ biết vì sao nó đáng giữ trong workflow.
+        </p>
+
+        <div class="tech-refs">
+          <div class="tech-refs-label">Ghi chú kỹ thuật</div>
+          <ul>
+            <li><code>--deep</code> (mode) và <code>--tdd</code> (composable flag) thêm trong commit <code>feat(skills): add deep and tdd plan-cook workflows</code> (hash <code>3e252e20</code>), xuất hiện từ ClaudeKit <code>v2.16.0-beta.8</code></li>
+            <li>Source tham khảo: <code>ck-plan/SKILL.md</code> — argument hint</li>
+            <li><code>ck-plan/references/workflow-modes.md</code> — Deep pipeline + TDD phase format</li>
+            <li><code>ck-plan/references/plan-organization.md</code> — phase file requirements</li>
+            <li><code>cook/references/workflow-steps.md</code> — Step 3.T/3.I/3.V split</li>
+            <li><code>cook/references/intent-detection.md</code> — "composable, does not change mode"</li>
+            <li>SKILL.md liệt kê 3 ví dụ combination (<code>--hard --tdd</code>, <code>--deep --tdd</code>, <code>--parallel --tdd</code>). Về nguyên tắc <code>--tdd</code> combine được với mọi mode kể cả <code>--fast</code>, nhưng trade-off với <code>--fast</code> không hợp lý</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+      </div><!-- /.article-body -->
+    </div><!-- /.page-layout -->
+
+    <!-- ── ARTICLE FOOTER ── -->
+    <footer class="article-footer">
+      <div class="footer-kicker">
+        <strong>Inside</strong> ClaudeKit · 22/04/2026
+      </div>
+      <div class="footer-kicker">
+        claudekit · planning · tdd · refactor
+      </div>
+    </footer>
+
+  </div><!-- /.container -->
+
+  <!-- Scroll-spy -->
+  <script>
+    (function () {
+      var sections = Array.from(document.querySelectorAll('section[id]'));
+      var sidebarLinks = document.querySelectorAll('.toc-sidebar-link[data-toc]');
+      var chips = document.querySelectorAll('.toc-chip[data-toc]');
+      var scrollToc = document.getElementById('scroll-toc');
+      var scrollLinks = document.querySelectorAll('.scroll-toc-link[data-toc]');
+      var articleHeader = document.querySelector('.article-header');
+
+      function setActive(id) {
+        sidebarLinks.forEach(function (el) {
+          el.classList.toggle('is-active', el.getAttribute('data-toc') === id);
+        });
+        chips.forEach(function (el) {
+          el.classList.toggle('is-active', el.getAttribute('data-toc') === id);
+        });
+        scrollLinks.forEach(function (el) {
+          var active = el.getAttribute('data-toc') === id;
+          el.classList.toggle('is-active', active);
+          if (active && scrollToc) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        });
+      }
+
+      function updateFloatingToc() {
+        if (!scrollToc) return;
+        var bottom = articleHeader ? articleHeader.getBoundingClientRect().bottom : 0;
+        var visible = bottom < 72;
+        scrollToc.classList.toggle('is-visible', visible);
+        document.body.classList.toggle('has-scroll-toc', visible);
+      }
+
+      if (!sections.length) return;
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { setActive(entry.target.id); }
+        });
+      }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+
+      sections.forEach(function (sec) { observer.observe(sec); });
+      window.addEventListener('scroll', updateFloatingToc, { passive: true });
+      window.addEventListener('resize', updateFloatingToc);
+      updateFloatingToc();
+    })();
+  </script>
+
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      var label = document.getElementById('theme-label');
+      var html = document.documentElement;
+      var key = 'ck-plan-ops-map-theme';
+
+      function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem(key, theme);
+        if (label) label.textContent = theme;
+      }
+
+      applyTheme(html.getAttribute('data-theme') || localStorage.getItem(key) || 'dark');
+      btn.addEventListener('click', function () {
+        applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+      });
+    })();
+  </script>
+</body>
+</html>
