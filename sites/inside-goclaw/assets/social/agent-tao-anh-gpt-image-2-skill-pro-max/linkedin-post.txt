@@ -1,0 +1,20 @@
+If your team pays for ChatGPT Pro/Team but still spends API budget on image generation, you're leaving paid quota on the table.
+
+The gpt-image-2 model is included in ChatGPT subscriptions (Plus/Pro/Team/Enterprise) — but until recently agent frameworks couldn't reach it, because their image-generation tools required APIKey + APIBase. OAuth flows don't expose either.
+
+GoClaw v3.11.0 ships PR #1002 to fix that. Three things to highlight:
+
+1. Native Codex path. The create_image tool now resolves through a NativeImageProvider interface that bypasses the credential check entirely. Agents call OpenAI's Responses API with the OAuth refresh-token flow — no API key, no leaked credentials, base URL chatgpt.com/backend-api.
+
+2. Two-tier capability gate. The provider must declare ImageGeneration=true AND the agent must have AllowImageGeneration=true. Either condition fails, the tool stays hidden. Operators can disable image gen per-agent via a single config flag.
+
+3. Prompt provenance in PNG tEXt chunks. Every generated PNG carries the original prompt embedded as a "Description" chunk before IEND. Six months later, exiftool tells you exactly which prompt produced which file — useful for audit, regeneration, and prompt debugging.
+
+Paired with the open-source gpt-image-2-pro-max skill (Richard Ng, MIT) — a Skill-system package indexing 3,000+ community prompt templates with BM25 search — an agent can analyse a brief, search the corpus, refactor a template, then generate the image with full author citation, all in one turn.
+
+Cost model: subscription quota you've already paid for, no API Usage charge. Default timeout bumped from 120s × 2 retries to 600s × 1 retry, because gpt-image-2 routinely takes 4–8 minutes and retrying mid-flight just doubles the cost.
+
+Full breakdown of the wire format, gate logic, and Skill resolution hierarchy:
+https://goclaw.thieunv.space/en/posts/agent-tao-anh-gpt-image-2-skill-pro-max
+
+#GoClaw #LLMOps #ChatGPT #ImageGeneration #PromptEngineering

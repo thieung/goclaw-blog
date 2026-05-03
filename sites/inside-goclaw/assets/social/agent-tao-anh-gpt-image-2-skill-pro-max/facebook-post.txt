@@ -1,17 +1,19 @@
-🦊 GoClaw v3.11.0 vừa ra một tính năng mà ae nào trả tiền ChatGPT Pro xong còn dùng API key gen ảnh chắc sẽ tiếc hùi hụi: native gpt-image-2 qua Codex OAuth — không phát sinh API key cost luôn 🔥
+🦊 Ae nào đang trả ChatGPT Pro hằng tháng mà agent vẫn phải xài API key riêng để gen ảnh thì cái này đáng đọc: GoClaw v3.11.0 mở native path qua Codex OAuth, quota gpt-image-2 trong subscription xài được luôn, không phát sinh API Usage cost thêm.
 
-Trước đây tool create_image trong GoClaw bắt buộc phải có APIKey + APIBase, mà OAuth của ChatGPT thì xài refresh token và base URL chatgpt.com/backend-api, không khớp interface. Nên ae nào đã trả ChatGPT Pro hằng tháng thì quota gpt-image-2 nằm yên trong subscription, agent không gọi được. Đa số phải chạy đường Nano Banana 2 qua OpenRouter cho đỡ phát sinh API key.
+Vấn đề cũ: tool create_image cần APIKey + APIBase chuẩn OpenAI, còn ChatGPT OAuth thì dùng refresh token và endpoint chatgpt.com/backend-api, hai cái không khớp nhau. Nên quota nằm yên trong tài khoản Pro, agent không gọi được.
 
-PR #1002 làm 3 việc đáng để ý:
+PR #1002 giải quyết 3 điểm:
 
-🔹 Wire Codex Responses API làm path riêng cho image gen — token tự refresh, không lộ key
-🔹 Gating 2 tier: model phải declare capability "image_output" + agent phải bật cờ allow_image_generation
-🔹 PNG provenance: embed prompt + revised_prompt + agent name vào tEXt chunk của file PNG, đọc lại 6 tháng sau vẫn biết ảnh sinh từ context nào
+🔹 Wire Codex Responses API làm path riêng cho image gen, token tự refresh theo lifecycle OAuth, không cần quản lý key thủ công
+🔹 Gating 2 tier: model phải khai báo capability "image_output" + agent phải bật cờ allow_image_generation (mặc định bật, dễ kiểm soát)
+🔹 PNG provenance: embed prompt + revised_prompt + agent name vào tEXt chunk của file PNG, 6 tháng sau mở lên vẫn biết ảnh sinh từ context nào
 
-Chưa hết, cộng đồng có maintain skill gpt-image-2-pro-max (license CC BY 4.0) đẩy thêm ~370 prompt template qua MCP. Agent muốn brainstrom prompt thì gọi search trong skill, không cần scrape X/Twitter thủ công nữa.
+Riêng phần prompt thì có thêm skill gpt-image-2-pro-max do Richard Ng (contributor GoClaw) open-source, license MIT. Skill được package theo chuẩn Claude Code Skill convention và tương thích Skill system của GoClaw, tức là zip thư mục skill lên upload qua Web Dashboard là agent dùng được ngay, không phải cài gì thêm.
 
-Ghép 2 thứ → agent tự brainstorm prompt chất lượng poster → sinh ảnh native qua subscription → embed provenance vào PNG. Một workflow gọn gàng cho ae nào làm marketing visual hoặc thumbnail blog.
+Bên trong skill có corpus 3,000+ prompt template từ creators Twitter/X. Skill index lại, dùng BM25 search, mỗi kết quả trả về đều cite tác giả gốc. Upstream credit cho repo EvoLinkAI/awesome-gpt-image-2-prompts, nhưng bản index + search engine là của Richard build thêm.
 
-Chi tiết wire format Responses API + benchmark timeout 600s mình để link ở comment nhé
+Ghép lại: agent search corpus → pick template phù hợp mood → refactor prompt → gọi create_image qua Codex OAuth → PNG ra kèm provenance. Tiền chỉ tốn cái subscription đã trả rồi 🔥
 
-#GoClaw #gptimage2 #MCP
+Chi tiết setup Dashboard + wire format Responses API mình để link ở comment
+
+#GoClaw #gptimage2 #AgentWorkflow

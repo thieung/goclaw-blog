@@ -1,0 +1,7 @@
+Trả ChatGPT Pro hằng tháng mà gen ảnh vẫn xài API key thì hơi tiếc. Quota gpt-image-2 nằm sẵn trong subscription, agent gọi không được vì tool create_image cũ yêu cầu APIKey + APIBase — mà OAuth không có 2 cái đó.
+
+GoClaw v3.11.0 (PR #1002) nối thẳng gpt-image-2 vào pipeline qua Codex OAuth: token tự refresh, không lộ key, gate 2 tier (capability + agent config), prompt embed vào tEXt chunk của PNG để 6 tháng sau vẫn trace lại được.
+
+Ghép thêm skill gpt-image-2-pro-max — 3,000+ prompt template từ cộng đồng, search BM25, agent tự pick template, refactor và cite tác giả gốc. Tạo poster trong 1 turn từ ảnh base + vài keyword.
+
+goclaw.thieunv.space/posts/agent-tao-anh-gpt-image-2-skill-pro-max

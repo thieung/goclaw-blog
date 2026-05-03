@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { width: 1200px; height: 630px; overflow: hidden; font-family: 'DM Sans', system-ui, sans-serif; background: #0d1117; position: relative; color: #e6e8eb; }
+.bg { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 88% 30%, rgba(94,234,212,0.10) 0%, transparent 55%), radial-gradient(ellipse 50% 60% at 10% 90%, rgba(245,158,11,0.06) 0%, transparent 50%); }
+.accent-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(180deg, #5eead4, #f59e0b); }
+.bg-logo { position: absolute; right: 60px; top: 50%; transform: translateY(-50%); width: 320px; height: 320px; opacity: 0.06; pointer-events: none; z-index: 0; filter: invert(1); }
+.content { position: relative; z-index: 1; padding: 64px 80px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+.top { display: flex; align-items: center; gap: 16px; }
+.logo img { width: 48px; height: 48px; filter: invert(1); }
+.brand { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: #e6e8eb; }
+.version { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #5eead4; background: rgba(94,234,212,0.10); padding: 6px 16px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(94,234,212,0.30); }
+.middle { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #5eead4; margin-bottom: 16px; }
+h1 { font-family: 'Instrument Serif', Georgia, serif; font-size: 60px; font-weight: 400; line-height: 1.1; color: #e6e8eb; max-width: 880px; letter-spacing: -0.01em; }
+h1 em { font-style: italic; color: #5eead4; }
+.subtitle { margin-top: 22px; font-size: 19px; color: #8b949e; max-width: 760px; line-height: 1.55; }
+.subtitle code { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #5eead4; background: rgba(94,234,212,0.06); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(94,234,212,0.15); }
+.bottom { display: flex; align-items: center; gap: 12px; }
+.tag { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 5px 14px; border-radius: 6px; background: rgba(245,158,11,0.10); color: #f59e0b; border: 1px solid rgba(245,158,11,0.20); }
+.url { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6b7480; }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<img class="bg-logo" src="../goclaw-icon.svg" alt="">
+<div class="accent-bar"></div>
+<div class="content">
+  <div class="top">
+    <div class="logo"><img src="../goclaw-icon.svg" alt=""></div>
+    <div class="brand">GoClaw</div>
+    <div class="version">v3.11.0</div>
+  </div>
+  <div class="middle">
+    <div class="eyebrow">Inside GoClaw</div>
+    <h1>Native image generation with<br><em>GPT Image 2</em> via <em>Codex OAuth</em></h1>
+    <div class="subtitle">Agents render poster images using paid ChatGPT subscription quota — no API key cost. The <code>gpt-image-2-pro-max</code> skill ships 3,000+ community prompts with BM25 search, auto refactor + citation.</div>
+  </div>
+  <div class="bottom">
+    <span class="tag">codex-oauth</span>
+    <span class="tag">gpt-image-2</span>
+    <span class="tag">skill-system</span>
+    <span class="url">goclaw.thieunv.space/en</span>
+  </div>
+</div>
+</body>
+</html>
