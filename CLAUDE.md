@@ -102,6 +102,10 @@ Run `pnpm validate:i18n` to detect truncated translations.
 
 **Prevention:** Copy FULL text từ HTML source. Verify all 4 langs có cùng structure.
 
+## Project Rules (read on demand)
+Lazy-load these only when the task touches the matching area:
+- `.claude/rules/post-navigation-and-theme.md` — nav header (home link, theme toggle, lang buttons) conventions for `_<slug>.html` post pages. **Read before editing any post HTML.**
+
 ## Social Content
 Each post has social media content in `sites/inside-goclaw/assets/social/<slug>/`:
 - `facebook-post.txt`, `facebook-comment.txt`
