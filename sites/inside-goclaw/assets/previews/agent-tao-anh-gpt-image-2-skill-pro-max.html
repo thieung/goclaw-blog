@@ -938,7 +938,7 @@
 }
 <span class="cmt">// Credential path cho openai, gemini, minimax, dashscope, byteplus, openrouter</span></code></pre>
 
-<p>Native check chạy <strong>trước</strong> <code>cp == nil</code> guard. OAuth provider cố ý không công khai credential; nếu check native path sau guard này thì request sẽ báo lỗi sai lý do.</p>
+<p>Native check chạy <strong>trước</strong> <code>cp == nil</code> guard. OAuth provider cố ý không công khai credential; nếu đảo thứ tự, request sẽ fail với <strong>lỗi trỏ nhầm hướng</strong> — user thấy "thiếu credential" và đi config credential, trong khi nguyên nhân thật là sai native path.</p>
 
 <h3>2 tier gate</h3>
 <p>Tool <code>image_generation</code> chỉ được gắn vào request khi cả 2 điều kiện thoả:</p>
@@ -964,7 +964,7 @@
 <p>Endpoint: <code>POST {apiBase}/codex/responses</code></p>
 
 <pre><code><span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">any</span>{
-    <span class="str">"model"</span>:        <span class="str">"gpt-5.5"</span>,  <span class="cmt">// parent LLM, không phải image model</span>
+    <span class="str">"model"</span>:        <span class="str">"gpt-5.4"</span>,  <span class="cmt">// parent LLM, không phải image model</span>
     <span class="str">"stream"</span>:       <span class="kw">true</span>,        <span class="cmt">// mandatory — false bị reject HTTP 400</span>
     <span class="str">"store"</span>:        <span class="kw">false</span>,
     <span class="str">"instructions"</span>: <span class="str">"Generate an image matching the user's description using the image_generation tool. Return only the image; do not describe it in text."</span>,
@@ -984,7 +984,7 @@
   <li><code>stream: true</code> <strong>bắt buộc</strong> — non-streaming bị reject với <code>Stream must be set to true</code>.</li>
   <li><code>instructions</code> phải có giá trị non-empty và rõ ràng. Để trống → model có thể trả text mô tả thay vì gọi tool.</li>
   <li><code>tool_choice</code> phải force <code>image_generation</code>, nếu không model có thể bỏ qua tool.</li>
-  <li>Có 2 model trong cùng request: <code>model</code> (parent — gpt-5.5) và <code>tools[0].model</code> (image — gpt-image-2). Nhầm 2 cái → API error mơ hồ.</li>
+  <li>Có 2 model trong cùng request: <code>model</code> (parent — gpt-5.4) và <code>tools[0].model</code> (image — gpt-image-2). Nhầm 2 cái → API error mơ hồ.</li>
 </ul>
 
 <h3>Parse response</h3>

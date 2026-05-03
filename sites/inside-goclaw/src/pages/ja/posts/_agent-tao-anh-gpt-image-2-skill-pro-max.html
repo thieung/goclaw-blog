@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi" data-theme="dark">
+<html lang="ja" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Native image generation với Codex OAuth + skill gpt-image-2-pro-max — Inside GoClaw</title>
-<link rel="icon" href="/favicon.ico" />
+<title>Codex OAuth で GPT Image 2 によるネイティブ画像生成 — Inside GoClaw</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
   /* ============ THEMES ============ */
   :root {
@@ -83,60 +83,96 @@
     padding: 80px 24px 120px;
   }
 
-  .breadcrumb {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--fg-muted);
-    margin-bottom: 32px;
-    letter-spacing: 0.02em;
-  }
-  .breadcrumb a {
-    color: var(--accent);
-    text-decoration: none;
-  }
-  .breadcrumb a:hover { color: var(--accent-strong); }
-
   /* ============ HEADER ============ */
   header.post-header {
+    position: relative;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 32px;
+    padding-bottom: 36px;
     margin-bottom: 48px;
   }
-  .post-meta {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+  /* ambient accent glow behind eyebrow */
+  header.post-header::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: -120px;
+    width: 320px;
+    height: 220px;
+    background: radial-gradient(ellipse at center, rgba(94, 234, 212, 0.10) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  header.post-header > * { position: relative; z-index: 1; }
+
+  .post-eyebrow {
     font-family: var(--mono);
-    font-size: 12px;
-    color: var(--fg-muted);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 16px;
+    color: var(--accent);
+    margin-bottom: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
   }
-  .post-meta .tag {
-    padding: 2px 8px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 3px;
+  .post-eyebrow::before {
+    content: '◆';
+    font-size: 7px;
+    flex-shrink: 0;
+    transform: translateY(-1px);
   }
-  .post-meta .accent { color: var(--accent); border-color: var(--accent); }
 
   h1.post-title {
     font-family: var(--sans);
-    font-size: 36px;
-    line-height: 1.2;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.08;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 0 0 20px;
+    letter-spacing: -0.035em;
+    margin: 0 0 22px;
     color: var(--fg);
   }
+  h1.post-title em {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 600;
+  }
+
   .post-lede {
     font-size: 17px;
     line-height: 1.7;
     color: var(--fg-muted);
-    margin-bottom: 0;
+    margin: 0 0 16px;
   }
+  .post-lede:last-of-type { margin-bottom: 28px; }
   .post-lede strong { color: var(--fg); }
+
+  .post-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+  .post-meta .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 4px 11px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--fg-muted);
+  }
+  .post-meta .tag.accent {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
   .post-lede code { background: var(--bg-code); }
 
   /* ============ HEADINGS ============ */
@@ -744,7 +780,7 @@
 </head>
 <body>
 
-<a class="home-link-fab" href="/" title="Về blog" aria-label="Về blog">←</a>
+<a class="home-link-fab home-link" href="/ja" title="ブログに戻る" aria-label="ブログに戻る">←</a>
 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
   <span class="sun">☀</span>
   <span class="moon">☾</span>
@@ -752,9 +788,9 @@
 
 <div class="sticky-toc" id="stickyToc" aria-hidden="true">
   <div class="sticky-toc-inner">
-    <span class="label">Đang đọc</span>
-    <span class="current" id="stickyTocCurrent"><span class="num">01</span>Vấn đề trước PR #1002</span>
-    <button class="menu-btn" id="stickyTocBtn" aria-label="Mục lục" aria-expanded="false">Mục lục ▾</button>
+    <span class="label">閲覧中</span>
+    <span class="current" id="stickyTocCurrent"><span class="num">01</span>PR #1002 以前の問題</span>
+    <button class="menu-btn" id="stickyTocBtn" aria-label="目次" aria-expanded="false">目次 ▾</button>
   </div>
   <div class="progress" id="stickyTocProgress"></div>
   <nav class="sticky-toc-menu" id="stickyTocMenu" role="menu"></nav>
@@ -762,85 +798,84 @@
 
 <div class="wrap">
 
-<div class="breadcrumb"><a href="https://goclaw.thieunv.space/">←</a> &nbsp; inside-goclaw / posts</div>
-
 <header class="post-header">
+  <div class="post-eyebrow">Inside GoClaw — v3.11.0 リリース</div>
+  <h1 class="post-title">Codex OAuth で <em>GPT Image 2</em> によるネイティブ画像生成</h1>
+  <p class="post-lede">
+    ChatGPT サブスクリプション（Plus / Pro / Team / Enterprise）にはすでに <code>gpt-image-2</code> がクォータに含まれています — Plus は十分な上限、Pro は最高上限と優先処理付き。
+  </p>
+  <p class="post-lede">
+    <a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a> は GoClaw の <code>create_image</code> ツールを Codex OAuth 経由のネイティブパイプラインに接続します。ここでの Codex は、GoClaw が API キーなしで OpenAI Responses API を呼び出すために使用している OAuth フローです。
+  </p>
+  <p class="post-lede">
+    GoClaw コントリビューターの <a href="https://github.com/therichardngai-code" target="_blank" rel="noopener">Richard Ng</a> 氏による <a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener"><code>gpt-image-2-pro-max</code></a> スキルは、MIT ライセンスのオープンソースで、Claude Code Skill 仕様に準拠し、GoClaw の Skill システムと互換性があります。スキルディレクトリを ZIP 圧縮してダッシュボードからアップロードすれば、エージェントがすぐに使えます。コーパス内の 3,000 以上のプロンプトテンプレートは Twitter/X クリエイターのものです。スキルは検索を高速化するためにインデックスを作成するだけです。PR #1002 とこのスキルを組み合わせることで、エージェントはスキルを読み込み、プロンプトを自分でブレインストーミングして <code>create_image</code> を呼び出し、ChatGPT サブスクリプションクォータ経由でポスタークオリティの画像を生成できます。API 使用料は発生しません。
+  </p>
   <div class="post-meta">
     <span class="tag accent">v3.11.0</span>
-    <span class="tag">May 3, 2026</span>
+    <span class="tag">2026 年 5 月 3 日</span>
     <span class="tag">gpt-image-2</span>
     <span class="tag">codex-oauth</span>
     <span class="tag">create_image</span>
     <span class="tag">image-gen</span>
   </div>
-  <h1 class="post-title">Native image generation với Codex OAuth + skill gpt-image-2-pro-max</h1>
-  <p class="post-lede">
-    ChatGPT subscription (Plus / Pro / Team / Enterprise) đã có <code>gpt-image-2</code> trong quota — gói Plus có hạn mức thoải mái, gói Pro có hạn mức cao nhất kèm ưu tiên xử lý.
-  </p>
-  <p class="post-lede">
-    <a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a> nối tool <code>create_image</code> của GoClaw vào native pipeline qua Codex OAuth. Codex ở đây là OAuth flow GoClaw dùng để gọi OpenAI Responses API mà không cần API key.
-  </p>
-  <p class="post-lede">
-    Skill <a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener"><code>gpt-image-2-pro-max</code></a> do <a href="https://github.com/therichardngai-code" target="_blank" rel="noopener">Richard Ng</a> — contributor của GoClaw — open-source, code license MIT, package theo chuẩn Claude Code Skill và tương thích với Skill system của GoClaw. Chỉ cần zip thư mục skill rồi upload qua Dashboard là agent dùng được. Corpus 3,000+ prompt template thuộc creators trên Twitter/X; skill chỉ index lại để search nhanh hơn. Ghép PR #1002 với skill này, agent có thể đọc skill, tự brainstorm prompt rồi gọi <code>create_image</code> ra ảnh poster qua quota subscription ChatGPT, không tốn cost theo đường API Usage.
-  </p>
 </header>
 
 <nav class="toc">
-  <div class="toc-title">Mục lục</div>
+  <div class="toc-title">目次</div>
   <ol>
-    <li><a href="#s01"><span class="num">01</span>Vấn đề trước PR #1002</a></li>
-    <li><a href="#s02"><span class="num">02</span>Kiến trúc native image cho OAuth</a></li>
-    <li><a href="#s03"><span class="num">03</span>Codex Responses API wire format</a></li>
-    <li><a href="#s04"><span class="num">04</span>Model whitelist + chain config</a></li>
-    <li><a href="#s05"><span class="num">05</span>Provenance: PNG tEXt chunk</a></li>
-    <li><a href="#s06"><span class="num">06</span>Skill gpt-image-2-pro-max qua Skill system</a></li>
-    <li><a href="#s07"><span class="num">07</span>Setup qua Web Dashboard</a></li>
-    <li><a href="#s08"><span class="num">08</span>Workflow minh họa: tạo ảnh trong GoClaw</a></li>
-    <li><a href="#s09"><span class="num">09</span>Best practices</a></li>
-    <li><a href="#s10"><span class="num">10</span>Tóm tắt kỹ thuật</a></li>
+    <li><a href="#s01"><span class="num">01</span>PR #1002 以前の問題</a></li>
+    <li><a href="#s02"><span class="num">02</span>OAuth 向けネイティブ画像アーキテクチャ</a></li>
+    <li><a href="#s03"><span class="num">03</span>Codex Responses API ワイヤーフォーマット</a></li>
+    <li><a href="#s04"><span class="num">04</span>モデルホワイトリスト + チェーン設定</a></li>
+    <li><a href="#s05"><span class="num">05</span>出所情報: PNG tEXt チャンク</a></li>
+    <li><a href="#s06"><span class="num">06</span>Skill システム経由の gpt-image-2-pro-max</a></li>
+    <li><a href="#s07"><span class="num">07</span>Web ダッシュボードからのセットアップ</a></li>
+    <li><a href="#s08"><span class="num">08</span>ワークフロー: GoClaw での画像生成</a></li>
+    <li><a href="#s09"><span class="num">09</span>ベストプラクティス</a></li>
+    <li><a href="#s10"><span class="num">10</span>技術サマリー</a></li>
   </ol>
 </nav>
 
 <!-- ============ SECTION 01 ============ -->
-<h2 id="s01"><span class="num">01</span>Vấn đề trước PR #1002</h2>
+<h2 id="s01"><span class="num">01</span>PR #1002 以前の問題</h2>
 
-<h3><code>create_image</code> cũ chỉ chạy được với API key</h3>
+<h3>旧 <code>create_image</code> は API キーでしか動作しなかった</h3>
 
-<p>Trước <a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a>, tool <code>create_image</code> trong GoClaw tìm provider thông qua <code>credentialProvider</code> interface — tức provider phải có 2 method <code>APIKey() string</code> và <code>APIBase() string</code>. <code>CodexProvider</code> dùng OAuth flow nên cố ý không implement 2 method này: token được rotate qua <code>refresh_token</code> grant (xem <code>internal/oauth/token.go</code>), còn backend URL default <code>https://chatgpt.com/backend-api</code> (constant <code>DefaultProviderAPIBase</code>) chỉ dùng nội bộ — không nằm trong credential surface mà tool layer được phép đụng.</p>
+<p><a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a> 以前、GoClaw の <code>create_image</code> ツールは <code>credentialProvider</code> インターフェース経由でプロバイダーを検索していました — つまりプロバイダーは <code>APIKey() string</code> と <code>APIBase() string</code> の 2 つのメソッドを実装している必要がありました。<code>CodexProvider</code> は OAuth フローを使用しているため、これら 2 つのメソッドを意図的に実装していません。トークンは <code>refresh_token</code> グラントで更新されます（<code>internal/oauth/token.go</code> を参照）。デフォルトのバックエンド URL <code>https://chatgpt.com/backend-api</code>（定数 <code>DefaultProviderAPIBase</code>）は内部専用であり、ツール層が触れることのできるクレデンシャルサーフェスには含まれません。</p>
 
-<p>Hệ quả: subscription ChatGPT Plus/Pro có <code>gpt-image-2</code> trong quota — gọi được trên web <code>chatgpt.com/images</code>, gọi được trong Codex CLI, nhưng agent của GoClaw không gọi được vì tool <code>create_image</code> bị chặn ở bước kiểm tra <code>APIKey()</code>/<code>APIBase()</code>. User phải đi đường API key song song. Path phổ biến là <strong>Gemini Nano Banana 2</strong> qua <strong>OpenRouter</strong> vì:</p>
+<p>その結果: ChatGPT Plus/Pro サブスクリプションにはクォータに <code>gpt-image-2</code> が含まれており、ウェブ（<code>chatgpt.com/images</code>）や Codex CLI からは呼び出せるのに、GoClaw のエージェントからは <code>APIKey()</code>/<code>APIBase()</code> チェックで <code>create_image</code> がブロックされるため呼び出せませんでした。ユーザーは並行する API キーパスを使わざるを得ませんでした。最も人気だったのは <strong>OpenRouter</strong> 経由の <strong>Gemini Nano Banana 2</strong> で、その理由は:</p>
 
 <ul>
-  <li>Chất lượng ổn cho hầu hết use case (poster, thumbnail, illustration).</li>
-  <li>OpenRouter cho phép dùng 1 key duy nhất cho nhiều image gen model, không phải quản lý API key OpenAI / Google riêng biệt.</li>
-  <li>Tính phí theo từng ảnh, không phát sinh subscription thứ hai.</li>
+  <li>ほとんどのユースケース（ポスター、サムネイル、イラスト）で十分なクオリティ。</li>
+  <li>OpenRouter なら OpenAI / Google の API キーを個別管理せず、1 つのキーで多くの画像生成モデルを使用できる。</li>
+  <li>画像ごとの従量課金 — 第 2 のサブスクリプションは不要。</li>
 </ul>
 
-<p>Chain mặc định <code>imageGenModelDefaults</code> của GoClaw ánh xạ mỗi provider sang 1 model: <code>openai → gpt-image-1.5</code>, <code>openrouter → google/gemini-2.5-flash-image</code> (Nano Banana 2), <code>gemini → gemini-2.5-flash-image</code>, <code>minimax → image-01</code>, <code>dashscope → wan2.6-image</code>, <code>byteplus → seedream-5-0-260128</code>. Thứ tự ưu tiên provider là <code>openrouter → gemini → openai → minimax → dashscope → byteplus</code>. Tất cả đều cần API key tương ứng.</p>
+<p>GoClaw のデフォルトチェーン <code>imageGenModelDefaults</code> は各プロバイダーを 1 つのモデルにマッピングしています: <code>openai → gpt-image-1.5</code>、<code>openrouter → google/gemini-2.5-flash-image</code>（Nano Banana 2）、<code>gemini → gemini-2.5-flash-image</code>、<code>minimax → image-01</code>、<code>dashscope → wan2.6-image</code>、<code>byteplus → seedream-5-0-260128</code>。プロバイダーの優先順位は <code>openrouter → gemini → openai → minimax → dashscope → byteplus</code>。すべてそれぞれの API キーが必要です。</p>
 
-<p>Vấn đề: user <strong>đã trả</strong> ChatGPT Plus/Pro hằng tháng cho coding workflow, gpt-image-2 là một trong các model tạo ảnh chất lượng cao — nhưng quota đó nằm yên, không xài được trong agent.</p>
+<p>問題: ユーザーはコーディングワークフローのために ChatGPT Plus/Pro を毎月<strong>すでに支払っており</strong>、gpt-image-2 は最高品質の画像生成モデルの 1 つ — しかしそのクォータはエージェントから使えず、眠ったままでした。</p>
 
 <div class="table-wrap">
 <table>
-  <thead><tr><th>Trước PR #1002</th><th>Sau PR #1002</th></tr></thead>
+  <thead><tr><th>PR #1002 以前</th><th>PR #1002 以降</th></tr></thead>
   <tbody>
-    <tr><td>Path duy nhất: API key (yêu cầu <code>APIKey()</code> + <code>APIBase()</code>)</td><td>Native path qua OAuth token <strong>thêm vào</strong> (API-key path vẫn còn cho <code>openai</code>, <code>gemini</code>, <code>openrouter</code>, …)</td></tr>
-    <tr><td><code>gpt-image-1.5</code> qua provider <code>openai</code> + <code>OPENAI_API_KEY</code> (gọi <code>api.openai.com/v1/chat/completions</code>); Nano Banana 2 qua OpenRouter</td><td><code>gpt-image-2</code> (default) + <code>gpt-image-1.5</code> (legacy) qua Codex OAuth, gọi <code>chatgpt.com/backend-api/codex/responses</code>; tiêu quota subscription</td></tr>
-    <tr><td>Pay-per-image phát sinh</td><td>Đã trả qua subscription</td></tr>
-    <tr><td>Timeout 120s × 2 retry</td><td>Timeout 600s × 1 retry</td></tr>
-    <tr><td>Không có prompt provenance</td><td>PNG <code>tEXt</code> chunk embed</td></tr>
-    <tr><td>1 tier gate (provider có credential?)</td><td>2 tier (capability + agent config)</td></tr>
+    <tr><td>単一パス: API キー（<code>APIKey()</code> + <code>APIBase()</code> 必須）</td><td>OAuth トークン経由のネイティブパスが<strong>追加</strong>（<code>openai</code>、<code>gemini</code>、<code>openrouter</code> などの API キーパスは引き続き利用可）</td></tr>
+    <tr><td><code>openai</code> プロバイダー + <code>OPENAI_API_KEY</code> 経由の <code>gpt-image-1.5</code>（<code>api.openai.com/v1/chat/completions</code> を呼び出す）; OpenRouter 経由の Nano Banana 2</td><td>Codex OAuth 経由の <code>gpt-image-2</code>（デフォルト）+ <code>gpt-image-1.5</code>（レガシー）、<code>chatgpt.com/backend-api/codex/responses</code> を呼び出す; サブスクリプションクォータを消費</td></tr>
+    <tr><td>画像ごとに従量課金が発生</td><td>サブスクリプションで支払い済み</td></tr>
+    <tr><td>タイムアウト 120s × 2 リトライ</td><td>タイムアウト 600s × 1 リトライ</td></tr>
+    <tr><td>プロンプト出所情報なし</td><td>PNG <code>tEXt</code> チャンク埋め込み</td></tr>
+    <tr><td>1 層ゲート（プロバイダーにクレデンシャルがあるか？）</td><td>2 層（ケーパビリティ + エージェント設定）</td></tr>
   </tbody>
 </table>
 </div>
 
-<h3>Prompt engineering phân tán</h3>
-<p>Cộng đồng <code>gpt-image-2</code> chia sẻ prompt template trên X/Twitter khá rời rạc. EvoLinkAI có repo <a href="https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts" target="_blank" rel="noopener"><code>awesome-gpt-image-2-prompts</code></a> (~370 cases), nhưng dữ liệu nằm ở dạng README + tweet links, chưa có search engine. Agent muốn tận dụng phải tự đọc và lọc thủ công.</p>
+<h3>プロンプトエンジニアリングの分散</h3>
+<p><code>gpt-image-2</code> コミュニティは X/Twitter でプロンプトテンプレートを散発的に共有しています。EvoLinkAI が <a href="https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts" target="_blank" rel="noopener"><code>awesome-gpt-image-2-prompts</code></a> リポジトリ（約 370 ケース）を管理していますが、データは README とツイートリンクの形式で、検索エンジンはありません。エージェントがそれを活用するには手動で読み込んでフィルタリングする必要があります。</p>
 
 <!-- ============ SECTION 02 ============ -->
-<h2 id="s02"><span class="num">02</span>Kiến trúc native image cho OAuth</h2>
+<h2 id="s02"><span class="num">02</span>OAuth 向けネイティブ画像アーキテクチャ</h2>
 
-<p><a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a> thêm interface mới ở <code>internal/providers/native_image.go</code>. Tổng quan luồng xử lý như diagram bên dưới:</p>
+<p><a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a> は <code>internal/providers/native_image.go</code> に新しいインターフェースを追加します。エンドツーエンドのフローは以下の図のとおりです。</p>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 820" class="theme-svg" style="font-family:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace">
   <defs>
@@ -855,7 +890,7 @@
     </marker>
   </defs>
   <rect width="720" height="820" class="bg"/>
-  <text x="360" y="34" text-anchor="middle" font-size="15" font-weight="700" class="text" letter-spacing="0.02em">Native image path cho OAuth provider</text>
+  <text x="360" y="34" text-anchor="middle" font-size="15" font-weight="700" class="text" letter-spacing="0.02em">OAuth プロバイダー向けネイティブ画像パス</text>
   <text x="360" y="54" text-anchor="middle" font-size="11" class="text-muted">Tool: create_image · MediaProviderChain · 2-tier gate</text>
   <rect x="40" y="74" width="640" height="118" rx="8" class="panel-dim" stroke-width="1" stroke-dasharray="4 3"/>
   <text x="56" y="94" font-size="10" class="text-muted" letter-spacing="0.08em">AGENT LOOP · buildFilteredTools()</text>
@@ -943,35 +978,35 @@
   </g>
 </svg>
 
-<p>Code thực tế gồm interface ngắn:</p>
+<p>実際のコードは短いインターフェースです。</p>
 
 <pre><code><span class="kw">type</span> <span class="fn">NativeImageProvider</span> <span class="kw">interface</span> {
     <span class="fn">GenerateImage</span>(ctx context.Context, req NativeImageRequest) (*NativeImageResult, <span class="kw">error</span>)
 }</code></pre>
 
-<p>Tool <code>create_image</code> tìm provider qua <code>MediaProviderChain</code>. Khi chain entry là Codex OAuth, raw provider object được đưa vào <code>params["_native_provider"]</code>. Trong <code>callProvider</code>:</p>
+<p><code>create_image</code> ツールは <code>MediaProviderChain</code> 経由でプロバイダーを検索します。チェーンエントリが Codex OAuth の場合、生のプロバイダーオブジェクトが <code>params["_native_provider"]</code> に渡されます。<code>callProvider</code> 内では:</p>
 
 <pre><code><span class="kw">if</span> rawProvider, ok := params[<span class="str">"_native_provider"</span>]; ok {
     <span class="kw">if</span> np, ok := rawProvider.(providers.NativeImageProvider); ok {
-        <span class="cmt">// Native path — không cần APIKey/APIBase</span>
+        <span class="cmt">// ネイティブパス — APIKey/APIBase 不要</span>
         <span class="kw">return</span> np.<span class="fn">GenerateImage</span>(ctx, ...)
     }
 }
 <span class="kw">if</span> cp == <span class="kw">nil</span> {
     <span class="kw">return</span> <span class="fn">error</span>(<span class="str">"provider does not expose API credentials"</span>)
 }
-<span class="cmt">// Credential path cho openai, gemini, minimax, dashscope, byteplus, openrouter</span></code></pre>
+<span class="cmt">// openai、gemini、minimax、dashscope、byteplus、openrouter のクレデンシャルパス</span></code></pre>
 
-<p>Native check chạy <strong>trước</strong> <code>cp == nil</code> guard. OAuth provider cố ý không công khai credential; nếu check native path sau guard này thì request sẽ báo lỗi sai lý do.</p>
+<p>ネイティブチェックは <code>cp == nil</code> ガードの<strong>前に</strong>実行されます。OAuth プロバイダーは意図的にクレデンシャルを公開しません。順序を逆にすると、リクエストは<strong>誤った方向を指すエラー</strong>で失敗します —— ユーザーは「クレデンシャル不足」と見てクレデンシャル設定に走りますが、本当の原因はネイティブパスの間違いです。</p>
 
-<h3>2 tier gate</h3>
-<p>Tool <code>image_generation</code> chỉ được gắn vào request khi cả 2 điều kiện thoả:</p>
+<h3>2 層ゲート</h3>
+<p><code>image_generation</code> ツールは以下の 2 つの条件が両方満たされた場合にのみリクエストに付与されます。</p>
 <ol>
-  <li><strong>Provider capability</strong>: provider implement <code>CapabilitiesAware</code> và <code>Capabilities().ImageGeneration == true</code>. Codex provider hardcode <code>true</code> vì OpenAI Responses API hỗ trợ tool <code>image_generation</code>.</li>
-  <li><strong>Agent config</strong>: field <code>AllowImageGeneration</code> trong <code>AgentConfig</code>, mặc định <code>true</code>. Admin có thể set <code>other_config.allow_image_generation: false</code> để cấm sinh ảnh.</li>
+  <li><strong>プロバイダーケーパビリティ</strong>: プロバイダーが <code>CapabilitiesAware</code> を実装し、<code>Capabilities().ImageGeneration == true</code> であること。Codex プロバイダーは OpenAI Responses API が <code>image_generation</code> ツールをサポートしているため <code>true</code> にハードコードされています。</li>
+  <li><strong>エージェント設定</strong>: <code>AgentConfig</code> の <code>AllowImageGeneration</code> フィールド（デフォルト <code>true</code>）。管理者は <code>other_config.allow_image_generation: false</code> を設定して画像生成を禁止できます。</li>
 </ol>
 
-<p>Logic trong <code>loop_tool_filter.go::buildFilteredTools</code>:</p>
+<p><code>loop_tool_filter.go::buildFilteredTools</code> のロジック:</p>
 <pre><code><span class="kw">if</span> l.allowImageGeneration {
     <span class="kw">if</span> aware, ok := l.provider.(providers.CapabilitiesAware); ok {
         <span class="kw">if</span> aware.<span class="fn">Capabilities</span>().ImageGeneration {
@@ -980,39 +1015,39 @@
     }
 }</code></pre>
 
-<p><code>imageGenToolDef</code> chỉ là cờ <code>{Type: "image_generation"}</code> — không có <code>name</code>, không có schema <code>parameters</code>. Với function calling thường, client phải định nghĩa đầy đủ (vd <code>{type: "function", function: {name, description, parameters}}</code>) để LLM biết truyền args. Ở đây, <code>image_generation</code> là built-in tool của Codex Responses API — server tự gắn schema, tự chạy handler, client chỉ cần bật bằng sentinel.</p>
+<p><code>imageGenToolDef</code> はフラグ <code>{Type: "image_generation"}</code> だけ — <code>name</code> も <code>parameters</code> スキーマもありません。通常の function calling ではクライアントがすべてを定義する必要があります（例: <code>{type: "function", function: {name, description, parameters}}</code>）が、ここで <code>image_generation</code> は Codex Responses API の組み込みツールです — サーバーがスキーマを付与し、ハンドラーを実行します。クライアントはセンチネルで有効化するだけで済みます。</p>
 
 <!-- ============ SECTION 03 ============ -->
-<h2 id="s03"><span class="num">03</span>Codex Responses API wire format</h2>
+<h2 id="s03"><span class="num">03</span>Codex Responses API ワイヤーフォーマット</h2>
 
-<p>Endpoint: <code>POST {apiBase}/codex/responses</code></p>
+<p>エンドポイント: <code>POST {apiBase}/codex/responses</code></p>
 
 <pre><code><span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">any</span>{
-    <span class="str">"model"</span>:        <span class="str">"gpt-5.5"</span>,  <span class="cmt">// parent LLM, không phải image model</span>
-    <span class="str">"stream"</span>:       <span class="kw">true</span>,        <span class="cmt">// mandatory — false bị reject HTTP 400</span>
+    <span class="str">"model"</span>:        <span class="str">"gpt-5.4"</span>,  <span class="cmt">// 親 LLM（画像モデルではない）</span>
+    <span class="str">"stream"</span>:       <span class="kw">true</span>,        <span class="cmt">// 必須 — false は HTTP 400 で拒否される</span>
     <span class="str">"store"</span>:        <span class="kw">false</span>,
     <span class="str">"instructions"</span>: <span class="str">"Generate an image matching the user's description using the image_generation tool. Return only the image; do not describe it in text."</span>,
     <span class="str">"input"</span>:        []<span class="kw">any</span>{...user message...},
     <span class="str">"tools"</span>: []<span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">any</span>{{
         <span class="str">"type"</span>:          <span class="str">"image_generation"</span>,
         <span class="str">"action"</span>:        <span class="str">"generate"</span>,
-        <span class="str">"model"</span>:         <span class="str">"gpt-image-2"</span>,   <span class="cmt">// image model nằm ở đây</span>
+        <span class="str">"model"</span>:         <span class="str">"gpt-image-2"</span>,   <span class="cmt">// 画像モデルはここ</span>
         <span class="str">"output_format"</span>: <span class="str">"png"</span>,
         <span class="str">"size"</span>:          <span class="str">"1024x1024"</span>,
     }},
     <span class="str">"tool_choice"</span>: <span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">any</span>{<span class="str">"type"</span>: <span class="str">"image_generation"</span>},  <span class="cmt">// force tool call</span>
 }</code></pre>
 
-<h3>Các điểm cần lưu ý:</h3>
+<h3>注意点:</h3>
 <ul>
-  <li><code>stream: true</code> <strong>bắt buộc</strong> — non-streaming bị reject với <code>Stream must be set to true</code>.</li>
-  <li><code>instructions</code> phải có giá trị non-empty và rõ ràng. Để trống → model có thể trả text mô tả thay vì gọi tool.</li>
-  <li><code>tool_choice</code> phải force <code>image_generation</code>, nếu không model có thể bỏ qua tool.</li>
-  <li>Có 2 model trong cùng request: <code>model</code> (parent — gpt-5.5) và <code>tools[0].model</code> (image — gpt-image-2). Nhầm 2 cái → API error mơ hồ.</li>
+  <li><code>stream: true</code> は<strong>必須</strong> — 非ストリーミングは <code>Stream must be set to true</code> で拒否されます。</li>
+  <li><code>instructions</code> は空でなく明確な値が必要です。空のままにするとモデルがツールを呼び出す代わりに説明テキストを返す可能性があります。</li>
+  <li><code>tool_choice</code> は <code>image_generation</code> を強制する必要があります。そうしないとモデルがツールをスキップする可能性があります。</li>
+  <li>同じリクエストに 2 つのモデルが存在します: <code>model</code>（親 — gpt-5.4）と <code>tools[0].model</code>（画像 — gpt-image-2）。混同すると曖昧な API エラーが発生します。</li>
 </ul>
 
-<h3>Parse response</h3>
-<p>Path chính là SSE stream vì <code>stream:true</code> là bắt buộc. Luồng end-to-end:</p>
+<h3>レスポンスのパース</h3>
+<p>メインパスは SSE ストリームです（<code>stream:true</code> が必須のため）。エンドツーエンドのフロー:</p>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" class="theme-svg" style="font-family:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace">
   <defs>
@@ -1070,53 +1105,53 @@
   <line x1="355" y1="460" x2="145" y2="460" class="accent-stroke" stroke-width="1.5" marker-end="url(#s3arr)"/>
   <rect x="172" y="440" width="156" height="14" class="bg" opacity="0.95"/>
   <text x="250" y="451" text-anchor="middle" font-size="11" class="text">return NativeImageResult</text>
-  <text x="360" y="510" text-anchor="middle" font-size="10" class="text-subtle">Defensive non-streaming JSON parse fallback nếu server bất ngờ trả raw object</text>
+  <text x="360" y="510" text-anchor="middle" font-size="10" class="text-subtle">サーバーが予期せず raw object を返した場合の防御的な非ストリーミング JSON パースフォールバック</text>
 </svg>
 
-<p>Code vẫn có fallback để parse JSON non-streaming. Nếu server bất ngờ trả raw JSON object (không phải các dòng <code>data:</code>), <code>parseNativeImageResponse</code> sẽ duyệt <code>output[]</code>, tìm <code>type == "image_generation_call"</code>, rồi base64 decode <code>result</code>. Không thể trigger path này bằng cách set <code>stream:false</code> vì request sẽ bị reject 400 trước.</p>
+<p>コードにはまだ非ストリーミング JSON パースのフォールバックがあります。サーバーが予期せず生の JSON オブジェクト（<code>data:</code> 行でなく）を返した場合、<code>parseNativeImageResponse</code> は <code>output[]</code> を走査し、<code>type == "image_generation_call"</code> を見つけて <code>result</code> を base64 デコードします。<code>stream:false</code> を設定してこのパスをトリガーすることはできません — リクエストは先に HTTP 400 で拒否されるためです。</p>
 
-<p>SSE path: scan <code>data:</code> lines, ưu tiên 2 event:</p>
+<p>SSE パス: <code>data:</code> 行をスキャンし、2 つのイベントを優先します。</p>
 <ul>
-  <li><code>response.output_item.done</code> — image item ready, lấy <code>event.Item.Result</code> (base64) + <code>OutputFormat</code>.</li>
-  <li><code>response.completed</code> — final usage tokens, walk <code>event.Response.Output[]</code> lần 2 nếu chưa thấy item.</li>
+  <li><code>response.output_item.done</code> — 画像アイテム準備完了、<code>event.Item.Result</code>（base64）+ <code>OutputFormat</code> を取得。</li>
+  <li><code>response.completed</code> — 最終利用トークン、アイテムが未取得の場合は <code>event.Response.Output[]</code> を再度走査。</li>
 </ul>
 
 <pre><code><span class="kw">for</span> line := <span class="kw">range</span> bytes.<span class="fn">SplitSeq</span>(data, []<span class="kw">byte</span>(<span class="str">"\n"</span>)) {
     <span class="kw">if</span> !bytes.<span class="fn">HasPrefix</span>(line, []<span class="kw">byte</span>(<span class="str">"data: "</span>)) { <span class="kw">continue</span> }
     payload := line[<span class="fn">len</span>(<span class="str">"data: "</span>):]
     <span class="kw">if</span> bytes.<span class="fn">Equal</span>(payload, []<span class="kw">byte</span>(<span class="str">"[DONE]"</span>)) { <span class="kw">break</span> }
-    <span class="cmt">// ... unmarshal event, switch event.Type</span>
+    <span class="cmt">// ... イベントをアンマーシャル、event.Type で switch</span>
 }</code></pre>
 
 <!-- ============ SECTION 04 ============ -->
-<h2 id="s04"><span class="num">04</span>Model whitelist + chain config</h2>
+<h2 id="s04"><span class="num">04</span>モデルホワイトリスト + チェーン設定</h2>
 
-<h3>Whitelist server-side</h3>
+<h3>サーバーサイドのホワイトリスト</h3>
 <pre><code><span class="kw">var</span> allowedImageModels = <span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">bool</span>{
-    <span class="str">"gpt-image-2"</span>:   <span class="kw">true</span>, <span class="cmt">// default — latest quality</span>
-    <span class="str">"gpt-image-1.5"</span>: <span class="kw">true</span>, <span class="cmt">// legacy fallback</span>
+    <span class="str">"gpt-image-2"</span>:   <span class="kw">true</span>, <span class="cmt">// デフォルト — 最新品質</span>
+    <span class="str">"gpt-image-1.5"</span>: <span class="kw">true</span>, <span class="cmt">// レガシーフォールバック</span>
 }</code></pre>
-<p><code>ValidateImageModel</code> reject mọi value khác (vd <code>dall-e-3</code>) ngay tại provider — không để upstream reject âm thầm. User chọn model qua chain entry param <code>image_model</code>; value này được truyền vào <code>NativeImageRequest.ImageModel</code>, kiểm tra hợp lệ, rồi gắn vào <code>tools[0].model</code> của Responses API request.</p>
+<p><code>ValidateImageModel</code> は他の値（例: <code>dall-e-3</code>）をプロバイダーレベルで即座に拒否します — アップストリームに黙って拒否させません。ユーザーはチェーンエントリパラメーター <code>image_model</code> でモデルを選択します。この値は <code>NativeImageRequest.ImageModel</code> に渡され、検証されてから Responses API リクエストの <code>tools[0].model</code> に付与されます。</p>
 
 <div class="callout warning">
-<strong>Note về <code>gpt-image-1.5</code>:</strong> Trước PR #1002, <code>gpt-image-1.5</code> là default model cho provider <code>openai</code> (<code>imageGenModelDefaults["openai"] = "gpt-image-1.5"</code>) — chạy qua <strong>API-key path</strong>, gọi <code>api.openai.com/v1/chat/completions</code> với <code>OPENAI_API_KEY</code>. Sau PR #1002, model này được giữ trong whitelist của native path làm legacy fallback — agent có thể chọn nó qua Codex OAuth nếu muốn. PR mở thêm path mới chứ không loại model cũ; cả 2 model đều có thể chạy native, default là <code>gpt-image-2</code>.
+<strong><code>gpt-image-1.5</code> に関する注意:</strong> PR #1002 以前、<code>gpt-image-1.5</code> は <code>openai</code> プロバイダーのデフォルトモデル（<code>imageGenModelDefaults["openai"] = "gpt-image-1.5"</code>）でした — <strong>API キーパス</strong>で動作し、<code>OPENAI_API_KEY</code> で <code>api.openai.com/v1/chat/completions</code> を呼び出していました。PR #1002 以降、このモデルはネイティブパスのホワイトリストにレガシーフォールバックとして残ります — エージェントは Codex OAuth 経由で選択できます。PR は新しいパスを追加するだけで古いモデルを削除しません。両方のモデルをネイティブで実行でき、デフォルトは <code>gpt-image-2</code> です。
 </div>
 
-<h3>Chain config</h3>
-<p><code>MediaProviderChainEntry</code> mặc định:</p>
-<pre><code>Timeout    <span class="kw">int</span>  <span class="cmt">// seconds, default 600 (10 min — image/video gen is slow)</span>
-MaxRetries <span class="kw">int</span>  <span class="cmt">// default 1 (image gen rarely succeeds on retry)</span></code></pre>
-<p>Timeout được tăng từ 120s lên <strong>600s</strong> vì gpt-image-2 thực tế có thể mất 30–180s. Nếu timeout giữa chừng, request phía upstream vẫn có thể tiếp tục chạy, nên retry thường không giúp gì. Vì vậy <code>MaxRetries</code> được giảm từ 2 xuống <strong>1</strong> để lỗi hiện ra sớm hơn thay vì bị che bởi retry loop.</p>
-<p>Phần UI dùng schema trong <code>ui/web/src/pages/builtin-tools/media-provider-params-schema.ts</code> để render form cấu hình, nên admin có thể tinh chỉnh theo từng tenant và từng tool.</p>
+<h3>チェーン設定</h3>
+<p>デフォルトの <code>MediaProviderChainEntry</code>:</p>
+<pre><code>Timeout    <span class="kw">int</span>  <span class="cmt">// 秒、デフォルト 600（10 分 — 画像/動画生成は低速）</span>
+MaxRetries <span class="kw">int</span>  <span class="cmt">// デフォルト 1（画像生成はリトライで成功することはまれ）</span></code></pre>
+<p>タイムアウトは 120s から <strong>600s</strong> に引き上げられました。gpt-image-2 は実際に 30〜180s かかることがあるためです。タイムアウトが途中で発生してもアップストリームのリクエストが引き続き実行されることがあるため、リトライはほとんど効果がありません。そのため <code>MaxRetries</code> はリトライループでエラーを隠すのではなく早期に表面化させるため、2 から <strong>1</strong> に削減されました。</p>
+<p>UI は <code>ui/web/src/pages/builtin-tools/media-provider-params-schema.ts</code> のスキーマを使用して設定フォームをレンダリングするため、管理者はテナントとツールごとに調整できます。</p>
 
 <!-- ============ SECTION 05 ============ -->
-<h2 id="s05"><span class="num">05</span>Provenance: PNG tEXt chunk + caption UI</h2>
+<h2 id="s05"><span class="num">05</span>出所情報: PNG tEXt チャンク + キャプション UI</h2>
 
-<p>Khi <code>create_image</code> lưu file, <code>pngEmbedPrompt</code> sẽ rewrite byte stream của PNG và chèn một <code>tEXt</code> chunk <code>Description</code> vào trước IEND. Function này nằm trong <code>tools/png_embed.go</code> để tránh import cycle tools→agent:</p>
+<p><code>create_image</code> がファイルを保存するとき、<code>pngEmbedPrompt</code> は PNG のバイトストリームを書き換え、IEND の直前に <code>tEXt</code> チャンク <code>Description</code> を挿入します。tools→agent のインポートサイクルを避けるため、この関数は <code>tools/png_embed.go</code> に配置されています。</p>
 
-<pre><code>Description = &lt;prompt user gửi&gt;</code></pre>
+<pre><code>Description = &lt;ユーザーが送信したプロンプト&gt;</code></pre>
 
-<p>Format chuẩn của PNG <code>tEXt</code> chunk và vị trí chèn trong byte stream:</p>
+<p>PNG <code>tEXt</code> チャンクの標準フォーマットとバイトストリームへの挿入位置:</p>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" class="theme-svg" style="font-family:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace">
   <defs>
@@ -1181,23 +1216,23 @@ MaxRetries <span class="kw">int</span>  <span class="cmt">// default 1 (image ge
   <rect x="600" y="285" width="74" height="50" rx="4" class="panel warning-stroke" stroke-width="1.2"/>
   <text x="637" y="306" text-anchor="middle" font-size="11" font-weight="600" class="text-warning">IEND</text>
   <text x="637" y="322" text-anchor="middle" font-size="9" class="text-muted">12 bytes</text>
-  <text x="360" y="362" text-anchor="middle" font-size="10" class="text-subtle">Failure-safe: nếu input không có PNG signature hoặc không tìm thấy IEND, function trả nguyên bytes cũ (no error).</text>
+  <text x="360" y="362" text-anchor="middle" font-size="10" class="text-subtle">Failure-safe: 入力に PNG シグネチャがないか IEND が見つからない場合、関数は元のバイト列をそのまま返す（エラーなし）。</text>
 </svg>
 
 <div class="callout warning">
-<strong>Note:</strong> Module <code>agent.EmbedPNGPrompt</code> có thêm chunk <code>Software = goclaw</code> nhưng path <code>create_image</code> hiện tại không gọi vào module đó — chỉ embed <code>Description</code>.
+<strong>注意:</strong> モジュール <code>agent.EmbedPNGPrompt</code> は追加で <code>Software = goclaw</code> チャンクも書き込みますが、現在の <code>create_image</code> パスはそのモジュールを呼び出しません — <code>Description</code> のみが埋め込まれます。
 </div>
 
-<p>Function tự bỏ qua nếu input không có PNG signature (8 byte magic) hoặc không tìm thấy IEND chunk. Failure mode: trả nguyên bytes cũ, không báo lỗi.</p>
+<p>関数は入力に PNG シグネチャ（8 バイトマジック）がないか IEND チャンクが見つからない場合は静かにスキップします。失敗モード: 元のバイト列をそのまま返し、エラーなし。</p>
 
-<p>Hệ quả: prompt gốc <strong>đi theo file download</strong>. Đọc lại bằng <code>exiftool image.png</code> (field <code>Description</code>) hoặc PNG metadata viewer. Audit, tái tạo ảnh tương tự, debug prompt đều dễ hơn.</p>
+<p>結果: 元のプロンプトが<strong>ダウンロードファイルに同行します</strong>。<code>exiftool image.png</code>（<code>Description</code> フィールド）または PNG メタデータビューアーで読み返せます。監査、類似画像の再生成、プロンプトのデバッグがすべて簡単になります。</p>
 
-<p>UI render caption dưới ảnh trong <code>MediaGallery</code>: muted italic, line-clamp 2 dòng, hover tooltip hiển thị full prompt. File được lưu theo path: <code>{workspace}/generated/{YYYY-MM-DD}/image_{hint}_{timestamp}.png</code>.</p>
+<p>UI は <code>MediaGallery</code> 内の画像の下にキャプションをレンダリングします: ミュートイタリック、2 行クランプ、ホバー時に全プロンプトを表示するツールチップ。ファイルは次のパスに保存されます: <code>{workspace}/generated/{YYYY-MM-DD}/image_{hint}_{timestamp}.png</code>。</p>
 
 <!-- ============ SECTION 06 ============ -->
-<h2 id="s06"><span class="num">06</span>Skill <code>gpt-image-2-pro-max</code>: prompt registry qua Skill system</h2>
+<h2 id="s06"><span class="num">06</span>スキル <code>gpt-image-2-pro-max</code>: Skill システム経由のプロンプトレジストリ</h2>
 
-<p>Skill <a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener"><code>gpt-image-2-pro-max</code></a> do <a href="https://github.com/therichardngai-code" target="_blank" rel="noopener">Richard Ng</a> — contributor của GoClaw — open-source, code license MIT. Riêng 3,000+ prompt template trong corpus thuộc creators trên Twitter/X; skill chỉ index lại để search nhanh hơn, mỗi prompt khi trả về đều cite tác giả gốc, và corpus ghi credit upstream cho repo <code>EvoLinkAI/awesome-gpt-image-2-prompts</code>. Skill được package theo Claude Code skill convention; GoClaw có Skill system tương thích, nên cùng 1 skill dir chạy được trên cả hai.</p>
+<p>GoClaw コントリビューターの <a href="https://github.com/therichardngai-code" target="_blank" rel="noopener">Richard Ng</a> 氏によるスキル <a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener"><code>gpt-image-2-pro-max</code></a> は MIT ライセンスのオープンソースです。コーパス内の 3,000 以上のプロンプトテンプレートは Twitter/X クリエイターのものです。スキルは検索を高速化するためにインデックスを作成するだけで、返される各プロンプトには元の著者が引用され、コーパスは上流の <code>EvoLinkAI/awesome-gpt-image-2-prompts</code> リポジトリにクレジットを記載しています。スキルは Claude Code スキル規約に準拠してパッケージ化されており、GoClaw は互換性のある Skill システムを搭載しているため、同じスキルディレクトリが両方で動作します。</p>
 
 <h3>Anatomy</h3>
 
@@ -1213,7 +1248,7 @@ MaxRetries <span class="kw">int</span>  <span class="cmt">// default 1 (image ge
   <rect x="40" y="80" width="320" height="48" rx="4" class="panel accent-stroke" stroke-width="1.2"/>
   <text x="56" y="99" font-size="11" font-weight="600" class="text-accent">Tier 1</text>
   <text x="120" y="99" font-size="11" class="text" font-family="'JetBrains Mono',monospace">workspace/skills/</text>
-  <text x="56" y="116" font-size="9.5" class="text-muted">per-project, ưu tiên cao nhất</text>
+  <text x="56" y="116" font-size="9.5" class="text-muted">プロジェクトごと、最高優先度</text>
   <line x1="200" y1="128" x2="200" y2="136" class="muted-stroke" stroke-width="1.2"/>
   <rect x="40" y="136" width="320" height="48" rx="4" class="panel-dim border-stroke" stroke-width="1.2"/>
   <text x="56" y="155" font-size="11" font-weight="600" class="text">Tier 2</text>
@@ -1233,31 +1268,31 @@ MaxRetries <span class="kw">int</span>  <span class="cmt">// default 1 (image ge
   <rect x="40" y="304" width="320" height="48" rx="4" class="panel-dim border-stroke" stroke-width="1.2"/>
   <text x="56" y="323" font-size="11" font-weight="600" class="text">Tier 5</text>
   <text x="120" y="323" font-size="11" class="text" font-family="'JetBrains Mono',monospace">builtin</text>
-  <text x="56" y="340" font-size="9.5" class="text-muted">bundled với binary</text>
+  <text x="56" y="340" font-size="9.5" class="text-muted">バイナリにバンドル</text>
   <text x="200" y="385" text-anchor="middle" font-size="10" class="text-subtle">Loader.LoadForContext walks tiers, first match wins</text>
   <text x="380" y="62" font-size="10" class="text-muted" letter-spacing="0.06em">SKILL DIRECTORY ANATOMY</text>
   <rect x="380" y="80" width="300" height="280" rx="6" class="panel-dim border-stroke" stroke-width="1.2"/>
   <text x="400" y="110" font-size="11" font-weight="600" class="text-accent">gpt-image-2-pro-max/</text>
   <text x="420" y="138" font-size="11" font-weight="500" class="text">├── SKILL.md</text>
   <text x="440" y="156" font-size="9.5" font-weight="400" class="text-subtle">frontmatter (name, desc) + workflow body</text>
-  <text x="440" y="172" font-size="9.5" font-weight="400" class="text-subtle">inject vào agent system prompt</text>
+  <text x="440" y="172" font-size="9.5" font-weight="400" class="text-subtle">エージェントのシステムプロンプトに注入</text>
   <text x="420" y="198" font-size="11" font-weight="500" class="text">└── scripts/</text>
   <text x="440" y="216" font-size="10" font-weight="400" class="text-muted">search.py — Python HTTP client</text>
-  <text x="440" y="230" font-size="9.5" font-weight="400" class="text-subtle">agent gọi qua bash tool sẵn có</text>
+  <text x="440" y="230" font-size="9.5" font-weight="400" class="text-subtle">エージェントが既存の bash ツール経由で呼び出す</text>
   <rect x="40" y="404" width="640" height="62" rx="6" class="panel-dim border-stroke" stroke-width="1" stroke-dasharray="4 3"/>
   <text x="56" y="425" font-size="11" font-weight="600" class="text-accent">Watcher hot-reload</text>
-  <text x="56" y="445" font-size="10" class="text-muted">internal/skills/watcher.go detect thay đổi SKILL.md → bump version</text>
-  <text x="56" y="458" font-size="10" class="text-muted">→ next agent turn pick up skill mới, no restart</text>
+  <text x="56" y="445" font-size="10" class="text-muted">internal/skills/watcher.go が SKILL.md の変更を検出 → バージョンをバンプ</text>
+  <text x="56" y="458" font-size="10" class="text-muted">→ 次のエージェントターンで新しいスキルを反映、再起動不要</text>
 </svg>
 
-<p><strong>Corpus</strong>: 3,238 prompts community-vetted, hosted ở <code>https://gpt-image-2-prompts.goclawoffice.com</code>. Tags được suy ra qua 10 facet: <code>subjects</code>, <code>styles</code>, <code>lighting</code>, <code>cameras</code>, <code>moods</code>, <code>palettes</code>, <code>compositions</code>, <code>mediums</code>, <code>techniques</code>, <code>usecases</code>. Mỗi record có prompt body, Twitter/X attribution, reference image. Endpoint có rate limit theo IP và fair-use friendly.</p>
+<p><strong>コーパス</strong>: コミュニティが審査した 3,238 のプロンプトが <code>https://gpt-image-2-prompts.goclawoffice.com</code> でホストされています。タグは 10 のファセットで推定されます: <code>subjects</code>、<code>styles</code>、<code>lighting</code>、<code>cameras</code>、<code>moods</code>、<code>palettes</code>、<code>compositions</code>、<code>mediums</code>、<code>techniques</code>、<code>usecases</code>。各レコードにはプロンプト本文、Twitter/X の帰属、参照画像が含まれます。エンドポイントは IP レート制限があり、フェアユースに配慮しています。</p>
 
-<p><strong>CLI surface</strong> mà agent gọi:</p>
+<p>エージェントが呼び出す <strong>CLI インターフェース</strong>:</p>
 <pre><code>python scripts/search.py "luxury shoe ecommerce ad cream pastel" -n 5
 python scripts/search.py "perfume bottle" --shape ecommerce -n 3
 python scripts/search.py "neon ui" --persist plans/neon-refs.md</code></pre>
 
-<p>Sample output cho query đầu tiên (rút gọn 3 hit, trim prompt body):</p>
+<p>最初のクエリのサンプル出力（3 件表示、プロンプト本文は省略）:</p>
 <pre><code><span class="cmt">#1  bm25=-10.76  shape=ecommerce  source=None</span>
   <span class="kw">id    </span>: 64dp29km
   <span class="kw">title </span>: E-commerce Main Image - Luxury Perfume Ad on Marble Vanity
@@ -1293,58 +1328,58 @@ python scripts/search.py "neon ui" --persist plans/neon-refs.md</code></pre>
 
 <span class="cmt">(3 matched, showing 3)</span></code></pre>
 
-<p>Output được rank bằng BM25, gồm <code>prompt_body</code>, <code>tags.{moods,palettes,subjects,...}</code>, <code>author</code>, <code>tweet</code>, <code>image</code>. Các filter chính: <code>--shape</code>, <code>--has-image</code>, <code>-n</code>, <code>--full</code>, <code>--persist</code>.</p>
+<p>出力は BM25 でランク付けされ、<code>prompt_body</code>、<code>tags.{moods,palettes,subjects,...}</code>、<code>author</code>、<code>tweet</code>、<code>image</code> を含みます。主なフィルター: <code>--shape</code>、<code>--has-image</code>、<code>-n</code>、<code>--full</code>、<code>--persist</code>。</p>
 
 <!-- ============ SECTION 07 ============ -->
-<h2 id="s07"><span class="num">07</span>Setup qua Web Dashboard</h2>
+<h2 id="s07"><span class="num">07</span>Web ダッシュボードからのセットアップ</h2>
 
-<p>GoClaw có Web Dashboard với sidebar phân nhóm <strong>Core / Capabilities / System</strong>. Setup này cần 4 mục: <code>Agents</code> (Core), <code>Skills</code> (Capabilities), <code>Providers</code> + <code>Builtin Tools</code> (System). Setup tối thiểu chỉ cần <strong>1 agent</strong> — mọi agent đều dùng được tool <code>create_image</code> nhờ Provider Chain global ở Step 2a (Step 2b cấu hình <code>read_image</code> là optional, model có vision native skip được).</p>
+<p>GoClaw は <strong>Core / Capabilities / System</strong> でグループ化されたサイドバーを持つ Web ダッシュボードを提供します。このセットアップには 4 つのセクションが必要です: <code>Agents</code>（Core）、<code>Skills</code>（Capabilities）、<code>Providers</code> + <code>Builtin Tools</code>（System）。最小セットアップでは<strong>エージェント 1 つ</strong>だけで十分です — Step 2a のグローバル Provider Chain により、すべてのエージェントが <code>create_image</code> ツールを使用できます（Step 2b の <code>read_image</code> 設定はオプションで、ネイティブビジョン搭載モデルはスキップ可）。</p>
 
-<h3>Step 1 — Connect Codex provider</h3>
-<p>Sidebar → <strong>System / Providers</strong> → nút <strong>Add Provider</strong>. Trong modal <strong>Add Provider</strong>, chọn <code>ChatGPT Subscription (OAuth)</code>, giữ hoặc sửa <em>Account Alias</em> (vd <code>openai-codex</code>), nhập <em>Display Name</em> nếu cần, rồi bấm <strong>Connect OpenAI Account</strong>. System mở tab OAuth mới để đăng nhập tài khoản ChatGPT (Plus / Pro / Team / Enterprise đều được) và grant access.</p>
-<p>Sau khi sign-in xong, browser redirect về callback dạng <code>http://localhost:1455/auth/callback?code=...&amp;state=...</code>. Nếu chạy remote/VPS và browser báo không mở được localhost, copy full URL trên address bar, paste vào ô callback trong modal, rồi bấm <strong>Submit</strong>. Khi Providers list hiển thị provider mới với status <code>Connected</code> là hoàn tất.</p>
-
-<figure class="screenshot">
-  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-add-provider-codex-oauth.png" alt="Modal Add Provider với ChatGPT Subscription OAuth, account alias openai-codex, trạng thái waiting for authentication và ô paste callback URL cho remote/VPS.">
-  <figcaption>Step 1 · Add Provider modal trong OAuth flow</figcaption>
-</figure>
-
-<h3>Step 2a — Bật + cấu hình <code>create_image</code></h3>
-<p>Sidebar → <strong>System / Builtin Tools</strong> (route <code>/builtin-tools</code>) → tab <strong>Media</strong> → mục <strong>Create Image</strong>. Cờ <em>Enabled</em> mặc định <strong>OFF</strong> (xem seed data ở <code>cmd/gateway_builtin_tools.go:55</code>) — bật toggle bên phải lên <strong>ON</strong> trước, đây là master switch cho toàn tenant. Sau đó bấm <strong>Configure</strong> để vào modal Provider Chain.</p>
-<p>Modal <em>Create Image — Provider Chain</em> cho phép xếp thứ tự các provider fallback; provider đầu tiên đang <em>enabled</em> sẽ được thử trước. Setup tối thiểu: thêm 1 entry <strong>Codex Plus</strong>, model <code>GPT-5.4</code>, <em>Timeout</em> <code>600s</code> (image gen có thể chạy lâu khi prompt phức tạp), <em>Retries</em> <code>1</code>, và quan trọng nhất — <em>Image model</em> chọn <strong>Default · gpt-image-2 (recommended)</strong>. Bấm <strong>Save</strong>. Có thể bấm <strong>Add Provider</strong> để thêm fallback (vd OpenAI API key) nếu muốn graceful degradation khi OAuth quota cạn.</p>
+<h3>Step 1 — Codex プロバイダーを接続する</h3>
+<p>サイドバー → <strong>System / Providers</strong> → <strong>Add Provider</strong> ボタン。<strong>Add Provider</strong> モーダルで <code>ChatGPT Subscription (OAuth)</code> を選択し、<em>Account Alias</em>（例: <code>openai-codex</code>）を保持または編集、必要に応じて <em>Display Name</em> を入力して <strong>Connect OpenAI Account</strong> をクリックします。システムが新しい OAuth タブを開き、ChatGPT アカウント（Plus / Pro / Team / Enterprise いずれも可）へのサインインとアクセス許可を求めます。</p>
+<p>サインイン後、ブラウザは <code>http://localhost:1455/auth/callback?code=...&amp;state=...</code> のようなコールバックにリダイレクトされます。リモート/VPS ホストでブラウザが localhost に接続できない場合は、アドレスバーの URL 全体をコピーしてモーダルのコールバックフィールドに貼り付け、<strong>Submit</strong> をクリックします。Providers リストに新しいプロバイダーが <code>Connected</code> ステータスで表示されれば完了です。</p>
 
 <figure class="screenshot">
-  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-builtin-tools-create-image-provider-chain.png" alt="Modal 'Create Image — Provider Chain' với entry #1 Codex Plus enabled, Provider dropdown chọn Codex Plus, Model GPT-5.4, Timeout 600s, Retries 1, Image model 'Default · gpt-image-2 (recommended)', nút Add Provider phía dưới và Cancel/Save.">
-  <figcaption>Step 2a · Provider Chain cho <code>create_image</code> — Codex Plus + GPT-5.4 + <code>gpt-image-2</code></figcaption>
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-add-provider-codex-oauth.png" alt="Add Provider modal with ChatGPT Subscription OAuth, account alias openai-codex, status 'waiting for authentication' and a callback URL paste field for remote/VPS hosts.">
+  <figcaption>Step 1 · OAuth フローの Add Provider モーダル</figcaption>
 </figure>
 
-<h3>Step 2b — Bật + cấu hình <code>read_image</code> <em>(optional)</em></h3>
-<p><strong>Bỏ qua nếu</strong> model chính của agent đã có vision native (Qwen3.6-Plus, ...) — runtime fallback inline mode, attach binary ảnh vào message cho LLM tự đọc. <strong>Cần config nếu</strong> dùng model text-only hoặc muốn tách biệt vision provider khỏi model reasoning để optimize cost/latency.</p>
-<p>Cùng trang <code>/builtin-tools</code> → tab <strong>Media</strong> → mục <strong>Read Image</strong>. Bật toggle <em>Enabled</em> ON (default OFF). Để ý badge <code>req</code> kế tên tool — viết tắt của <em>"requires"</em>, dependency của tool. Hover sẽ thấy yêu cầu <code>vision_provider</code>: phải có ít nhất 1 provider có vision capability đăng ký ở Step 1 (vd Gemini, OpenAI, Anthropic, OpenRouter, dashscope qwen-vl) thì bật toggle mới có ý nghĩa — nếu không, tool throw lỗi <code>"No vision provider configured"</code> lúc runtime.</p>
-<p>Sau khi bật, bấm <strong>Configure</strong> → modal <em>Read Image — Provider Chain</em>. Setup ví dụ trong screenshot: 1 entry <strong>OpenRouter</strong>, model <code>google/gemini-2.5-flash-image</code>, <em>Timeout</em> <code>120s</code> (vision call thường nhanh, không cần 600s như image gen), <em>Retries</em> <code>3</code> (vision call cheap, retry an toàn nếu provider chập chờn). Đây là chain RIÊNG cho <code>read_image</code>, không dùng chung với <code>create_image</code>.</p>
+<h3>Step 2a — <code>create_image</code> を有効化 + 設定する</h3>
+<p>サイドバー → <strong>System / Builtin Tools</strong>（ルート <code>/builtin-tools</code>）→ <strong>Media</strong> タブ → <strong>Create Image</strong>。<em>Enabled</em> フラグはデフォルト <strong>OFF</strong>（<code>cmd/gateway_builtin_tools.go:55</code> のシードデータを参照）— まずトグルを <strong>ON</strong> にします（テナント全体のマスタースイッチ）。次に <strong>Configure</strong> をクリックして Provider Chain モーダルに進みます。</p>
+<p><em>Create Image — Provider Chain</em> モーダルでフォールバックプロバイダーの順序を設定できます。最初の <em>enabled</em> エントリが最初に試行されます。最小セットアップ: <strong>Codex Plus</strong> エントリを 1 つ追加し、モデル <code>GPT-5.4</code>、<em>Timeout</em> <code>600s</code>（複雑なプロンプトの場合、画像生成に時間がかかることがある）、<em>Retries</em> <code>1</code>、最も重要なのは <em>Image model</em> で <strong>Default · gpt-image-2 (recommended)</strong> を選択。<strong>Save</strong> をクリック。OAuth クォータが枯渇した際のグレースフルデグラデーションのため <strong>Add Provider</strong> でフォールバック（例: OpenAI API キー）を追加することもできます。</p>
+
+<figure class="screenshot">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-builtin-tools-create-image-provider-chain.png" alt="'Create Image — Provider Chain' modal with entry #1 Codex Plus enabled, Provider dropdown set to Codex Plus, Model GPT-5.4, Timeout 600s, Retries 1, Image model 'Default · gpt-image-2 (recommended)', Add Provider button below and Cancel/Save.">
+  <figcaption>Step 2a · <code>create_image</code> の Provider Chain — Codex Plus + GPT-5.4 + <code>gpt-image-2</code></figcaption>
+</figure>
+
+<h3>Step 2b — <code>read_image</code> を有効化 + 設定する <em>（オプション）</em></h3>
+<p>エージェントのメインモデルがすでにネイティブビジョンを持つ場合（Qwen3.6-Plus など）は<strong>スキップしてください</strong> — ランタイムがインラインモードにフォールバックし、画像バイナリをメッセージに添付して LLM が直接読み取ります。テキストのみのモデルを使用する場合、またはコスト/レイテンシを最適化するためにビジョンプロバイダーを推論モデルから分離したい場合は<strong>設定が必要</strong>です。</p>
+<p>同じ <code>/builtin-tools</code> ページ → <strong>Media</strong> タブ → <strong>Read Image</strong>。<em>Enabled</em> トグルをオンにします（デフォルト OFF）。ツール名の横にある <code>req</code> バッジに注意してください — <em>"requires"</em>（依存関係）の略です。ホバーすると <code>vision_provider</code> 要件が表示されます: トグルが意味を持つには Step 1 で少なくとも 1 つのビジョン対応プロバイダー（Gemini、OpenAI、Anthropic、OpenRouter、dashscope qwen-vl など）が登録されている必要があります — そうでなければ、ツールは実行時に <code>"No vision provider configured"</code> エラーをスローします。</p>
+<p>有効化後、<strong>Configure</strong> をクリック → <em>Read Image — Provider Chain</em> モーダル。スクリーンショットのサンプルセットアップ: <strong>OpenRouter</strong> エントリ 1 つ、モデル <code>google/gemini-2.5-flash-image</code>、<em>Timeout</em> <code>120s</code>（ビジョン呼び出しは通常高速で 600s は不要）、<em>Retries</em> <code>3</code>（ビジョン呼び出しは安価でプロバイダーが不安定な場合のリトライは安全）。これは <code>read_image</code> 専用のチェーンであり、<code>create_image</code> とは共有されません。</p>
 <div class="callout info">
-<strong>Routing:</strong> chain <code>read_image</code> config rồi → mọi agent gọi <code>read_image</code> đều route qua chain này, kể cả model chính của agent có vision native. Chain chưa config → ảnh attach inline vào message cho LLM tự đọc (chỉ work nếu model có vision). Code: <code>internal/agent/media_tool_routing.go</code>.
+<strong>ルーティング:</strong> <code>read_image</code> チェーンが設定済みの場合 → エージェントのメインモデルがネイティブビジョンを持っていても、すべての <code>read_image</code> 呼び出しがこのチェーンを通ります。チェーンが未設定の場合 → 画像がメッセージにインラインで添付されて LLM が直接読み取ります（モデルがビジョンをサポートしている場合のみ動作）。コード: <code>internal/agent/media_tool_routing.go</code>。
 </div>
 
 <figure class="screenshot">
-  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-builtin-tools-read-image-provider-chain.png" alt="Modal 'Read Image — Provider Chain' với entry #1 OpenRouter enabled, Provider dropdown chọn OpenRouter, Model 'google/gemini-2.5-flash-image', Timeout 120s, Retries 3, nút Add Provider phía dưới và Cancel/Save.">
-  <figcaption>Step 2b · Provider Chain cho <code>read_image</code> — OpenRouter + <code>google/gemini-2.5-flash-image</code>, Timeout 120s, Retries 3</figcaption>
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-builtin-tools-read-image-provider-chain.png" alt="'Read Image — Provider Chain' modal with entry #1 OpenRouter enabled, Provider dropdown set to OpenRouter, Model 'google/gemini-2.5-flash-image', Timeout 120s, Retries 3, Add Provider button below and Cancel/Save.">
+  <figcaption>Step 2b · <code>read_image</code> の Provider Chain — OpenRouter + <code>google/gemini-2.5-flash-image</code>、Timeout 120s、Retries 3</figcaption>
 </figure>
 
 <div class="callout info">
-<strong>Sao phải tách 2 chain?</strong> <code>create_image</code> cần model gen ảnh (gpt-image-2, DALL-E 3...). <code>read_image</code> cần model vision (Gemini 2.5 Flash, GPT-4o-mini...). Hai loại model khác nhau, provider khác nhau, billing khác nhau, đặc tính latency/retry cũng khác (image gen 4-8 phút retry rất tốn; vision call vài giây retry an toàn) — nên GoClaw lưu 2 chain riêng trong <code>builtin_tools.settings</code> (xem <code>internal/tools/media_provider_chain.go:64-100</code>). Bật + config riêng từng tool.
+<strong>なぜ 2 つのチェーンを分けるのか？</strong> <code>create_image</code> は画像生成モデル（gpt-image-2、DALL-E 3 など）が必要です。<code>read_image</code> はビジョンモデル（Gemini 2.5 Flash、GPT-4o-mini など）が必要です。モデルクラスが異なり、プロバイダーが異なり、課金が異なり、レイテンシ/リトライ特性も異なります（画像生成は 4〜8 分かかりリトライは高コスト、ビジョン呼び出しは数秒でリトライは安価）— そのため GoClaw は <code>builtin_tools.settings</code> に 2 つの別々のチェーンを保存します（<code>internal/tools/media_provider_chain.go:64-100</code> を参照）。各ツールを個別に有効化・設定してください。
 </div>
 
-<h3>Step 3 — Tạo Agent</h3>
-<p>Sidebar → <strong>Core / Agents</strong> → <strong>New Agent</strong>. Các field tối thiểu: <em>Name</em>, <em>Provider</em>, <em>Model</em> (vd Tiểu Hổ + qwen3.6-plus, hoặc bất kỳ model nào đủ thông minh để đọc ảnh và chạy skill). Save → agent xuất hiện trong list. Vai trò của agent này là <strong>chạy reasoning</strong>: phân tích brief, đọc ảnh, search corpus, refactor prompt, rồi gọi tool <code>create_image</code>.</p>
+<h3>Step 3 — エージェントを作成する</h3>
+<p>サイドバー → <strong>Core / Agents</strong> → <strong>New Agent</strong>。最小フィールド: <em>Name</em>、<em>Provider</em>、<em>Model</em>（例: Tiểu Hổ + qwen3.6-plus、または画像を読み取りスキルを実行できる十分に賢いモデル）。保存するとエージェントがリストに表示されます。このエージェントの役割は<strong>推論を実行する</strong>ことです: ブリーフを分析し、画像を読み取り、コーパスを検索し、プロンプトをリファクタリングして、<code>create_image</code> ツールを呼び出します。</p>
 
 <figure class="screenshot">
-  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-agents-new-imagegen.png" alt="Card agent 'Tiểu Hổ' (handle tieu-ho), provider qwen / qwen3.6-plus, badge active, mô tả 'Trợ lý cá nhân đa năng, xử lý tác vụ nhanh gọn, chính xác, hỗ trợ quản lý công việc, nhắc nhở sức khỏe & thói quen', kèm badges Full + Evolving và context window 200K ctx.">
-  <figcaption>Step 3 · Agent <code>tieu-ho</code> sau khi tạo — provider <code>qwen</code>, model <code>qwen3.6-plus</code></figcaption>
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-agents-new-imagegen.png" alt="Agent card 'Tiểu Hổ' (handle tieu-ho), provider qwen / qwen3.6-plus, active badge, description 'A versatile personal assistant for fast, accurate task handling, work management, and health &amp; habit reminders', with Full + Evolving badges and a 200K ctx context window.">
+  <figcaption>Step 3 · 作成後の Agent <code>tieu-ho</code> — provider <code>qwen</code>、model <code>qwen3.6-plus</code></figcaption>
 </figure>
 
-<h3>Step 4 — Upload skill <code>gpt-image-2-pro-max</code></h3>
-<p>Clone + zip skill từ upstream:</p>
+<h3>Step 4 — スキル <code>gpt-image-2-pro-max</code> をアップロードする</h3>
+<p>上流からスキルをクローンして ZIP 圧縮:</p>
 <span class="code-os-label">macOS / Linux · bash</span>
 <pre><code>git clone https://github.com/therichardngai-code/gpt-image-2-pro-max /tmp/g2pm
 cd /tmp/g2pm/.claude/skills/gpt-image-2-pro-max
@@ -1355,26 +1390,26 @@ zip -r ~/Desktop/gpt-image-2-pro-max.zip .</code></pre>
 Set-Location $env:TEMP\g2pm\.claude\skills\gpt-image-2-pro-max
 Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip -Force</code></pre>
 
-<p>Sidebar → <strong>Capabilities / Skills</strong> → <strong>Upload Skill</strong> → drop file zip → Dashboard parse <code>SKILL.md</code> frontmatter, lấy <code>name</code> + <code>description</code>, rồi lưu skill record vào DB (version là số nguyên do DB tự gán, increment mỗi lần upload — không lấy từ frontmatter). Skill xuất hiện trong list với toggle <strong>Enabled</strong>.</p>
+<p>サイドバー → <strong>Capabilities / Skills</strong> → <strong>Upload Skill</strong> → ZIP ファイルをドロップ → ダッシュボードが <code>SKILL.md</code> フロントマターをパースし <code>name</code> + <code>description</code> を取得、DB にスキルレコードを保存（version は DB が自動採番する整数で、アップロードのたびにインクリメント — フロントマターからは取得しない）。スキルが <strong>Enabled</strong> トグル付きでリストに表示されます。</p>
 
-<p>Cuối cùng, grant skill cho agent vừa tạo: mở <strong>Agent detail</strong> → section <strong>Skills</strong> → toggle <code>gpt-image-2-pro-max</code> sang <em>granted</em>. Loader đưa SKILL.md vào system prompt của agent từ turn kế tiếp, không cần restart. Skill này là <em>prompt-engineering pipeline</em> — dạy agent cách diagnose brief, search corpus 3,238 prompt mẫu, pick template phù hợp mood, refactor và resolve slot, rồi mới gọi <code>create_image</code> với prompt đã polished.</p>
+<p>最後に、作成したエージェントにスキルをグラントします: <strong>Agent detail</strong> → <strong>Skills</strong> セクション → <code>gpt-image-2-pro-max</code> を <em>granted</em> にトグル。ローダーが次のターンからエージェントのシステムプロンプトに SKILL.md を注入します — 再起動不要。このスキルは <em>プロンプトエンジニアリングパイプライン</em> — エージェントに、ブリーフの診断、3,238 プロンプトのコーパス検索、ムードに合ったテンプレートの選択、スロットのリファクタリングと解決、そして最後に磨かれたプロンプトで <code>create_image</code> を呼び出す方法を教えます。</p>
 
 <figure class="screenshot">
-  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-skills-upload.png" alt="Modal Upload Skills hướng dẫn upload ZIP có SKILL.md với YAML frontmatter (name, description, slug); drop zone, file gpt-image-2-pro-max.zip 7.3 KB hiện badge NEW, status '1 of 1 valid', nút Upload (1).">
-  <figcaption>Step 4a · Upload Skill modal — drop ZIP, preview entry hợp lệ</figcaption>
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-skills-upload.png" alt="Upload Skills modal with instructions to upload a ZIP containing SKILL.md with YAML frontmatter (name, description, slug); drop zone, file gpt-image-2-pro-max.zip 7.3 KB with a NEW badge, status '1 of 1 valid', Upload (1) button.">
+  <figcaption>Step 4a · Upload Skill モーダル — ZIP をドロップ、有効なエントリをプレビュー</figcaption>
 </figure>
 
 <figure class="screenshot">
-  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-agent-detail-skills-grant.png" alt="Agent detail page của 'Tiểu Hổ' (handle tieu-ho, provider qwen, model qwen3.6-plus, badges Full / V3 / Evolving): section Dreaming Memory Consolidation (Enabled, threshold 5, debounce 600000ms), Heartbeat (chưa setup), Hooks (chưa configure), Skills (1/1) liệt kê gpt-image-2-pro-max badge internal toggle granted ON với mô tả 'Production prompt-engineering pipeline for GPT-Image-2 / OpenAI image generation. Pairs a media-designer agent with a hosted searc...'.">
-  <figcaption>Step 4b · Agent detail <code>tieu-ho</code> (qwen3.6-plus) — toggle grant <code>gpt-image-2-pro-max</code> ON</figcaption>
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-agent-detail-skills-grant.png" alt="Agent detail page for 'Tiểu Hổ' (handle tieu-ho, provider qwen, model qwen3.6-plus, badges Full / V3 / Evolving): Dreaming Memory Consolidation section (Enabled, threshold 5, debounce 600000ms), Heartbeat (not set up), Hooks (not configured), Skills (1/1) listing gpt-image-2-pro-max with internal badge and granted toggle ON; description 'Production prompt-engineering pipeline for GPT-Image-2 / OpenAI image generation. Pairs a media-designer agent with a hosted searc...'.">
+  <figcaption>Step 4b · Agent detail <code>tieu-ho</code> (qwen3.6-plus) — <code>gpt-image-2-pro-max</code> グラントトグルを ON</figcaption>
 </figure>
 
 <div class="callout">
-<strong>Pattern nâng cao (optional) — tách 2 agent qua Agent Team:</strong> Có thể gom <em>orchestrator</em> (lead, chạy skill, điều phối task) + <em>image worker</em> (chỉ gọi <code>create_image</code>) vào cùng một <strong>Agent Team</strong>: orchestrator giữ context dài, worker chạy render lightweight, audit/trace tách bạch qua team task board. Tạo team ở Sidebar → <strong>Core / Teams</strong> → add cả 2 agent làm member; runtime sẽ chuyển agent sang mode <code>ModeTeam</code> (<code>internal/agent/orchestration_mode.go</code>) — full team tasks + delegate + spawn tools đều available. Nhưng KHÔNG bắt buộc về mặt runtime — 1 agent đã đủ chạy full workflow.
+<strong>応用パターン（オプション）— Agent Team で 2 エージェントに分割:</strong> <em>オーケストレーター</em>（リード、スキル実行、タスク調整）と <em>画像ワーカー</em>（<code>create_image</code> のみ呼び出し）を同一の <strong>Agent Team</strong> にまとめることができます: オーケストレーターが長いコンテキストを保持し、ワーカーはレンダリングを軽量に実行し、監査・トレースはチームタスクボードで明確に分離されます。Sidebar → <strong>Core / Teams</strong> → 両エージェントをメンバーとして追加してチームを作成します。ランタイムはエージェントを <code>ModeTeam</code>（<code>internal/agent/orchestration_mode.go</code>）に切り替え、フルのチームタスク・デリゲート・スポーンツールが利用可能になります。ただしランタイム上は必須ではありません — 1 つのエージェントだけでフルワークフローを実行できます。
 </div>
 
-<h3>Trace 1 turn (post-setup)</h3>
-<p>User brief: <em>"poster cao điểm Tết với cáo đỏ Việt Nam, style infographic"</em></p>
+<h3>1 ターントレース（セットアップ後）</h3>
+<p>ユーザーブリーフ: <em>"poster cao điểm Tết với cáo đỏ Việt Nam, style infographic"</em></p>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 720" class="theme-svg" style="font-family:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace">
   <defs>
@@ -1396,16 +1431,16 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
   <circle cx="64" cy="142" r="11" class="accent-fill"/>
   <text x="64" y="146" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">1</text>
   <text x="86" y="146" font-size="11" font-weight="600" class="text">Loader.LoadForContext</text>
-  <text x="86" y="162" font-size="10" class="text-muted">khớp SKILL.md description với brief → inject SKILL.md body vào system prompt</text>
-  <text x="86" y="178" font-size="9.5" class="text-subtle">điều kiện: skill được grant cho agent (Step 4b)</text>
+  <text x="86" y="162" font-size="10" class="text-muted">SKILL.md の description とブリーフを照合 → SKILL.md 本文をシステムプロンプトに注入</text>
+  <text x="86" y="178" font-size="9.5" class="text-subtle">前提: スキルがエージェントにグラントされている（Step 4b）</text>
 
   <line x1="360" y1="188" x2="360" y2="208" class="accent-stroke" stroke-width="1.5" marker-end="url(#traceArr)"/>
 
   <rect x="40" y="212" width="640" height="64" rx="6" class="panel border-stroke" stroke-width="1.2"/>
   <circle cx="64" cy="230" r="11" class="accent-fill"/>
   <text x="64" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">2</text>
-  <text x="86" y="234" font-size="11" font-weight="600" class="text">Agent phân tích brief</text>
-  <text x="86" y="250" font-size="10" class="text-muted">đọc workflow trong SKILL.md, extract facets:</text>
+  <text x="86" y="234" font-size="11" font-weight="600" class="text">エージェントがブリーフを分析</text>
+  <text x="86" y="250" font-size="10" class="text-muted">SKILL.md のワークフローを読み、ファセットを抽出:</text>
   <text x="86" y="266" font-size="10" class="text-accent">subject=fox · mood=festive · shape=infographic · palette=red-gold</text>
 
   <line x1="360" y1="276" x2="360" y2="296" class="accent-stroke" stroke-width="1.5" marker-end="url(#traceArr)"/>
@@ -1413,7 +1448,7 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
   <rect x="40" y="300" width="640" height="74" rx="6" class="panel border-stroke" stroke-width="1.2"/>
   <circle cx="64" cy="318" r="11" class="accent-fill"/>
   <text x="64" y="322" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">3</text>
-  <text x="86" y="322" font-size="11" font-weight="600" class="text">Agent gọi scripts/search.py qua bash tool</text>
+  <text x="86" y="322" font-size="11" font-weight="600" class="text">エージェントが bash ツール経由で scripts/search.py を呼び出す</text>
   <rect x="86" y="332" width="586" height="32" rx="4" class="panel-dim border-stroke" stroke-width="1" stroke-dasharray="3 2"/>
   <text x="96" y="353" font-size="10" class="text-muted" font-family="'JetBrains Mono',monospace">python search.py "lunar new year fox infographic poster" --shape infographic -n 5 --has-image</text>
 
@@ -1424,17 +1459,17 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
   <text x="64" y="420" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">4</text>
   <text x="86" y="420" font-size="11" font-weight="600" class="text">search.py → corpus server (HTTP)</text>
   <text x="86" y="436" font-size="10" class="text-muted">https://gpt-image-2-prompts.goclawoffice.com · BM25 + tag boost ranking</text>
-  <text x="86" y="452" font-size="9.5" class="text-subtle">trả top-5 record (prompt body + tags + author + twitter_link + reference image URL)</text>
+  <text x="86" y="452" font-size="9.5" class="text-subtle">上位 5 件のレコードを返す（prompt body + tags + author + twitter_link + reference image URL）</text>
 
   <line x1="360" y1="462" x2="360" y2="482" class="accent-stroke" stroke-width="1.5" marker-end="url(#traceArr)"/>
 
   <rect x="40" y="486" width="640" height="74" rx="6" class="panel border-stroke" stroke-width="1.2"/>
   <circle cx="64" cy="504" r="11" class="accent-fill"/>
   <text x="64" y="508" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">5</text>
-  <text x="86" y="508" font-size="11" font-weight="600" class="text">Agent chọn record + refactor prompt</text>
+  <text x="86" y="508" font-size="11" font-weight="600" class="text">エージェントがレコードを選択 + プロンプトをリファクタリング</text>
   <text x="86" y="524" font-size="10" class="text-muted">filter tags: moods=festive ∧ palettes=red-gold</text>
   <text x="86" y="540" font-size="10" class="text-accent">substitute {argument name="subject"} = "red fox"</text>
-  <text x="86" y="554" font-size="9.5" class="text-subtle">+ chèn detail: "Vietnamese tet decorations, lì xì, mai blossom"</text>
+  <text x="86" y="554" font-size="9.5" class="text-subtle">+ 詳細を追加: "Vietnamese tet decorations, lì xì, mai blossom"</text>
 
   <line x1="360" y1="560" x2="360" y2="580" class="accent-stroke" stroke-width="1.5" marker-end="url(#traceArr)"/>
 
@@ -1442,7 +1477,7 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
   <circle cx="64" cy="602" r="11" class="accent-fill"/>
   <text x="64" y="606" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">6</text>
   <text x="86" y="606" font-size="11" font-weight="600" class="text-accent">create_image(prompt=&lt;refactored&gt;, aspect_ratio="3:4")</text>
-  <text x="86" y="624" font-size="10" class="text-muted">→ native path ở Section 02 (Codex Responses API, image_generation tool, gate 2-tier)</text>
+  <text x="86" y="624" font-size="10" class="text-muted">→ Section 02 のネイティブパス（Codex Responses API、image_generation ツール、2 段階ゲート）</text>
 
   <line x1="360" y1="640" x2="360" y2="660" class="accent-stroke" stroke-width="1.5" marker-end="url(#traceArr)"/>
 
@@ -1450,29 +1485,29 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
   <circle cx="64" cy="688" r="11" class="accent-fill"/>
   <text x="64" y="692" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">7</text>
   <text x="86" y="688" font-size="11" font-weight="600" class="text">Agent reply + citation</text>
-  <text x="86" y="703" font-size="10" class="text-muted">image attached + author/twitter_link của prompt gốc (provenance)</text>
+  <text x="86" y="703" font-size="10" class="text-muted">画像を添付 + 元プロンプトの author/twitter_link（出所情報）</text>
 </svg>
 
-<p>Visual trace detail từ run thật: <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/kaitranntt/goclaw/8dd1590fd0d1c7f6d55b3d6beb33752d95562bf1/.github/pr-assets/1002/index.html" target="_blank" rel="noopener">PR #1002 · UX trace</a>.</p>
+<p>実際の実行からの詳細なビジュアルトレース: <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/kaitranntt/goclaw/8dd1590fd0d1c7f6d55b3d6beb33752d95562bf1/.github/pr-assets/1002/index.html" target="_blank" rel="noopener">PR #1002 · UX trace</a>。</p>
 
 <div class="callout warning">
-<strong>Multi-tenant:</strong> trong tenant mode, sidebar có thêm mục <strong>System / Tenants</strong>. Mỗi tenant có Codex provider + agent + skill grants riêng — upload skill 1 lần vào shared scope, grant cho từng tenant theo nhu cầu, không phải clone skill nhiều bản.
+<strong>マルチテナント:</strong> テナントモードではサイドバーに <strong>System / Tenants</strong> メニューが追加されます。各テナントは独自の Codex プロバイダー + エージェント + スキルグラントを持ちます — スキルをシェアドスコープに 1 度アップロードして、必要に応じて各テナントにグラントするだけ — スキルを複数コピーする必要はありません。
 </div>
 
 <!-- ============ SECTION 08 ============ -->
-<h2 id="s08"><span class="num">08</span>Workflow minh họa: tạo ảnh trong GoClaw</h2>
+<h2 id="s08"><span class="num">08</span>ワークフロー: GoClaw で画像を生成する</h2>
 
-<blockquote>"Anh em xài GoClaw tha hồ gen ảnh với GPT Image 2 chỉ trong 1 prompt. Upload ảnh base lên → Agent tối ưu prompt → Gen ảnh ngay trong GoClaw.<br><br>P.S. Mình setup Main model Qwen3.6-Plus (+ <code>read_image</code>) và GPT_Image_2 (<code>create_image</code>)." — <a href="https://www.facebook.com/groups/nextlevelbuilder.goclaw/posts/2060954061153975" target="_blank" rel="noopener">tác giả (Richard Ng)</a></blockquote>
+<blockquote>"GoClaw ユーザーの皆さん — GPT Image 2 を使ってプロンプト 1 つで画像を生成できます。ベース画像をアップロード → エージェントがプロンプトを最適化 → GoClaw 内で画像を生成。<br><br>P.S. メインモデルは Qwen3.6-Plus（+ <code>read_image</code>）、画像生成は GPT_Image_2（<code>create_image</code>）で設定しました。" — <a href="https://www.facebook.com/groups/nextlevelbuilder.goclaw/posts/2060954061153975" target="_blank" rel="noopener">著者 (Richard Ng)</a></blockquote>
 
-<p>Đây là workflow do chính tác giả chia sẻ: chỉ cần <strong>upload ảnh muốn làm</strong> + gõ vài <strong>keyword mô tả</strong> (ví dụ: "tạo ảnh ads poster ecommerce"). Agent tự làm phần còn lại — toàn bộ chỉ cần một lần upload.</p>
+<p>これは著者自身が共有したワークフローです: <strong>作りたい画像をアップロード</strong>して数個の<strong>説明キーワード</strong>を入力するだけ（例: "ecommerce 広告ポスターを作成"）。残りはエージェントがすべて行います — アップロード 1 回で完結します。</p>
 
-<h3>Setup tối thiểu trong GoClaw</h3>
+<h3>GoClaw の最小セットアップ</h3>
 <div class="split">
-  <div class="before"><span class="label">Agent</span><code>tieu-ho</code> (Tiểu Hổ) · qwen3.6-plus · grant skill <code>gpt-image-2-pro-max</code>. Đây là agent duy nhất user nói chuyện cùng. Chạy reasoning (phân tích brief, search corpus, refactor prompt) và gọi <code>create_image</code> trực tiếp. Qwen3.6-Plus đã có vision native nên đọc ảnh upload trực tiếp, không cần config <code>read_image</code> tool.</div>
-  <div class="after"><span class="label">Tool <code>create_image</code></span>Builtin tool — runtime tự đính vào tool list khi tenant đã bật toggle ở <code>/builtin-tools</code> (Step 2a ở Section 07) và agent có cờ <code>AllowImageGeneration=true</code> (default). Provider Chain → Codex Plus + <code>gpt-image-2</code> render PNG. Model chính của agent (Qwen3.6-Plus) chỉ chạy reasoning, không liên quan model gen ảnh — runtime route media tool qua chain riêng. Tool <code>read_image</code> (Step 2b) <em>chỉ cần config nếu model chính của agent là text-only (không có khả năng vision)</em>.</div>
+  <div class="before"><span class="label">Agent</span><code>tieu-ho</code> (Tiểu Hổ) · qwen3.6-plus · スキル <code>gpt-image-2-pro-max</code> をグラント済み。ユーザーが会話する唯一のエージェントです。推論（ブリーフ分析、コーパス検索、プロンプトリファクタリング）を実行し <code>create_image</code> を直接呼び出します。Qwen3.6-Plus はネイティブビジョンを搭載しているため、アップロードされた画像を直接読み取れます — <code>read_image</code> ツールの設定は不要です。</div>
+  <div class="after"><span class="label">Tool <code>create_image</code></span>ビルトインツール — テナントが <code>/builtin-tools</code> のトグルを有効化し（Section 07 の Step 2a）、エージェントに <code>AllowImageGeneration=true</code>（デフォルト）フラグが付いているときに、ランタイムがツールリストに自動的に追加します。Provider Chain → Codex Plus + <code>gpt-image-2</code> が PNG をレンダリング。エージェントのメインモデル（Qwen3.6-Plus）は推論のみ実行し、画像生成モデルとは無関係 — ランタイムがメディアツールを専用チェーン経由でルーティングします。<code>read_image</code> ツール（Step 2b）は<em>エージェントのメインモデルがテキストオンリー（ビジョン機能なし）の場合のみ設定が必要</em>です。</div>
 </div>
 
-<h3>Workflow: brief → ảnh hoàn chỉnh</h3>
+<h3>ワークフロー: ブリーフ → 完成画像</h3>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 880" class="theme-svg" style="font-family:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace">
   <defs>
@@ -1489,161 +1524,161 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
   <rect width="720" height="880" class="bg"/>
 
   <!-- Title -->
-  <text x="360" y="26" text-anchor="middle" font-size="14" font-weight="700" class="text" letter-spacing="0.02em">Workflow: brief → ảnh — 1 turn vs 2 turn</text>
-  <text x="360" y="44" text-anchor="middle" font-size="10" class="text-muted">Branch theo intent của user: "gen ngay" vs "duyệt trước"</text>
+  <text x="360" y="26" text-anchor="middle" font-size="14" font-weight="700" class="text" letter-spacing="0.02em">ワークフロー: ブリーフ → 画像 — 1 ターン vs 2 ターン</text>
+  <text x="360" y="44" text-anchor="middle" font-size="10" class="text-muted">ユーザーのインテントで分岐: "今すぐ生成" vs "先にレビュー"</text>
 
   <!-- USER INPUT -->
   <rect x="180" y="62" width="360" height="62" rx="8" class="panel" stroke-width="1.5"/>
   <text x="360" y="82" text-anchor="middle" font-size="11" font-weight="700" class="text-accent">USER INPUT (turn 1)</text>
   <text x="360" y="100" text-anchor="middle" font-size="10" class="text">📎 Upload <tspan font-style="italic">poster.jpg</tspan> + brief text</text>
-  <text x="360" y="115" text-anchor="middle" font-size="10" class="text-muted">vd: "tạo ảnh ads poster ecommerce"</text>
+  <text x="360" y="115" text-anchor="middle" font-size="10" class="text-muted">例: "ecommerce 広告ポスターを作成"</text>
   <line x1="360" y1="124" x2="360" y2="142" class="accent-stroke" stroke-width="1.5" marker-end="url(#wfArr)"/>
 
   <!-- AGENT REASONING (6 steps — common to both branches) -->
   <rect x="120" y="146" width="480" height="240" rx="10" class="panel-dim" stroke-width="1.2"/>
-  <text x="360" y="168" text-anchor="middle" font-size="11" font-weight="700" class="text">AGENT REASONING — chạy skill <tspan class="text-accent">gpt-image-2-pro-max</tspan> (6 bước)</text>
-  <text x="360" y="183" text-anchor="middle" font-size="9" class="text-subtle">SKILL.md được inject vào system prompt khi grant cho agent</text>
+  <text x="360" y="168" text-anchor="middle" font-size="11" font-weight="700" class="text">AGENT REASONING — スキル <tspan class="text-accent">gpt-image-2-pro-max</tspan> を実行（6 ステップ）</text>
+  <text x="360" y="183" text-anchor="middle" font-size="9" class="text-subtle">SKILL.md はエージェントにグラントされるとシステムプロンプトに注入される</text>
 
   <!-- 6 step boxes vertical -->
   <g font-size="10">
     <rect x="160" y="196" width="400" height="22" rx="4" class="panel" stroke-width="0.8"/>
     <text x="172" y="211" class="text-muted">①</text>
-    <text x="190" y="211" class="text"><tspan font-weight="600">Read image</tspan> — đọc <tspan class="text-accent">poster.jpg</tspan>: subject, palette, composition</text>
+    <text x="190" y="211" class="text"><tspan font-weight="600">Read image</tspan> — <tspan class="text-accent">poster.jpg</tspan> を読み取る: subject, palette, composition</text>
 
     <rect x="160" y="222" width="400" height="22" rx="4" class="panel" stroke-width="0.8"/>
     <text x="172" y="237" class="text-muted">②</text>
-    <text x="190" y="237" class="text"><tspan font-weight="600">Search corpus</tspan> — <tspan class="text-accent">scripts/search.py</tspan> BM25 → top-5 prompt</text>
+    <text x="190" y="237" class="text"><tspan font-weight="600">Search corpus</tspan> — <tspan class="text-accent">scripts/search.py</tspan> BM25 → 上位 5 プロンプト</text>
 
     <rect x="160" y="248" width="400" height="22" rx="4" class="panel" stroke-width="0.8"/>
     <text x="172" y="263" class="text-muted">③</text>
-    <text x="190" y="263" class="text"><tspan font-weight="600">Pick template</tspan> — mood-mismatch filter, chọn 1 base</text>
+    <text x="190" y="263" class="text"><tspan font-weight="600">Pick template</tspan> — ムード不一致フィルター、ベースを 1 つ選択</text>
 
     <rect x="160" y="274" width="400" height="22" rx="4" class="panel" stroke-width="0.8"/>
     <text x="172" y="289" class="text-muted">④</text>
-    <text x="190" y="289" class="text"><tspan font-weight="600">Refactor</tspan> — parameterise template với <tspan class="text-accent">{argument}</tspan> slots</text>
+    <text x="190" y="289" class="text"><tspan font-weight="600">Refactor</tspan> — <tspan class="text-accent">{argument}</tspan> スロットでテンプレートをパラメータ化</text>
 
     <rect x="160" y="300" width="400" height="22" rx="4" class="panel" stroke-width="0.8"/>
     <text x="172" y="315" class="text-muted">⑤</text>
-    <text x="190" y="315" class="text"><tspan font-weight="600">Resolve</tspan> — fill slots; default-fallback nếu mơ hồ, never invent</text>
+    <text x="190" y="315" class="text"><tspan font-weight="600">Resolve</tspan> — スロットを埋める; 曖昧な場合はデフォルトフォールバック、絶対に創作しない</text>
 
     <rect x="160" y="326" width="400" height="22" rx="4" class="panel" stroke-width="0.8"/>
     <text x="172" y="341" class="text-muted">⑥</text>
     <text x="190" y="341" class="text"><tspan font-weight="600">Output 4-block</tspan> — Base · Parameterised · Resolved · Rationale</text>
   </g>
-  <text x="360" y="370" text-anchor="middle" font-size="9.5" class="text-subtle">— branch theo intent của user —</text>
+  <text x="360" y="370" text-anchor="middle" font-size="9.5" class="text-subtle">— ユーザーのインテントで分岐 —</text>
 
   <!-- BRANCH POINT — diamond (centered, isolated row) -->
   <line x1="360" y1="386" x2="360" y2="400" class="muted-stroke" stroke-width="1" stroke-dasharray="3 2"/>
   <polygon points="360,400 440,440 360,480 280,440" class="panel" stroke="var(--border-strong)" stroke-width="1.5"/>
   <text x="360" y="438" text-anchor="middle" font-size="11" font-weight="700" class="text">User intent?</text>
-  <text x="360" y="452" text-anchor="middle" font-size="8.5" class="text-muted">(reasoning của agent)</text>
+  <text x="360" y="452" text-anchor="middle" font-size="8.5" class="text-muted">（エージェントの推論）</text>
 
-  <!-- Diagonal arrows từ diamond xuống 2 nhánh (label đặt giữa arrow, không overlap diamond) -->
+  <!-- Diagonal arrows from diamond down to two branches -->
   <line x1="300" y1="465" x2="220" y2="510" class="success-stroke" stroke-width="1.5" marker-end="url(#wfArrSuccess)"/>
   <rect x="178" y="475" width="92" height="18" rx="4" fill="var(--bg)" stroke="var(--success)" stroke-width="1"/>
-  <text x="224" y="488" text-anchor="middle" font-size="9.5" class="text-success" font-weight="700">"gen ngay"</text>
+  <text x="224" y="488" text-anchor="middle" font-size="9.5" class="text-success" font-weight="700">"今すぐ生成"</text>
 
   <line x1="420" y1="465" x2="500" y2="510" class="warning-stroke" stroke-width="1.5" marker-end="url(#wfArrWarning)"/>
   <rect x="450" y="475" width="100" height="18" rx="4" fill="var(--bg)" stroke="var(--warning)" stroke-width="1"/>
-  <text x="500" y="488" text-anchor="middle" font-size="9.5" class="text-warning" font-weight="700">"duyệt trước"</text>
+  <text x="500" y="488" text-anchor="middle" font-size="9.5" class="text-warning" font-weight="700">"先にレビュー"</text>
 
   <!-- Branch A — 1 turn (left) -->
   <rect x="40" y="520" width="320" height="170" rx="10" class="panel" stroke="var(--success)" stroke-width="1.5"/>
-  <text x="200" y="542" text-anchor="middle" font-size="11" font-weight="700" class="text-success">Ⓐ NHÁNH A — 1 turn (autonomous)</text>
-  <text x="200" y="558" text-anchor="middle" font-size="9.5" class="text-muted">Agent KHÔNG end_turn, chain tiếp tool call</text>
+  <text x="200" y="542" text-anchor="middle" font-size="11" font-weight="700" class="text-success">Ⓐ ブランチ A — 1 ターン（自律）</text>
+  <text x="200" y="558" text-anchor="middle" font-size="9.5" class="text-muted">エージェントは end_turn せず、ツール呼び出しをチェーン継続</text>
 
   <rect x="60" y="568" width="280" height="50" rx="5" class="panel-dim" stroke-width="0.8"/>
-  <text x="200" y="586" text-anchor="middle" font-size="10" font-weight="600" class="text">⑦ Gọi <tspan class="text-accent">create_image(prompt=Resolved)</tspan></text>
+  <text x="200" y="586" text-anchor="middle" font-size="10" font-weight="600" class="text">⑦ <tspan class="text-accent">create_image(prompt=Resolved)</tspan> を呼び出す</text>
   <text x="200" y="601" text-anchor="middle" font-size="9" class="text-muted">→ Provider Chain → Codex / gpt-image-2 → PNG</text>
 
   <line x1="200" y1="622" x2="200" y2="638" class="success-stroke" stroke-width="1.5" marker-end="url(#wfArrSuccess)"/>
   <rect x="60" y="642" width="280" height="38" rx="5" class="panel-dim" stroke="var(--success)" stroke-width="0.8"/>
   <text x="200" y="659" text-anchor="middle" font-size="10" font-weight="600" class="text-success">Reply: PNG + 4-block + reference</text>
-  <text x="200" y="672" text-anchor="middle" font-size="9" class="text-muted">User chỉ thao tác 1 lần</text>
+  <text x="200" y="672" text-anchor="middle" font-size="9" class="text-muted">ユーザーの操作は 1 回で完了</text>
 
   <!-- Branch B — 2 turn (right) -->
   <rect x="360" y="520" width="320" height="170" rx="10" class="panel" stroke="var(--warning)" stroke-width="1.5"/>
-  <text x="520" y="542" text-anchor="middle" font-size="11" font-weight="700" class="text-warning">Ⓑ NHÁNH B — 2 turn (review-first)</text>
-  <text x="520" y="558" text-anchor="middle" font-size="9.5" class="text-muted">Agent end_turn sau bước ⑥, chờ user duyệt</text>
+  <text x="520" y="542" text-anchor="middle" font-size="11" font-weight="700" class="text-warning">Ⓑ ブランチ B — 2 ターン（レビュー優先）</text>
+  <text x="520" y="558" text-anchor="middle" font-size="9.5" class="text-muted">エージェントはステップ⑥後に end_turn、ユーザー承認を待機</text>
 
   <rect x="380" y="568" width="280" height="50" rx="5" class="panel-dim" stroke-width="0.8"/>
   <text x="520" y="586" text-anchor="middle" font-size="10" font-weight="600" class="text">Reply turn 1: 4-block + reference image</text>
-  <text x="520" y="601" text-anchor="middle" font-size="9" class="text-muted">User đọc Resolved prompt, OK / chỉnh slot</text>
+  <text x="520" y="601" text-anchor="middle" font-size="9" class="text-muted">ユーザーが Resolved プロンプトを確認、OK / スロット調整</text>
 
   <line x1="520" y1="622" x2="520" y2="638" class="warning-stroke" stroke-width="1.5" marker-end="url(#wfArrWarning)"/>
   <rect x="380" y="642" width="280" height="38" rx="5" class="panel-dim" stroke="var(--warning)" stroke-width="0.8"/>
-  <text x="520" y="659" text-anchor="middle" font-size="10" font-weight="600" class="text-warning">USER INPUT (turn 2): "OK gen đi"</text>
-  <text x="520" y="672" text-anchor="middle" font-size="9" class="text-muted">→ trigger ⑦ create_image, PNG về</text>
+  <text x="520" y="659" text-anchor="middle" font-size="10" font-weight="600" class="text-warning">USER INPUT (turn 2): "OK、生成して"</text>
+  <text x="520" y="672" text-anchor="middle" font-size="9" class="text-muted">→ ⑦ create_image をトリガー、PNG が返る</text>
 
   <!-- Common bottom note -->
   <line x1="200" y1="690" x2="360" y2="730" class="muted-stroke" stroke-width="1" stroke-dasharray="3 2"/>
   <line x1="520" y1="690" x2="360" y2="730" class="muted-stroke" stroke-width="1" stroke-dasharray="3 2"/>
 
   <rect x="100" y="736" width="520" height="64" rx="8" class="panel-dim" stroke-width="1"/>
-  <text x="360" y="757" text-anchor="middle" font-size="10" font-weight="700" class="text">GoClaw runtime: KHÔNG có gate cứng cho <tspan class="text-accent">create_image</tspan></text>
-  <text x="360" y="773" text-anchor="middle" font-size="9.5" class="text-muted">Branch quyết định 100% bởi reasoning của agent dựa trên wording brief.</text>
-  <text x="360" y="789" text-anchor="middle" font-size="9.5" class="text-muted">"tạo ngay / gen ảnh đi" → A · "đề xuất prompt / cho xem mẫu / draft" → B</text>
+  <text x="360" y="757" text-anchor="middle" font-size="10" font-weight="700" class="text">GoClaw ランタイム: <tspan class="text-accent">create_image</tspan> にハードゲートなし</text>
+  <text x="360" y="773" text-anchor="middle" font-size="9.5" class="text-muted">分岐はブリーフのワーディングに基づくエージェントの推論によって 100% 決定される。</text>
+  <text x="360" y="789" text-anchor="middle" font-size="9.5" class="text-muted">"今すぐ生成 / 画像を作って" → A · "プロンプトを提案 / 下書きを見せて" → B</text>
 
   <!-- Footer ref -->
   <text x="360" y="822" text-anchor="middle" font-size="9" class="text-subtle">Tool loop: <tspan font-family="'JetBrains Mono',monospace">internal/agent/loop_run.go</tspan> · max 30 LLM iterations / user turn (<tspan font-family="'JetBrains Mono',monospace">DefaultMaxIterations</tspan>)</text>
-  <text x="360" y="838" text-anchor="middle" font-size="9" class="text-subtle">User input cho turn 2 = trigger duy nhất để branch B tiếp tục — agent đã end_turn ở turn 1</text>
+  <text x="360" y="838" text-anchor="middle" font-size="9" class="text-subtle">ターン 2 のユーザー入力がブランチ B の唯一のトリガー — エージェントはターン 1 で end_turn 済み</text>
 </svg>
 
 <div class="callout">
-<strong>1 turn hay 2 turn — phụ thuộc instruction:</strong> Brief kiểu "gen ảnh ngay" (như demo trên — <em>nhánh A</em> trong diagram) → agent chain 7 bước trong cùng 1 user turn, autonomous tới khi PNG về. Brief kiểu "đề xuất prompt cho tôi xem trước" (<em>nhánh B</em>) → agent dừng sau bước ⑥ (return 4-block + reference), end_turn; user duyệt / chỉnh slot ở turn 2 mới trigger gọi <code>create_image</code>. GoClaw runtime hỗ trợ cả hai — không có gate cứng cho <code>create_image</code>, mọi quyết định nằm ở reasoning của agent.
+<strong>1 ターンか 2 ターンか — インストラクション次第:</strong> 「画像を今すぐ生成して」系のブリーフ（上のデモのように — ダイアグラムの<em>ブランチ A</em>）→ エージェントは同じユーザーターン内で 7 ステップを連鎖し、PNG が返るまで自律実行。「プロンプトを先に見せて」系のブリーフ（<em>ブランチ B</em>）→ エージェントはステップ⑥後に停止（4-block + reference を返却）、end_turn; ターン 2 でユーザーが承認・スロット調整して初めて <code>create_image</code> 呼び出しをトリガー。GoClaw ランタイムは両方をサポート — <code>create_image</code> にハードゲートなし、すべての決定はエージェントの推論に委ねられます。
 </div>
 
 <figure class="screenshot">
-  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/workflow-output-mary-jane-harboriis.png" alt="Output ads poster ecommerce: thương hiệu HARBORIIS giới thiệu giày Mary Jane, ba người mẫu mặc đồ silk màu kem ngồi quanh đôi giày floral embroidery cỡ lớn trên nền pastel cream với pearl spheres và crystal formations; tagline 'Where Softness Becomes Form. Floral mesh, weightless step, quiet confidence.' kèm 4 icon đặc tính (Sheer Mesh, Floral Embroidery, Soft Cream Tone, Hand-Finished); góc trên ghi 'Designed with ChatGPT'.">
-  <figcaption>Output từ workflow — ads poster cho thương hiệu giày HARBORIIS, gen 1 turn từ ảnh base + keyword <code>"tạo ảnh ads poster ecommerce"</code></figcaption>
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/workflow-output-mary-jane-harboriis.png" alt="Ecommerce ad poster output: HARBORIIS brand showcases Mary Jane shoes, three models in cream silk outfits seated around an oversized floral-embroidery shoe on a pastel cream background with pearl spheres and crystal formations; tagline 'Where Softness Becomes Form. Floral mesh, weightless step, quiet confidence.' along with four feature icons (Sheer Mesh, Floral Embroidery, Soft Cream Tone, Hand-Finished); top corner reads 'Designed with ChatGPT'.">
+  <figcaption>ワークフロー出力 — HARBORIIS シューズブランドの広告ポスター、ベース画像 + キーワード <code>"ecommerce 広告ポスターを作成"</code> から 1 ターンで生成</figcaption>
 </figure>
 
 <!-- ============ SECTION 09 ============ -->
-<h2 id="s09"><span class="num">09</span>Best practices</h2>
+<h2 id="s09"><span class="num">09</span>ベストプラクティス</h2>
 
-<p>2 tips quan trọng nhất khi chạy combo này:</p>
+<p>このコンボを運用する際の最重要ヒント 2 つ:</p>
 <ol>
-  <li><strong>Brief càng chi tiết, agent search càng trúng.</strong> Khi user chỉ gõ <em>"con cáo đỏ"</em>, agent sẽ search <code>"red fox"</code> và nhận về đủ loại template không liên quan (cáo trong rừng, cáo cartoon, cáo realistic…). Thêm vào brief các keyword về <strong>shape</strong> (poster / infographic / portrait / ad…), <strong>mood</strong> (festive / moody / minimal…), và <strong>palette</strong> (red-gold / pastel / neon…) thì kết quả search bám sát ý định hơn nhiều. Vd: <em>"poster Tết cáo đỏ Việt Nam style infographic, palette đỏ-vàng festive"</em> → search query của agent có đủ <code>infographic festive red-gold</code> để filter ra template phù hợp.</li>
-  <li><strong>Đừng giảm timeout xuống dưới 600s.</strong> Sinh ảnh phức tạp (vd infographic nhiều text trong ảnh) bình thường mất 4–8 phút server xử lý — đó không phải lỗi, là realistic. Default cũ <code>120s × 2 retries</code> hay bị cắt giữa chừng (<code>context deadline exceeded</code>) làm hỏng việc. PR #1002 đổi thành <code>600s × 1 retry</code>: chờ lâu hơn nhưng đủ thời gian; chỉ retry 1 lần vì retry sau timeout tốn gấp đôi tiền mà hiếm khi qua được. Operator có quyền đặt lại nếu cần, nhưng đừng đặt thấp hơn 600s — gần như chắc chắn sẽ gặp lại lỗi cũ.</li>
+  <li><strong>ブリーフが詳細なほど、エージェントの検索精度が上がる。</strong> ユーザーが <em>"red fox"</em> とだけ入力すると、エージェントは <code>"red fox"</code> で検索し、無関係なテンプレートが大量に返ります（森の狐、カートゥーン狐、リアル狐など）。ブリーフに <strong>shape</strong>（poster / infographic / portrait / ad…）、<strong>mood</strong>（festive / moody / minimal…）、<strong>palette</strong>（red-gold / pastel / neon…）のキーワードを追加すれば、検索結果がインテントに大幅に絞り込まれます。例: <em>"Tet poster, Vietnamese red fox, infographic style, festive red-gold palette"</em> → エージェントの検索クエリに <code>infographic festive red-gold</code> が含まれ、適切なテンプレートへのフィルタリングが可能になります。</li>
+  <li><strong>タイムアウトを 600s 未満に下げないこと。</strong> 複雑な画像の生成（例: テキストを多く含む infographic）は通常サーバー側で 4〜8 分かかります — これはエラーではなくリアルな数値です。旧デフォルトの <code>120s × 2 retries</code> は処理途中で切断されることが多く（<code>context deadline exceeded</code>）、実行を台無しにしていました。PR #1002 で <code>600s × 1 retry</code> に変更しました: 待機時間は長くなりますがサーバーに十分な時間を与えられます。リトライは 1 回のみ — タイムアウト後のリトライはコストが 2 倍になる割に成功することはほとんどないためです。オペレーターは必要に応じて変更できますが、600s を下回ると設定しないでください — 旧来の失敗モードが再発することはほぼ確実です。</li>
 </ol>
 
 <!-- ============ SECTION 10 ============ -->
-<h2 id="s10"><span class="num">10</span>Tóm tắt kỹ thuật</h2>
+<h2 id="s10"><span class="num">10</span>技術サマリー</h2>
 
-<h3>File references</h3>
+<h3>ファイルリファレンス</h3>
 <div class="table-wrap">
 <table>
-  <thead><tr><th>Component</th><th>File</th><th>Vai trò</th></tr></thead>
+  <thead><tr><th>Component</th><th>File</th><th>役割</th></tr></thead>
   <tbody>
-    <tr><td><strong>Native image interface</strong></td><td><code>internal/providers/native_image.go</code></td><td>Interface <code>NativeImageProvider</code>, <code>ValidateImageModel</code>, <code>SizeFromAspect</code></td></tr>
-    <tr><td><strong>Codex impl</strong></td><td><code>internal/providers/codex_native_image.go</code></td><td>Build body, parse JSON / SSE response</td></tr>
-    <tr><td><strong>Tool entry</strong></td><td><code>internal/tools/create_image.go</code></td><td>Tool dispatch, chain resolution, native path</td></tr>
-    <tr><td><strong>Provider chain</strong></td><td><code>internal/tools/media_provider_chain.go</code></td><td>Chain timeout 600s, max_retries 1 default</td></tr>
-    <tr><td><strong>PNG embed (runtime)</strong></td><td><code>internal/tools/png_embed.go</code></td><td><code>pngEmbedPrompt</code> — chèn "Description" tEXt chunk trước IEND</td></tr>
-    <tr><td><strong>PNG embed (2-chunk)</strong></td><td><code>internal/agent/png_metadata.go</code></td><td><code>EmbedPNGPrompt</code> 2-chunk (<code>Description</code> + <code>Software</code>) — chưa được <code>create_image</code> gọi</td></tr>
-    <tr><td><strong>Tool filter gate</strong></td><td><code>internal/agent/loop_tool_filter.go</code></td><td>2-tier gate: capability AND <code>allowImageGeneration</code></td></tr>
-    <tr><td><strong>Vision routing</strong></td><td><code>internal/agent/media_tool_routing.go</code></td><td><code>hasReadImageProvider</code> — file-ref vs inline mode cho ảnh upload</td></tr>
-    <tr><td><strong>Orchestration mode</strong></td><td><code>internal/agent/orchestration_mode.go</code></td><td><code>ModeTeam</code> / <code>ModeDelegate</code> / <code>ModeSpawn</code> resolve theo team + agent links</td></tr>
-    <tr><td><strong>Builtin tool seed</strong></td><td><code>cmd/gateway_builtin_tools.go</code></td><td>Default <code>Enabled: false</code> + <code>Requires</code> deps (vision, image_gen, ...)</td></tr>
+    <tr><td><strong>Native image interface</strong></td><td><code>internal/providers/native_image.go</code></td><td><code>NativeImageProvider</code> インターフェース、<code>ValidateImageModel</code>、<code>SizeFromAspect</code></td></tr>
+    <tr><td><strong>Codex impl</strong></td><td><code>internal/providers/codex_native_image.go</code></td><td>リクエストボディを構築、JSON / SSE レスポンスをパース</td></tr>
+    <tr><td><strong>Tool entry</strong></td><td><code>internal/tools/create_image.go</code></td><td>ツールディスパッチ、チェーン解決、ネイティブパス</td></tr>
+    <tr><td><strong>Provider chain</strong></td><td><code>internal/tools/media_provider_chain.go</code></td><td>チェーンタイムアウト 600s、max_retries 1 デフォルト</td></tr>
+    <tr><td><strong>PNG embed (runtime)</strong></td><td><code>internal/tools/png_embed.go</code></td><td><code>pngEmbedPrompt</code> — IEND の直前に "Description" tEXt チャンクを挿入</td></tr>
+    <tr><td><strong>PNG embed (2-chunk)</strong></td><td><code>internal/agent/png_metadata.go</code></td><td><code>EmbedPNGPrompt</code> 2 チャンク（<code>Description</code> + <code>Software</code>）— <code>create_image</code> からはまだ呼び出されていない</td></tr>
+    <tr><td><strong>Tool filter gate</strong></td><td><code>internal/agent/loop_tool_filter.go</code></td><td>2 段階ゲート: capability AND <code>allowImageGeneration</code></td></tr>
+    <tr><td><strong>Vision routing</strong></td><td><code>internal/agent/media_tool_routing.go</code></td><td><code>hasReadImageProvider</code> — アップロード画像のファイル参照 vs インラインモード</td></tr>
+    <tr><td><strong>Orchestration mode</strong></td><td><code>internal/agent/orchestration_mode.go</code></td><td><code>ModeTeam</code> / <code>ModeDelegate</code> / <code>ModeSpawn</code> をチーム + エージェントリンクから解決</td></tr>
+    <tr><td><strong>Builtin tool seed</strong></td><td><code>cmd/gateway_builtin_tools.go</code></td><td>デフォルト <code>Enabled: false</code> + <code>Requires</code> 依存関係（vision、image_gen など）</td></tr>
   </tbody>
 </table>
 </div>
 
 
-<h3>Skill backend</h3>
-<p>Skill upload qua Dashboard (xem Section 07 · Step 4). <code>scripts/search.py</code> gọi corpus host bên ngoài; BM25 + tag boost ranking nằm bên server, không phải GoClaw core.</p>
+<h3>スキルバックエンド</h3>
+<p>スキルはダッシュボード経由でアップロードします（Section 07 · Step 4 参照）。<code>scripts/search.py</code> は外部コーパスホストを呼び出します。BM25 + タグブーストランキングはサーバー側にあり、GoClaw コアには含まれません。</p>
 
 <footer class="footer-band" id="summary">
-  <p class="footer-text"><strong><a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a></strong> mở native path cho image generation qua Codex OAuth, kết hợp <strong><a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener">skill <code>gpt-image-2-pro-max</code></a></strong> (Richard Ng, MIT) để agent search → refactor → cite. Cost: xài quota ChatGPT subscription đã trả, không tính API Usage. Gain: <em>prompt quality từ community + provenance đi theo file ảnh</em>.</p>
-  <div class="footer-ver"><a href="https://github.com/nextlevelbuilder/goclaw">inside-goclaw</a> · v3.11.0 · 2026-05-03</div>
-  <a class="footer-back" href="/">← Về blog</a>
+  <p class="footer-text"><strong><a href="https://github.com/nextlevelbuilder/goclaw" target="_blank" rel="noopener">GoClaw &ge; v3.11.0</a></strong> に更新すれば Codex OAuth 経由のネイティブ画像生成が利用可能になり、<strong><a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener">スキル <code>gpt-image-2-pro-max</code></a></strong>（Richard Ng、MIT）と組み合わせれば、エージェントは検索 → リファクタリング → 引用を完結できます。コスト: 支払済みの ChatGPT サブスクリプションクォータを消費、API Usage 料金なし。</p>
+  <div class="footer-ver"><a href="https://github.com/nextlevelbuilder/goclaw">GoClaw v3.11.0</a> — Inside GoClaw Series</div>
+  <a class="footer-back" href="/ja/">← ブログへ</a>
 </footer>
 
 </div>
 
 <script>
   (function() {
-    var KEY = 'preview-theme';
+    var KEY = 'goclaw-blog-theme';
     var stored = localStorage.getItem(KEY);
     if (stored === 'light' || stored === 'dark') {
       document.documentElement.setAttribute('data-theme', stored);
@@ -1655,6 +1690,10 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem(KEY, next);
     });
+    // Locale-aware home link (no trailing slash)
+    var localePrefix = window.location.pathname.match(/^\/(en|zh|ja)\//);
+    var homeHref = localePrefix ? '/' + localePrefix[1] : '/';
+    document.querySelectorAll('.home-link').forEach(function(a) { a.href = homeHref; });
   })();
 
   /* ============ STICKY TOC ============ */

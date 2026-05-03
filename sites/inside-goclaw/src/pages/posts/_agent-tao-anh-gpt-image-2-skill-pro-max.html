@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Native image generation với Codex OAuth + skill gpt-image-2-pro-max — Inside GoClaw</title>
-<link rel="icon" href="/favicon.ico" />
+<title>Native image generation với GPT Image 2 qua Codex OAuth — Inside GoClaw</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
   /* ============ THEMES ============ */
   :root {
@@ -83,60 +83,96 @@
     padding: 80px 24px 120px;
   }
 
-  .breadcrumb {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--fg-muted);
-    margin-bottom: 32px;
-    letter-spacing: 0.02em;
-  }
-  .breadcrumb a {
-    color: var(--accent);
-    text-decoration: none;
-  }
-  .breadcrumb a:hover { color: var(--accent-strong); }
-
   /* ============ HEADER ============ */
   header.post-header {
+    position: relative;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 32px;
+    padding-bottom: 36px;
     margin-bottom: 48px;
   }
-  .post-meta {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+  /* ambient accent glow behind eyebrow */
+  header.post-header::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: -120px;
+    width: 320px;
+    height: 220px;
+    background: radial-gradient(ellipse at center, rgba(94, 234, 212, 0.10) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  header.post-header > * { position: relative; z-index: 1; }
+
+  .post-eyebrow {
     font-family: var(--mono);
-    font-size: 12px;
-    color: var(--fg-muted);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 16px;
+    color: var(--accent);
+    margin-bottom: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
   }
-  .post-meta .tag {
-    padding: 2px 8px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 3px;
+  .post-eyebrow::before {
+    content: '◆';
+    font-size: 7px;
+    flex-shrink: 0;
+    transform: translateY(-1px);
   }
-  .post-meta .accent { color: var(--accent); border-color: var(--accent); }
 
   h1.post-title {
     font-family: var(--sans);
-    font-size: 36px;
-    line-height: 1.2;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.08;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 0 0 20px;
+    letter-spacing: -0.035em;
+    margin: 0 0 22px;
     color: var(--fg);
   }
+  h1.post-title em {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 600;
+  }
+
   .post-lede {
     font-size: 17px;
     line-height: 1.7;
     color: var(--fg-muted);
-    margin-bottom: 0;
+    margin: 0 0 16px;
   }
+  .post-lede:last-of-type { margin-bottom: 28px; }
   .post-lede strong { color: var(--fg); }
+
+  .post-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+  .post-meta .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 4px 11px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--fg-muted);
+  }
+  .post-meta .tag.accent {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
   .post-lede code { background: var(--bg-code); }
 
   /* ============ HEADINGS ============ */
@@ -744,7 +780,7 @@
 </head>
 <body>
 
-<a class="home-link-fab" href="/" title="Về blog" aria-label="Về blog">←</a>
+<a class="home-link-fab home-link" href="/" title="Về blog" aria-label="Về blog">←</a>
 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
   <span class="sun">☀</span>
   <span class="moon">☾</span>
@@ -762,18 +798,9 @@
 
 <div class="wrap">
 
-<div class="breadcrumb"><a href="https://goclaw.thieunv.space/">←</a> &nbsp; inside-goclaw / posts</div>
-
 <header class="post-header">
-  <div class="post-meta">
-    <span class="tag accent">v3.11.0</span>
-    <span class="tag">May 3, 2026</span>
-    <span class="tag">gpt-image-2</span>
-    <span class="tag">codex-oauth</span>
-    <span class="tag">create_image</span>
-    <span class="tag">image-gen</span>
-  </div>
-  <h1 class="post-title">Native image generation với Codex OAuth + skill gpt-image-2-pro-max</h1>
+  <div class="post-eyebrow">Inside GoClaw — v3.11.0 Release</div>
+  <h1 class="post-title">Native image generation với <em>GPT Image 2</em> qua Codex OAuth</h1>
   <p class="post-lede">
     ChatGPT subscription (Plus / Pro / Team / Enterprise) đã có <code>gpt-image-2</code> trong quota — gói Plus có hạn mức thoải mái, gói Pro có hạn mức cao nhất kèm ưu tiên xử lý.
   </p>
@@ -783,6 +810,14 @@
   <p class="post-lede">
     Skill <a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener"><code>gpt-image-2-pro-max</code></a> do <a href="https://github.com/therichardngai-code" target="_blank" rel="noopener">Richard Ng</a> — contributor của GoClaw — open-source, code license MIT, package theo chuẩn Claude Code Skill và tương thích với Skill system của GoClaw. Chỉ cần zip thư mục skill rồi upload qua Dashboard là agent dùng được. Corpus 3,000+ prompt template thuộc creators trên Twitter/X; skill chỉ index lại để search nhanh hơn. Ghép PR #1002 với skill này, agent có thể đọc skill, tự brainstorm prompt rồi gọi <code>create_image</code> ra ảnh poster qua quota subscription ChatGPT, không tốn cost theo đường API Usage.
   </p>
+  <div class="post-meta">
+    <span class="tag accent">v3.11.0</span>
+    <span class="tag">May 3, 2026</span>
+    <span class="tag">gpt-image-2</span>
+    <span class="tag">codex-oauth</span>
+    <span class="tag">create_image</span>
+    <span class="tag">image-gen</span>
+  </div>
 </header>
 
 <nav class="toc">
@@ -962,7 +997,7 @@
 }
 <span class="cmt">// Credential path cho openai, gemini, minimax, dashscope, byteplus, openrouter</span></code></pre>
 
-<p>Native check chạy <strong>trước</strong> <code>cp == nil</code> guard. OAuth provider cố ý không công khai credential; nếu check native path sau guard này thì request sẽ báo lỗi sai lý do.</p>
+<p>Native check chạy <strong>trước</strong> <code>cp == nil</code> guard. OAuth provider cố ý không công khai credential; nếu đảo thứ tự, request sẽ fail với <strong>lỗi trỏ nhầm hướng</strong> — user thấy "thiếu credential" và đi config credential, trong khi nguyên nhân thật là sai native path.</p>
 
 <h3>2 tier gate</h3>
 <p>Tool <code>image_generation</code> chỉ được gắn vào request khi cả 2 điều kiện thoả:</p>
@@ -988,7 +1023,7 @@
 <p>Endpoint: <code>POST {apiBase}/codex/responses</code></p>
 
 <pre><code><span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">any</span>{
-    <span class="str">"model"</span>:        <span class="str">"gpt-5.5"</span>,  <span class="cmt">// parent LLM, không phải image model</span>
+    <span class="str">"model"</span>:        <span class="str">"gpt-5.4"</span>,  <span class="cmt">// parent LLM, không phải image model</span>
     <span class="str">"stream"</span>:       <span class="kw">true</span>,        <span class="cmt">// mandatory — false bị reject HTTP 400</span>
     <span class="str">"store"</span>:        <span class="kw">false</span>,
     <span class="str">"instructions"</span>: <span class="str">"Generate an image matching the user's description using the image_generation tool. Return only the image; do not describe it in text."</span>,
@@ -1008,7 +1043,7 @@
   <li><code>stream: true</code> <strong>bắt buộc</strong> — non-streaming bị reject với <code>Stream must be set to true</code>.</li>
   <li><code>instructions</code> phải có giá trị non-empty và rõ ràng. Để trống → model có thể trả text mô tả thay vì gọi tool.</li>
   <li><code>tool_choice</code> phải force <code>image_generation</code>, nếu không model có thể bỏ qua tool.</li>
-  <li>Có 2 model trong cùng request: <code>model</code> (parent — gpt-5.5) và <code>tools[0].model</code> (image — gpt-image-2). Nhầm 2 cái → API error mơ hồ.</li>
+  <li>Có 2 model trong cùng request: <code>model</code> (parent — gpt-5.4) và <code>tools[0].model</code> (image — gpt-image-2). Nhầm 2 cái → API error mơ hồ.</li>
 </ul>
 
 <h3>Parse response</h3>
@@ -1634,8 +1669,8 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
 <p>Skill upload qua Dashboard (xem Section 07 · Step 4). <code>scripts/search.py</code> gọi corpus host bên ngoài; BM25 + tag boost ranking nằm bên server, không phải GoClaw core.</p>
 
 <footer class="footer-band" id="summary">
-  <p class="footer-text"><strong><a href="https://github.com/nextlevelbuilder/goclaw/pull/1002" target="_blank" rel="noopener">PR #1002</a></strong> mở native path cho image generation qua Codex OAuth, kết hợp <strong><a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener">skill <code>gpt-image-2-pro-max</code></a></strong> (Richard Ng, MIT) để agent search → refactor → cite. Cost: xài quota ChatGPT subscription đã trả, không tính API Usage. Gain: <em>prompt quality từ community + provenance đi theo file ảnh</em>.</p>
-  <div class="footer-ver"><a href="https://github.com/nextlevelbuilder/goclaw">inside-goclaw</a> · v3.11.0 · 2026-05-03</div>
+  <p class="footer-text">Cập nhật <strong><a href="https://github.com/nextlevelbuilder/goclaw" target="_blank" rel="noopener">GoClaw &ge; v3.11.0</a></strong> là có sẵn native image generation qua Codex OAuth, ghép thêm <strong><a href="https://github.com/therichardngai-code/gpt-image-2-pro-max/tree/main/.claude/skills/gpt-image-2-pro-max" target="_blank" rel="noopener">skill <code>gpt-image-2-pro-max</code></a></strong> (Richard Ng, MIT) là agent có thể search → refactor → cite. Cost: xài quota ChatGPT subscription đã trả, không tính API Usage.</p>
+  <div class="footer-ver"><a href="https://github.com/nextlevelbuilder/goclaw">GoClaw v3.11.0</a> — Inside GoClaw Series</div>
   <a class="footer-back" href="/">← Về blog</a>
 </footer>
 
@@ -1643,7 +1678,7 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
 
 <script>
   (function() {
-    var KEY = 'preview-theme';
+    var KEY = 'goclaw-blog-theme';
     var stored = localStorage.getItem(KEY);
     if (stored === 'light' || stored === 'dark') {
       document.documentElement.setAttribute('data-theme', stored);
@@ -1655,6 +1690,10 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem(KEY, next);
     });
+    // Locale-aware home link (no trailing slash)
+    var localePrefix = window.location.pathname.match(/^\/(en|zh|ja)\//);
+    var homeHref = localePrefix ? '/' + localePrefix[1] : '/';
+    document.querySelectorAll('.home-link').forEach(function(a) { a.href = homeHref; });
   })();
 
   /* ============ STICKY TOC ============ */
