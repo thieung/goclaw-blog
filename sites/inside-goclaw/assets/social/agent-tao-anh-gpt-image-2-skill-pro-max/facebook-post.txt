@@ -1,0 +1,17 @@
+🦊 GoClaw v3.11.0 vừa ra một tính năng mà ae nào trả tiền ChatGPT Pro xong còn dùng API key gen ảnh chắc sẽ tiếc hùi hụi: native gpt-image-2 qua Codex OAuth — không phát sinh API key cost luôn 🔥
+
+Trước đây tool create_image trong GoClaw bắt buộc phải có APIKey + APIBase, mà OAuth của ChatGPT thì xài refresh token và base URL chatgpt.com/backend-api, không khớp interface. Nên ae nào đã trả ChatGPT Pro hằng tháng thì quota gpt-image-2 nằm yên trong subscription, agent không gọi được. Đa số phải chạy đường Nano Banana 2 qua OpenRouter cho đỡ phát sinh API key.
+
+PR #1002 làm 3 việc đáng để ý:
+
+🔹 Wire Codex Responses API làm path riêng cho image gen — token tự refresh, không lộ key
+🔹 Gating 2 tier: model phải declare capability "image_output" + agent phải bật cờ allow_image_generation
+🔹 PNG provenance: embed prompt + revised_prompt + agent name vào tEXt chunk của file PNG, đọc lại 6 tháng sau vẫn biết ảnh sinh từ context nào
+
+Chưa hết, cộng đồng có maintain skill gpt-image-2-pro-max (license CC BY 4.0) đẩy thêm ~370 prompt template qua MCP. Agent muốn brainstrom prompt thì gọi search trong skill, không cần scrape X/Twitter thủ công nữa.
+
+Ghép 2 thứ → agent tự brainstorm prompt chất lượng poster → sinh ảnh native qua subscription → embed provenance vào PNG. Một workflow gọn gàng cho ae nào làm marketing visual hoặc thumbnail blog.
+
+Chi tiết wire format Responses API + benchmark timeout 600s mình để link ở comment nhé
+
+#GoClaw #gptimage2 #MCP

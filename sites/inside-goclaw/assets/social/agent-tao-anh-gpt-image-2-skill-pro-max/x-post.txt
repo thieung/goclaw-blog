@@ -1,0 +1,15 @@
+If you pay for ChatGPT Pro and still burn API key cost on image generation, you are leaving quota on the table. The gpt-image-2 model lives in your subscription, but agents could not call it because the create_image tool required APIKey + APIBase — neither of which OAuth provides.
+
+GoClaw v3.11.0 (PR #1002) wires gpt-image-2 natively through Codex OAuth. Three pieces matter:
+
+1. Codex Responses API as a separate code path for image generation. Token refresh handled by the OAuth client, no key leakage, base URL is chatgpt.com/backend-api.
+
+2. Two-tier gating. The model must declare capability "image_output", AND the agent must opt in via allow_image_generation. Either gate fails, the tool is hidden — no accidental quota burn from agents that should not gen images.
+
+3. PNG provenance. Prompt, revised_prompt, agent name embedded into the tEXt chunk of every generated PNG. Six months later you can still trace which agent context produced which image.
+
+Bonus: the community skill gpt-image-2-pro-max (CC BY 4.0) ships ~370 prompt templates via MCP. Agent calls search-prompts inside the skill, picks a template, fills variables, generates. No more scraping X for prompt patterns.
+
+Default timeout bumped from 120s × 2 retry to 600s × 1 retry — gpt-image-2 with high quality + portrait size routinely takes 4-7 minutes, retry on partial generation just doubled cost.
+
+https://goclaw.thieunv.space/posts/agent-tao-anh-gpt-image-2-skill-pro-max
