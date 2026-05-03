@@ -239,7 +239,7 @@ gpt-image-2-pro-max/
 
 Watcher hot-reload (`internal/skills/watcher.go`): detect thay đổi `SKILL.md` → bump version → next agent turn pick up skill mới, no restart.
 
-**Corpus**: 3,238 prompts community-vetted, hosted ở `https://gpt-image-2-prompts.goclawoffice.com`. Tags được suy ra qua 10 facet: `subjects`, `styles`, `lighting`, `cameras`, `moods`, `palettes`, `compositions`, `mediums`, `techniques`, `usecases`. Mỗi record có prompt body, Twitter/X attribution, reference image. Endpoint có rate limit theo IP và fair-use friendly.
+**Kho 3,238 prompt mẫu đã qua sàng lọc cộng đồng**, host tại `https://gpt-image-2-prompts.goclawoffice.com`. Tags được suy ra qua 10 facet: `subjects`, `styles`, `lighting`, `cameras`, `moods`, `palettes`, `compositions`, `mediums`, `techniques`, `usecases`. Mỗi record có prompt body, Twitter/X attribution, reference image. Endpoint có rate limit theo IP và fair-use friendly.
 
 **CLI surface** mà agent gọi:
 
