@@ -744,9 +744,11 @@
 <header class="post-header">
   <div class="post-meta">
     <span class="tag accent">v3.11.0</span>
+    <span class="tag">May 3, 2026</span>
     <span class="tag">gpt-image-2</span>
+    <span class="tag">codex-oauth</span>
+    <span class="tag">mcp-skill</span>
     <span class="tag">image-gen</span>
-    <span class="tag">skill-system</span>
   </div>
   <h1 class="post-title">Native image generation với Codex OAuth + skill gpt-image-2-pro-max</h1>
   <p class="post-lede">
@@ -1280,7 +1282,7 @@ python scripts/search.py "neon ui" --persist plans/neon-refs.md</code></pre>
 <p>Sau khi sign-in xong, browser redirect về callback dạng <code>http://localhost:1455/auth/callback?code=...&amp;state=...</code>. Nếu chạy remote/VPS và browser báo không mở được localhost, copy full URL trên address bar, paste vào ô callback trong modal, rồi bấm <strong>Submit</strong>. Khi Providers list hiển thị provider mới với status <code>Connected</code> là hoàn tất.</p>
 
 <figure class="screenshot">
-  <img src="../screenshots/dashboard-add-provider-codex-oauth.png" alt="Modal Add Provider với ChatGPT Subscription OAuth, account alias openai-codex, trạng thái waiting for authentication và ô paste callback URL cho remote/VPS.">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-add-provider-codex-oauth.png" alt="Modal Add Provider với ChatGPT Subscription OAuth, account alias openai-codex, trạng thái waiting for authentication và ô paste callback URL cho remote/VPS.">
   <figcaption>Step 1 · Add Provider modal trong OAuth flow</figcaption>
 </figure>
 
@@ -1289,7 +1291,7 @@ python scripts/search.py "neon ui" --persist plans/neon-refs.md</code></pre>
 <p>Modal <em>Create Image — Provider Chain</em> cho phép xếp thứ tự các provider fallback; provider đầu tiên đang <em>enabled</em> sẽ được thử trước. Setup tối thiểu: thêm 1 entry <strong>Codex Plus</strong>, model <code>GPT-5.4</code>, <em>Timeout</em> <code>600s</code> (image gen có thể chạy lâu khi prompt phức tạp), <em>Retries</em> <code>1</code>, và quan trọng nhất — <em>Image model</em> chọn <strong>Default · gpt-image-2 (recommended)</strong>. Bấm <strong>Save</strong>. Có thể bấm <strong>Add Provider</strong> để thêm fallback (vd OpenAI API key) nếu muốn graceful degradation khi OAuth quota cạn.</p>
 
 <figure class="screenshot">
-  <img src="../screenshots/dashboard-builtin-tools-create-image-provider-chain.png" alt="Modal 'Create Image — Provider Chain' với entry #1 Codex Plus enabled, Provider dropdown chọn Codex Plus, Model GPT-5.4, Timeout 600s, Retries 1, Image model 'Default · gpt-image-2 (recommended)', nút Add Provider phía dưới và Cancel/Save.">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-builtin-tools-create-image-provider-chain.png" alt="Modal 'Create Image — Provider Chain' với entry #1 Codex Plus enabled, Provider dropdown chọn Codex Plus, Model GPT-5.4, Timeout 600s, Retries 1, Image model 'Default · gpt-image-2 (recommended)', nút Add Provider phía dưới và Cancel/Save.">
   <figcaption>Step 2a · Provider Chain cho <code>create_image</code> — Codex Plus + GPT-5.4 + <code>gpt-image-2</code></figcaption>
 </figure>
 
@@ -1302,7 +1304,7 @@ python scripts/search.py "neon ui" --persist plans/neon-refs.md</code></pre>
 </div>
 
 <figure class="screenshot">
-  <img src="../screenshots/dashboard-builtin-tools-read-image-provider-chain.png" alt="Modal 'Read Image — Provider Chain' với entry #1 OpenRouter enabled, Provider dropdown chọn OpenRouter, Model 'google/gemini-2.5-flash-image', Timeout 120s, Retries 3, nút Add Provider phía dưới và Cancel/Save.">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-builtin-tools-read-image-provider-chain.png" alt="Modal 'Read Image — Provider Chain' với entry #1 OpenRouter enabled, Provider dropdown chọn OpenRouter, Model 'google/gemini-2.5-flash-image', Timeout 120s, Retries 3, nút Add Provider phía dưới và Cancel/Save.">
   <figcaption>Step 2b · Provider Chain cho <code>read_image</code> — OpenRouter + <code>google/gemini-2.5-flash-image</code>, Timeout 120s, Retries 3</figcaption>
 </figure>
 
@@ -1314,7 +1316,7 @@ python scripts/search.py "neon ui" --persist plans/neon-refs.md</code></pre>
 <p>Sidebar → <strong>Core / Agents</strong> → <strong>New Agent</strong>. Các field tối thiểu: <em>Name</em>, <em>Provider</em>, <em>Model</em> (vd Tiểu Hổ + qwen3.6-plus, hoặc bất kỳ model nào đủ thông minh để đọc ảnh và chạy skill). Save → agent xuất hiện trong list. Vai trò của agent này là <strong>chạy reasoning</strong>: phân tích brief, đọc ảnh, search corpus, refactor prompt, rồi gọi tool <code>create_image</code>.</p>
 
 <figure class="screenshot">
-  <img src="../screenshots/dashboard-agents-new-imagegen.png" alt="Card agent 'Tiểu Hổ' (handle tieu-ho), provider qwen / qwen3.6-plus, badge active, mô tả 'Trợ lý cá nhân đa năng, xử lý tác vụ nhanh gọn, chính xác, hỗ trợ quản lý công việc, nhắc nhở sức khỏe & thói quen', kèm badges Full + Evolving và context window 200K ctx.">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-agents-new-imagegen.png" alt="Card agent 'Tiểu Hổ' (handle tieu-ho), provider qwen / qwen3.6-plus, badge active, mô tả 'Trợ lý cá nhân đa năng, xử lý tác vụ nhanh gọn, chính xác, hỗ trợ quản lý công việc, nhắc nhở sức khỏe & thói quen', kèm badges Full + Evolving và context window 200K ctx.">
   <figcaption>Step 3 · Agent <code>tieu-ho</code> sau khi tạo — provider <code>qwen</code>, model <code>qwen3.6-plus</code></figcaption>
 </figure>
 
@@ -1335,12 +1337,12 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
 <p>Cuối cùng, grant skill cho agent vừa tạo: mở <strong>Agent detail</strong> → section <strong>Skills</strong> → toggle <code>gpt-image-2-pro-max</code> sang <em>granted</em>. Loader đưa SKILL.md vào system prompt của agent từ turn kế tiếp, không cần restart. Skill này là <em>prompt-engineering pipeline</em> — dạy agent cách diagnose brief, search corpus 3,238 prompt mẫu, pick template phù hợp mood, refactor và resolve slot, rồi mới gọi <code>create_image</code> với prompt đã polished.</p>
 
 <figure class="screenshot">
-  <img src="../screenshots/dashboard-skills-upload.png" alt="Modal Upload Skills hướng dẫn upload ZIP có SKILL.md với YAML frontmatter (name, description, slug); drop zone, file gpt-image-2-pro-max.zip 7.3 KB hiện badge NEW, status '1 of 1 valid', nút Upload (1).">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-skills-upload.png" alt="Modal Upload Skills hướng dẫn upload ZIP có SKILL.md với YAML frontmatter (name, description, slug); drop zone, file gpt-image-2-pro-max.zip 7.3 KB hiện badge NEW, status '1 of 1 valid', nút Upload (1).">
   <figcaption>Step 4a · Upload Skill modal — drop ZIP, preview entry hợp lệ</figcaption>
 </figure>
 
 <figure class="screenshot">
-  <img src="../screenshots/dashboard-agent-detail-skills-grant.png" alt="Agent detail page của 'Tiểu Hổ' (handle tieu-ho, provider qwen, model qwen3.6-plus, badges Full / V3 / Evolving): section Dreaming Memory Consolidation (Enabled, threshold 5, debounce 600000ms), Heartbeat (chưa setup), Hooks (chưa configure), Skills (1/1) liệt kê gpt-image-2-pro-max badge internal toggle granted ON với mô tả 'Production prompt-engineering pipeline for GPT-Image-2 / OpenAI image generation. Pairs a media-designer agent with a hosted searc...'.">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/dashboard-agent-detail-skills-grant.png" alt="Agent detail page của 'Tiểu Hổ' (handle tieu-ho, provider qwen, model qwen3.6-plus, badges Full / V3 / Evolving): section Dreaming Memory Consolidation (Enabled, threshold 5, debounce 600000ms), Heartbeat (chưa setup), Hooks (chưa configure), Skills (1/1) liệt kê gpt-image-2-pro-max badge internal toggle granted ON với mô tả 'Production prompt-engineering pipeline for GPT-Image-2 / OpenAI image generation. Pairs a media-designer agent with a hosted searc...'.">
   <figcaption>Step 4b · Agent detail <code>tieu-ho</code> (qwen3.6-plus) — toggle grant <code>gpt-image-2-pro-max</code> ON</figcaption>
 </figure>
 
@@ -1569,7 +1571,7 @@ Compress-Archive -Path * -DestinationPath $HOME\Desktop\gpt-image-2-pro-max.zip 
 </div>
 
 <figure class="screenshot">
-  <img src="../screenshots/workflow-output-mary-jane-harboriis.png" alt="Output ads poster ecommerce: thương hiệu HARBORIIS giới thiệu giày Mary Jane, ba người mẫu mặc đồ silk màu kem ngồi quanh đôi giày floral embroidery cỡ lớn trên nền pastel cream với pearl spheres và crystal formations; tagline 'Where Softness Becomes Form. Floral mesh, weightless step, quiet confidence.' kèm 4 icon đặc tính (Sheer Mesh, Floral Embroidery, Soft Cream Tone, Hand-Finished); góc trên ghi 'Designed with ChatGPT'.">
+  <img src="/posts/assets/agent-tao-anh-gpt-image-2-skill-pro-max/workflow-output-mary-jane-harboriis.png" alt="Output ads poster ecommerce: thương hiệu HARBORIIS giới thiệu giày Mary Jane, ba người mẫu mặc đồ silk màu kem ngồi quanh đôi giày floral embroidery cỡ lớn trên nền pastel cream với pearl spheres và crystal formations; tagline 'Where Softness Becomes Form. Floral mesh, weightless step, quiet confidence.' kèm 4 icon đặc tính (Sheer Mesh, Floral Embroidery, Soft Cream Tone, Hand-Finished); góc trên ghi 'Designed with ChatGPT'.">
   <figcaption>Output từ workflow — ads poster cho thương hiệu giày HARBORIIS, gen 1 turn từ ảnh base + keyword <code>"tạo ảnh ads poster ecommerce"</code></figcaption>
 </figure>
 
