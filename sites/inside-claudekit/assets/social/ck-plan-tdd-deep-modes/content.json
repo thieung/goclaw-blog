@@ -1,0 +1,27 @@
+{
+  "slug": "ck-plan-tdd-deep-modes",
+  "urls": {
+    "vi": "https://claudekit.thieunv.space/posts/ck-plan-tdd-deep-modes",
+    "en": "https://claudekit.thieunv.space/en/posts/ck-plan-tdd-deep-modes",
+    "zh": "https://claudekit.thieunv.space/zh/posts/ck-plan-tdd-deep-modes",
+    "ja": "https://claudekit.thieunv.space/ja/posts/ck-plan-tdd-deep-modes"
+  },
+  "posts": {
+    "facebook": {
+      "lang": "vi",
+      "content": "Mình vừa viết note dùng nội bộ về lúc nào nên bật /ck:plan --deep --tdd, lúc nào nên đi đường ngắn hơn 🔧\n\nMột task refactor lớn thường không hỏng ở dòng code đầu tiên. Nó hỏng vì lúc plan chưa nhìn đủ scope, đến lúc cook mới phát hiện migration, background job hoặc test bị bỏ sót.\n\n--deep và --tdd giải quyết hai rủi ro khác nhau:\n\n🔹 --deep là MODE — đổi pipeline planning, scout từng phase, có researcher + red-team + validation\n🔹 --tdd là FLAG — compose được với mọi mode, ép viết test bảo vệ behavior cũ TRƯỚC khi refactor\n🔹 Đi chung khi task vừa rộng vừa có behavior cũ cần giữ (ví dụ tách billing module: retry, idempotency, webhook replay, status transition)\n🔹 KHÔNG dùng --deep cho task <5 file. KHÔNG dùng --tdd cho greenfield\n🔹 /clear giữa plan và cook để giảm context nặng\n\nBài viết có decision matrix cho từng tình huống, template prompt chi tiết, pitfalls thường gặp (vd --tdd vô tình chụp test cho code có bug sẵn), và phần \"Inside\" mổ xẻ cơ chế researcher/red-team thực sự chạy thế nào.\n\nCó ae nào đã thử cặp --deep --tdd cho refactor nặng chưa? Share kinh nghiệm nhé.\n\n#ClaudeKit #ClaudeCode #Refactoring"
+    },
+    "threads": {
+      "lang": "vi",
+      "content": "/ck:plan --deep --tdd không phải mode \"mạnh hơn\" — nó giải hai rủi ro cụ thể:\n\n→ --deep: cho bản đồ từng phase (file inventory, dependency map)\n→ --tdd: cho lớp regression gate trước khi refactor\n\nMajor refactor có behavior cũ cần giữ thì bật cả cặp. Task nhỏ <5 file thì đừng overkill.\n\nLink bài viết trong bio!"
+    },
+    "x": {
+      "lang": "en",
+      "content": "Just shipped a writeup on /ck:plan --deep --tdd — when each is worth the cost, and when shorter modes are the better call.\n\nKey distinction most folks miss:\n\n• --deep is a MODE: changes the plan pipeline (researcher pass, per-phase scout, red-team, validation)\n• --tdd is a FLAG: composes with any mode, forces tests-first ordering at both plan and cook time\n\nThey solve different risks:\n\n→ Don't know enough scope yet → --deep gives you a file inventory + dependency map per phase\n→ Worried refactor breaks running behavior → --tdd snapshots behavior with tests before code changes\n\nPair them for major refactors (e.g. splitting a billing module while keeping retry/idempotency/webhook contracts).\n\nDon't pair for greenfield or <5-file tweaks — there's no behavior to snapshot, and the planning overhead doesn't pay off.\n\nFull post covers decision matrix, prompt templates, and the gotcha where --tdd accidentally locks in pre-existing bugs as \"current behavior.\"\n\nLink below."
+    },
+    "linkedin": {
+      "lang": "en",
+      "content": "I've been refining how I approach larger refactors with Claude Code, and one decision keeps coming up: when to use /ck:plan --deep --tdd, and when shorter modes are smarter.\n\nThe short version: they solve different risks.\n\n--deep is a MODE that changes the planning pipeline. It runs 2-3 researcher passes for architecture analysis, scouts each phase individually (not just the overall scope), adds a red-team review, and forces a validation step. The output is a phase file with concrete file inventory, dependency maps, and test gap analysis — not just bullet points.\n\n--tdd is a FLAG that composes with any mode. It restructures both the plan output and the cook execution order: tests get written FIRST to snapshot existing behavior, then refactor happens, then the regression gate (a specific compile/test command) must pass before moving on.\n\nWhen to pair them:\n• Major refactor (5+ areas, architectural debt)\n• Code is running in production / has users\n• Specific behavior must be preserved (retry logic, idempotency, API contracts, webhook handling)\n\nClassic example: splitting a billing module out of a monolith. The scope spans API routes, database schema, background jobs, admin UI, and shared contracts. Behaviors like retry-then-fail-after-3, single-application-per-event-id, and refund-blocked-on-voided-invoice all need to survive.\n\nWhen NOT to pair them:\n• Small fixes (<5 files) — use --fast or default\n• Greenfield code — there's no existing behavior to snapshot\n• When the approach itself is unclear — use /ck:brainstorm first\n\nThe post also covers a subtle pitfall: --tdd can accidentally lock in pre-existing bugs as \"current behavior\" (e.g., duplicate webhooks creating duplicate payments). If the team is aware of known bugs, they should be declared in the task description, or split into a separate fix-then-refactor plan.\n\nIf you're using ClaudeKit on larger codebases, this writeup gives a concrete decision matrix, prompt templates, and an Inside section breaking down what --deep actually costs in tokens and time.\n\nLink in comments.\n\n#ClaudeKit #ClaudeCode #SoftwareEngineering #Refactoring #DeveloperTools"
+    }
+  }
+}

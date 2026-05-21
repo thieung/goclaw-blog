@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    font-family: 'Fraunces', Georgia, serif;
+    background: #1a140e;
+    position: relative;
+    color: #f4ebd9;
+  }
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(212, 97, 42, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212, 97, 42, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 60% at 30% 50%, black 30%, transparent 75%);
+  }
+  .accent-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 8px;
+    background: linear-gradient(180deg, #e07a45, #b94c1f);
+  }
+  .stripe {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 420px;
+    background: linear-gradient(135deg, rgba(224, 122, 69, 0.08) 0%, transparent 50%);
+    border-left: 1px solid rgba(224, 122, 69, 0.15);
+  }
+  .content {
+    position: relative;
+    z-index: 2;
+    padding: 56px 72px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #d4a574;
+  }
+  .series-name {
+    color: #e07a45;
+    font-weight: 700;
+  }
+  .series-dot {
+    width: 32px; height: 1px;
+    background: rgba(224, 122, 69, 0.5);
+  }
+  .series-product { color: #c9b59a; }
+  .version {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #e07a45;
+    border: 1px solid rgba(224, 122, 69, 0.35);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  .middle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 900px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: #e07a45;
+    margin-bottom: 22px;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 64px;
+    font-weight: 500;
+    line-height: 1.08;
+    color: #f4ebd9;
+    letter-spacing: -0.01em;
+    margin-bottom: 24px;
+  }
+  h1 .cmd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78em;
+    font-weight: 700;
+    color: #e07a45;
+    background: rgba(224, 122, 69, 0.10);
+    padding: 4px 14px;
+    border-radius: 6px;
+    display: inline-block;
+    border-bottom: 3px solid rgba(224, 122, 69, 0.5);
+  }
+  .subtitle {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 21px;
+    line-height: 1.5;
+    color: #c9b59a;
+    max-width: 760px;
+    font-weight: 500;
+  }
+  .bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    border: 1px solid rgba(224, 122, 69, 0.3);
+    background: rgba(224, 122, 69, 0.06);
+    color: #d4a574;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .url {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #a48b6a;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="accent-bar"></div>
+<div class="stripe"></div>
+<div class="content">
+  <div class="top">
+    <span class="series-name">Inside ClaudeKit</span>
+    <span class="series-dot"></span>
+    <span class="series-product">ClaudeKit Engineer</span>
+    <span class="version">engineer@v2.19.1</span>
+  </div>
+  <div class="middle">
+    <div class="eyebrow">// Plan mode picker · 2026-05</div>
+    <h1>When to use <span class="cmd">/ck:plan --deep --tdd</span></h1>
+    <div class="subtitle">--deep maps every phase. --tdd locks behavior in tests before the refactor. Pair them on major refactors where current behavior must survive.</div>
+  </div>
+  <div class="bottom">
+    <span class="tag">--deep</span>
+    <span class="tag">--tdd</span>
+    <span class="tag">refactor</span>
+    <span class="tag">regression-gate</span>
+    <span class="url">claudekit.thieunv.space</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,1761 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Khi nào dùng /ck:plan --deep --tdd</title>
+  <meta name="description" content="--deep giúp plan nhìn rõ scope; --tdd thêm regression gate cho refactor. Bài này tách rõ khi nào dùng từng option, khi nào không cần bật." />
+  <meta name="color-scheme" content="light dark" />
+  <script is:inline>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.dataset.theme = stored;
+          return;
+        }
+        document.documentElement.dataset.theme = 'dark';
+      } catch (_) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    })();
+  </script>
+  <style is:inline>
+    :root {
+      color-scheme: light;
+      --bg: oklch(98% 0.004 95);
+      --surface: oklch(100% 0.002 95);
+      --fg: oklch(20% 0.018 70);
+      --muted: oklch(48% 0.012 70);
+      --border: oklch(90% 0.006 95);
+      --accent: oklch(52% 0.10 28);
+      --accent-strong: oklch(45% 0.12 28);
+      --accent-soft: oklch(95% 0.018 35);
+      --code-bg: oklch(24% 0.018 70);
+      --code-fg: oklch(96% 0.006 95);
+      --success: oklch(52% 0.13 145);
+      --warn: oklch(64% 0.13 72);
+      --danger: oklch(55% 0.16 25);
+
+      --font-display: 'Iowan Old Style', 'Charter', Georgia, serif;
+      --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --max-reader: 760px;
+      --max-page: 1120px;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: oklch(16% 0.014 70);
+      --surface: oklch(20% 0.014 70);
+      --fg: oklch(93% 0.006 95);
+      --muted: oklch(72% 0.012 82);
+      --border: oklch(34% 0.012 70);
+      --accent: oklch(70% 0.12 42);
+      --accent-strong: oklch(78% 0.13 45);
+      --accent-soft: oklch(30% 0.05 42);
+      --code-bg: oklch(12% 0.018 70);
+      --code-fg: oklch(94% 0.006 95);
+      --success: oklch(70% 0.13 145);
+      --warn: oklch(76% 0.13 72);
+      --danger: oklch(70% 0.16 25);
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+    body {
+      margin: 0;
+      color: var(--fg);
+      background: var(--bg);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.76;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration-color: color-mix(in oklch, var(--accent) 70%, transparent);
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 0.18em;
+    }
+
+    .progress {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 4px;
+      z-index: 30;
+      background: color-mix(in oklch, var(--accent) 24%, transparent);
+    }
+    .progress span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.08s linear;
+    }
+
+    .page {
+      max-width: var(--max-page);
+      margin: 0 auto;
+      padding: 24px clamp(18px, 4vw, 48px) 84px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 58px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: clamp(34px, 6vw, 72px);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+    .series {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--fg);
+      font-weight: 700;
+    }
+    .series-name {
+      color: var(--accent-strong);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .series-product {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .series-product::before {
+      content: "";
+      width: 32px;
+      height: 1px;
+      background: color-mix(in oklch, var(--accent) 60%, var(--border));
+    }
+    .meta-line {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px 16px;
+      text-align: right;
+    }
+    .theme-toggle,
+    .home-link {
+      flex: 0 0 auto;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: color-mix(in oklch, var(--surface) 88%, transparent);
+      color: var(--fg);
+      font: 700 11px/1 var(--font-mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+    .home-link svg {
+      width: 14px;
+      height: 14px;
+    }
+    .theme-toggle:hover,
+    .home-link:hover {
+      border-color: var(--accent);
+      background: color-mix(in oklch, var(--accent-soft) 64%, var(--surface));
+      color: var(--fg);
+    }
+
+    .post-footer {
+      display: flex;
+      justify-content: center;
+      padding: clamp(36px, 6vw, 56px) 0 clamp(48px, 7vw, 72px);
+      border-top: 1px solid var(--border);
+      margin-top: clamp(40px, 5vw, 60px);
+    }
+    .post-footer .home-link {
+      min-height: 44px;
+      padding: 0 22px;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+    }
+    .post-footer .home-link svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 820px);
+      gap: 24px;
+      align-items: start;
+      padding-bottom: clamp(34px, 6vw, 62px);
+      border-bottom: 1px solid var(--border);
+    }
+    .eyebrow {
+      margin: 0 0 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.3;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+    h1 {
+      max-width: 980px;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(40px, 5.6vw, 68px);
+      line-height: 1.05;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+    .dek {
+      max-width: 680px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: clamp(18px, 1.7vw, 22px);
+      line-height: 1.55;
+      text-wrap: pretty;
+    }
+    .hero-card {
+      max-width: 680px;
+      border-left: 3px solid var(--accent);
+      padding: 2px 0 2px 18px;
+      display: block;
+    }
+    .hero-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+    .mode-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .mode {
+      display: inline-flex;
+      gap: 6px;
+      padding: 0;
+      border-bottom: 0;
+    }
+    .mode strong { color: var(--fg); }
+    .mode span { color: var(--muted); }
+    .accent-mark {
+      display: inline-block;
+      padding: 0 0.08em 0.02em;
+      background: transparent;
+      color: var(--accent-strong);
+      border-bottom: 2px solid color-mix(in oklch, var(--accent) 34%, transparent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(180px, 250px) minmax(0, var(--max-reader));
+      justify-content: center;
+      gap: clamp(28px, 5vw, 54px);
+      align-items: start;
+      margin-top: clamp(44px, 7vw, 84px);
+    }
+    .toc {
+      position: sticky;
+      top: 28px;
+      align-self: start;
+      max-height: calc(100dvh - 56px);
+      overflow: auto;
+      padding-right: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    .toc-title {
+      margin: 0 0 14px;
+      color: var(--fg);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .toc a {
+      display: block;
+      padding: 7px 0 7px 12px;
+      border-left: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--muted);
+    }
+    .toc a.active,
+    .toc a:hover {
+      color: var(--fg);
+      border-left-color: var(--accent);
+    }
+    article {
+      min-width: 0;
+    }
+    section {
+      scroll-margin-top: 28px;
+      padding: 18px 0 44px;
+      border-bottom: 1px solid var(--border);
+    }
+    section:last-child {
+      border-bottom: 0;
+    }
+    h2 {
+      font-family: var(--font-display);
+      line-height: 1.08;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+    h2 {
+      margin: 0 0 22px;
+      font-size: clamp(30px, 4vw, 48px);
+    }
+    h3 {
+      margin: 34px 0 14px;
+      font-family: var(--font-display);
+      font-size: clamp(23px, 3vw, 32px);
+      font-weight: 700;
+      line-height: 1.14;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+    h3.compact-heading {
+      font-size: clamp(22px, 2.5vw, 28px);
+      line-height: 1.12;
+    }
+    .vi-readable-heading {
+      font-family: Georgia, var(--font-display);
+      font-weight: 680;
+      line-height: 1.2;
+      text-wrap: normal;
+    }
+    #prompts h3 {
+      text-wrap: normal;
+    }
+    p {
+      margin: 0 0 22px;
+      text-wrap: pretty;
+    }
+    p.lead {
+      font-size: clamp(22px, 2.4vw, 30px);
+      line-height: 1.52;
+      color: var(--fg);
+    }
+    .case-file {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: clamp(18px, 4vw, 34px);
+      margin: 0 0 34px;
+      padding: 22px 0 24px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .case-index {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.35;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+    .case-title {
+      margin: 0;
+      max-width: 680px;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.12;
+      color: var(--fg);
+      text-wrap: balance;
+    }
+    .case-title strong {
+      color: var(--accent-strong);
+      font-weight: 760;
+    }
+    .case-map {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .case-map span {
+      border: 1px solid var(--border);
+      background: transparent;
+      padding: 4px 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+    ul, ol {
+      margin: 0 0 24px;
+      padding-left: 1.25em;
+    }
+    li { margin: 8px 0; }
+    strong { font-weight: 720; }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: color-mix(in oklch, var(--accent-soft) 64%, var(--surface));
+      padding: 0.12em 0.32em;
+      border-radius: 4px;
+    }
+    h2 code {
+      white-space: nowrap;
+    }
+    .command-pair {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.16em;
+      white-space: nowrap;
+    }
+
+    .callout {
+      position: relative;
+      margin: 34px 0;
+      padding: 26px 30px 24px 58px;
+      border-top: 1px solid color-mix(in oklch, var(--accent) 42%, var(--border));
+      border-bottom: 1px solid var(--border);
+      border-left: 0;
+      background: color-mix(in oklch, var(--surface) 72%, var(--bg));
+    }
+    .callout::before,
+    .callout::after {
+      position: absolute;
+      font-family: var(--font-display);
+      line-height: 1;
+      color: var(--accent-strong);
+      pointer-events: none;
+    }
+    .callout::before {
+      content: "“";
+      top: 10px;
+      left: 16px;
+      font-size: 72px;
+      opacity: 0.36;
+    }
+    .callout::after {
+      content: "”";
+      right: 18px;
+      bottom: -10px;
+      font-size: 56px;
+      opacity: 0.18;
+    }
+    .callout p {
+      position: relative;
+      z-index: 1;
+    }
+    .callout p:last-child { margin-bottom: 0; }
+    .callout .label {
+      position: relative;
+      z-index: 1;
+      display: block;
+      margin-bottom: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 28px 0 34px;
+      border-top: 1px solid var(--fg);
+      border-bottom: 1px solid var(--fg);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+      font-size: 15px;
+      line-height: 1.42;
+    }
+    th, td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: color-mix(in oklch, var(--surface) 72%, var(--bg));
+    }
+    tr:last-child td { border-bottom: 0; }
+    td:first-child, th:first-child { padding-left: 0; }
+    td:last-child, th:last-child { padding-right: 0; }
+
+    .code-block {
+      margin: 26px 0 34px;
+      background: var(--code-bg);
+      color: var(--code-fg);
+      border: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    :root[data-theme="dark"] .code-block {
+      border-color: color-mix(in oklch, var(--border) 72%, var(--accent) 18%);
+      box-shadow: 0 16px 34px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 42px;
+      padding: 8px 12px 8px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.62);
+    }
+    .copy-btn {
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      min-height: 32px;
+      padding: 0 10px;
+      border-radius: 6px;
+      font: 700 11px/1 var(--font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.18s ease, transform 0.18s ease;
+    }
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-1px);
+    }
+    pre {
+      margin: 0;
+      padding: 22px;
+      overflow: auto;
+      font: 14px/1.62 var(--font-mono);
+      white-space: pre;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+      font-size: inherit;
+    }
+
+    .decision-band {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin: 34px 0;
+      background: var(--fg);
+      border: 1px solid var(--fg);
+    }
+    .decision-card {
+      min-height: 132px;
+      padding: 20px;
+      background: var(--surface);
+    }
+    .decision-card b {
+      display: block;
+      margin-bottom: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+    .decision-card span {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 28px;
+      line-height: 1.12;
+    }
+
+    .visual-diagram {
+      margin: 30px 0 36px;
+      padding: 22px 0;
+      border-top: 1px solid var(--fg);
+      border-bottom: 1px solid var(--border);
+    }
+    .diagram-kicker {
+      margin: 0 0 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.35;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+    .diagram-node {
+      position: relative;
+      min-width: 0;
+      padding: 16px 16px 15px;
+      border: 1px solid var(--border);
+      background: color-mix(in oklch, var(--surface) 76%, var(--bg));
+    }
+    .diagram-node strong {
+      display: block;
+      margin-bottom: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.25;
+      letter-spacing: 0.03em;
+      color: var(--fg);
+    }
+    .diagram-node span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .pipeline-diagram {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .pipeline-diagram .diagram-node::before {
+      content: attr(data-step);
+      position: absolute;
+      top: -10px;
+      left: 12px;
+      padding: 0 6px;
+      background: var(--bg);
+      color: var(--accent-strong);
+      font: 700 11px/1 var(--font-mono);
+    }
+    .tdd-diagram {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .tdd-diagram .diagram-node {
+      display: flex;
+      min-height: 132px;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .diagram-arrow {
+      align-self: center;
+      color: var(--accent-strong);
+      font: 700 18px/1 var(--font-mono);
+    }
+    .risk-diagram {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+    .risk-diagram .diagram-node {
+      border-top: 4px solid var(--accent);
+    }
+    .risk-result {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+      border: 1px solid var(--fg);
+      background: var(--surface);
+    }
+    .risk-result b {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      color: var(--accent-strong);
+    }
+    .risk-result span {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+    .context-flow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .context-flow .diagram-node {
+      min-height: 124px;
+    }
+    .practice-grid {
+      display: grid;
+      gap: 14px;
+      margin: 24px 0 26px;
+    }
+    .practice-card,
+    .pitfall-item {
+      display: grid;
+      grid-template-columns: minmax(104px, 128px) minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px 0 20px;
+      border-top: 1px solid var(--border);
+    }
+    .practice-card:last-child,
+    .pitfall-item:last-child {
+      border-bottom: 1px solid var(--border);
+    }
+    .practice-index,
+    .pitfall-tag {
+      align-self: start;
+      justify-self: start;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.25;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+    .practice-index {
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      background: color-mix(in oklch, var(--surface) 72%, var(--bg));
+    }
+    .practice-card h4,
+    .pitfall-item h4 {
+      margin: 0 0 8px;
+      font-family: Georgia, var(--font-display);
+      font-size: clamp(22px, 2.15vw, 27px);
+      font-weight: 700;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+    .practice-card p,
+    .pitfall-item p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .review-panel {
+      margin: 28px 0 32px;
+      padding: 20px 0 0;
+      border-top: 4px solid var(--fg);
+    }
+    .review-panel p {
+      max-width: 680px;
+    }
+    .review-kicker {
+      margin: 0 0 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.35;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+      gap: 1px;
+      margin-top: 18px;
+      background: var(--fg);
+      border: 1px solid var(--fg);
+    }
+    .review-item {
+      position: relative;
+      min-height: 150px;
+      padding: 38px 14px 14px;
+      background: var(--surface);
+    }
+    .review-item::before {
+      content: attr(data-q);
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      color: var(--accent-strong);
+      font: 700 11px/1 var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+    .review-item b {
+      display: block;
+      margin-bottom: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.3;
+      letter-spacing: 0.03em;
+      color: var(--fg);
+    }
+    .review-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.42;
+    }
+    .pitfall-list {
+      display: grid;
+      gap: 0;
+      margin: 24px 0 0;
+    }
+    .pitfall-item {
+      border-top-color: color-mix(in oklch, var(--accent) 38%, var(--border));
+    }
+    .pitfall-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--accent);
+      background: color-mix(in oklch, var(--accent-soft) 70%, transparent);
+      text-align: center;
+    }
+    .template-note {
+      margin: 26px 0 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.35;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+
+    .section-number {
+      display: block;
+      margin-bottom: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--accent-strong);
+    }
+
+    .mobile-toc-toggle {
+      display: none;
+      width: 100%;
+      min-height: 48px;
+      margin: 26px 0 0;
+      border: 1px solid var(--fg);
+      background: var(--surface);
+      color: var(--fg);
+      font: 700 13px/1 var(--font-mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .closing-note {
+      display: grid;
+      grid-template-columns: 118px minmax(0, 1fr);
+      gap: 22px;
+      align-items: center;
+      margin-top: 34px;
+      padding: 24px;
+      border: 1px solid color-mix(in oklch, var(--accent) 42%, var(--border));
+      border-left: 5px solid var(--accent);
+      background:
+        linear-gradient(135deg, color-mix(in oklch, var(--accent-soft) 38%, transparent), transparent 54%),
+        color-mix(in oklch, var(--surface) 78%, var(--bg));
+    }
+    .closing-note .label {
+      display: grid;
+      place-items: center;
+      min-height: 92px;
+      border-right: 1px solid var(--border);
+      padding-right: 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.35;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+    }
+    .closing-note-body {
+      min-width: 0;
+    }
+    .closing-note-flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .closing-note-chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      background: color-mix(in oklch, var(--surface) 74%, var(--bg));
+      font: 700 14px/1 var(--font-mono);
+    }
+    .closing-note-chip.is-heavy {
+      border-color: var(--border);
+      background: color-mix(in oklch, var(--surface) 74%, var(--bg));
+      color: var(--fg);
+    }
+    .closing-note-chip.is-heavy::after {
+      content: "";
+      position: absolute;
+      inset: auto 8px -1px;
+      height: 2px;
+      background: var(--accent);
+    }
+    .closing-note-operator {
+      font: 700 13px/1 var(--font-mono);
+      color: var(--accent-strong);
+    }
+    .closing-note-verdict {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 10px;
+      background: var(--fg);
+      color: var(--bg);
+      font: 700 12px/1 var(--font-mono);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .closing-note p {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.62;
+      color: var(--fg);
+    }
+
+    @media (max-width: 1100px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .toc {
+        position: static;
+        display: none;
+        max-height: none;
+        padding: 18px 0 0;
+      }
+      .toc.open { display: block; }
+      .mobile-toc-toggle { display: block; }
+      article {
+        max-width: var(--max-reader);
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body { font-size: 16px; }
+      .page { padding-inline: 18px; }
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-bottom: 16px;
+      }
+      .series {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .series-product::before {
+        width: 24px;
+      }
+      .meta-line {
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .hero {
+        padding-bottom: 36px;
+      }
+      h1 {
+        font-size: clamp(36px, 12vw, 56px);
+        line-height: 1.04;
+      }
+      .dek {
+        margin-top: 22px;
+        font-size: 19px;
+      }
+      .hero-card {
+        min-height: 0;
+      }
+      section {
+        padding-bottom: 34px;
+      }
+      h2 {
+        font-size: 34px;
+      }
+      h3 {
+        font-size: 26px;
+      }
+      .decision-band {
+        grid-template-columns: 1fr;
+      }
+      .pipeline-diagram,
+      .risk-diagram,
+      .context-flow,
+      .review-grid {
+        grid-template-columns: 1fr;
+      }
+      .practice-card,
+      .pitfall-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .review-item {
+        min-height: 0;
+      }
+      .tdd-diagram {
+        grid-template-columns: 1fr;
+      }
+      .diagram-arrow {
+        transform: rotate(90deg);
+        justify-self: center;
+      }
+      .risk-result {
+        grid-template-columns: 1fr;
+      }
+      pre {
+        padding: 18px;
+        font-size: 13px;
+      }
+      .callout {
+        padding: 24px 18px 22px 46px;
+      }
+      .callout::before {
+        left: 12px;
+        font-size: 58px;
+      }
+      .callout::after {
+        right: 12px;
+        font-size: 46px;
+      }
+      .case-file {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 20px 0 22px;
+      }
+      .closing-note {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 18px;
+      }
+      .closing-note .label {
+        place-items: start;
+        min-height: 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 0 0 10px;
+      }
+      .case-title {
+        font-size: clamp(30px, 10vw, 42px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+  <main class="page">
+    <header class="topbar" aria-label="Article metadata">
+      <div class="series" aria-label="Series">
+        <span class="series-name">Inside ClaudeKit</span>
+        <span class="series-product">ClaudeKit Engineer</span>
+      </div>
+      <div class="meta-line">
+        <span>Cập nhật 2026-05-21</span>
+        <span>Planning, Deep, TDD</span>
+        <a class="home-link" href="/" aria-label="Về trang chủ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+          <span>Home</span>
+        </a>
+        <button class="theme-toggle" type="button" aria-label="Đổi giao diện sáng tối" aria-pressed="false">Dark</button>
+      </div>
+    </header>
+
+    <section class="hero" aria-labelledby="article-title">
+      <div>
+        <p class="eyebrow">Ghi chú dùng trong lúc chọn plan mode</p>
+        <h1 id="article-title" class="vi-readable-heading">Khi nào dùng <span class="accent-mark">/ck:plan --deep --tdd</span></h1>
+        <p class="dek">Không phải task nào cũng cần mode nặng. Bài này tách rõ lúc nào cần <code>--deep</code>, lúc nào thêm <code>--tdd</code>, và lúc nào nên đi đường ngắn hơn.</p>
+      </div>
+
+      <aside class="hero-card" aria-label="Core idea">
+        <p>Một refactor lớn hiếm khi hỏng ngay ở dòng code đầu tiên. Nó thường hỏng vì lúc plan chưa nhìn đủ scope, rồi đến lúc cook mới phát hiện test, migration hoặc background job bị bỏ sót.</p>
+        <div class="mode-stack">
+          <div class="mode"><strong>--deep</strong><span>khi scope rộng</span></div>
+          <div class="mode"><strong>--tdd</strong><span>khi cần giữ behavior cũ</span></div>
+          <div class="mode"><strong>--deep --tdd</strong><span>khi có cả hai rủi ro</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <button class="mobile-toc-toggle" type="button" aria-expanded="false" aria-controls="toc">Mở mục lục</button>
+
+    <div class="layout">
+      <nav class="toc" id="toc" aria-label="Mục lục">
+        <p class="toc-title">Mục lục</p>
+        <a href="#intro">Mở bài</a>
+        <a href="#mode-vs-flag">01 Mode vs Flag</a>
+        <a href="#deep">02 Khi cần --deep</a>
+        <a href="#tdd">03 Khi cần --tdd</a>
+        <a href="#combo">04 Vì sao đi chung</a>
+        <a href="#before-plan">05 Brainstorm / Scout trước</a>
+        <a href="#matrix">06 Decision matrix</a>
+        <a href="#inside">07 Cơ chế bên trong</a>
+        <a href="#prompts">08 Cách chạy</a>
+        <a href="#practices">09 Best practices</a>
+        <a href="#summary">10 Tóm lại</a>
+      </nav>
+
+      <article>
+        <section id="intro">
+          <div class="case-file" aria-label="Ví dụ xuyên suốt trong bài">
+            <div class="case-index">Case xuyên suốt</div>
+            <div>
+              <p class="case-title">Tách <strong>billing module</strong> ra khỏi monolith</p>
+              <div class="case-map" aria-label="Các vùng scope trong ví dụ billing">
+                <span>API routes</span>
+                <span>DB models</span>
+                <span>Background jobs</span>
+                <span>Webhooks</span>
+                <span>Admin UI</span>
+              </div>
+            </div>
+          </div>
+          <p>Billing đang nằm rải rác trong API routes, database models, background jobs, retry logic, invoice status, webhook handler và admin UI. Task nghe đơn giản: “tách billing ra module riêng, giữ behavior cũ”. Nhưng khi agent bắt đầu chạy, câu hỏi mới lộ ra:</p>
+          <ul>
+            <li>File nào thật sự thuộc scope: API, jobs, DB, UI, hay webhook?</li>
+            <li>Behavior nào phải giữ nguyên: retry, idempotency, invoice status, payment failure?</li>
+            <li>Test hiện tại đang cover được bao nhiêu?</li>
+            <li>Phase này có phụ thuộc ngầm vào migration hoặc background job không?</li>
+            <li>Nếu code mới build được nhưng lệch edge case thì ai bắt?</li>
+          </ul>
+          <p>Với task nhỏ, <code>/ck:plan --fast</code> hoặc <code>/ck:plan</code> mặc định thường đủ. Với task phức tạp nhưng chưa tới major refactor, <code>--hard</code> thường hợp hơn. Với task lớn, thiếu context ở đầu sẽ tạo chi phí ở cuối: cook phải đoán lại scope, phase file mơ hồ, test viết sau code, regression chỉ lộ khi đã refactor xong.</p>
+          <blockquote class="callout">
+            <span class="label">Ý chính</span>
+            <p><code>--deep</code> giúp plan nhìn đủ vùng bị ảnh hưởng: file inventory, test gap, dependency giữa các phase. <code>--tdd</code> ép flow ghi lại behavior hiện tại trước khi refactor, rồi dùng chính test đó làm regression gate.</p>
+          </blockquote>
+          <p>Hai thứ này không phải “mode mạnh hơn” theo nghĩa cứ bật là tốt hơn. Chúng giải quyết hai rủi ro cụ thể: <strong>không biết đủ scope</strong> và <strong>không bảo vệ được behavior cũ</strong>.</p>
+        </section>
+
+        <section id="mode-vs-flag">
+          <span class="section-number">Section 01</span>
+          <h2 class="vi-readable-heading">Mode vs Flag, hai khái niệm khác nhau</h2>
+          <p>Trước khi đi tiếp, cần tách bạch một điểm dễ nhầm. <code>/ck:plan</code> nhận 2 loại tham số:</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Loại</th><th>Ví dụ</th><th>Tác dụng</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Mode</strong></td><td><code>--fast</code>, <code>--hard</code>, <code>--deep</code>, <code>--parallel</code>, <code>--two</code></td><td>Chọn pipeline. Mỗi lệnh chỉ dùng một mode.</td></tr>
+                <tr><td><strong>Composable flag</strong></td><td><code>--tdd</code>, <code>--no-tasks</code></td><td>Phần cộng thêm. Có thể đi cùng bất kỳ mode nào.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Điểm quan trọng: <code>--deep</code> là <strong>mode</strong>, tức đổi pipeline planning. <code>--tdd</code> là <strong>flag</strong>, tức giữ mode đã chọn nhưng thêm phần tests-first vào phase file và cook flow.</p>
+          <div class="code-block">
+            <div class="code-head"><span>argument hint</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>argument-hint: "[task] [--fast|--hard|--deep|--parallel|--two] [--tdd|--no-tasks]"</code></pre>
+          </div>
+          <p>Dấu <code>|</code> giữa các mode nghĩa là chọn một. <code>--tdd</code> đứng ở block riêng nên có thể compose. Vì vậy <code>--deep --tdd</code> hợp lệ, còn <code>--deep --hard</code> thì không.</p>
+        </section>
+
+        <section id="deep">
+          <span class="section-number">Section 02</span>
+          <h2 class="vi-readable-heading"><code>--deep</code>, khi plan cần bản đồ từng phase</h2>
+          <h3 class="vi-readable-heading">Vấn đề mà <code>--deep</code> giải quyết</h3>
+          <p>Task lớn thường có nhiều vùng code cùng bị ảnh hưởng. Với billing module, scope có thể trải qua:</p>
+          <ul>
+            <li>API routes: create invoice, retry payment, refund, webhook callback</li>
+            <li>Database: invoice table, payment attempt table, status history</li>
+            <li>Background jobs: retry scheduler, reconciliation job, webhook replay</li>
+            <li>Admin UI: invoice detail, manual retry, refund action</li>
+            <li>Shared contracts: frontend API response, webhook payload, event names</li>
+          </ul>
+          <p>Những task này không chỉ cần danh sách bước. Chúng cần bản đồ:</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Câu hỏi</th><th>Trong ví dụ billing</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>File nào create/modify/delete?</td><td>Route, service, job, migration, UI action</td></tr>
+                <tr><td>Test nào đang cover behavior cũ?</td><td>Retry, idempotency, refund, webhook replay</td></tr>
+                <tr><td>Phase nào phụ thuộc phase nào?</td><td>Migration phải đi trước service, service đi trước UI</td></tr>
+                <tr><td>Interface nào cần test protection?</td><td>API response, webhook payload, job input</td></tr>
+                <tr><td>Dependency edge nào rủi ro?</td><td>Job đọc status cũ trong khi service đã đổi enum</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><code>--deep</code> phù hợp khi chi phí plan sai lớn hơn chi phí plan kỹ.</p>
+          <div class="code-block">
+            <div class="code-head"><span>mode rule</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>Major refactor, 5+ areas, architectural debt -> use --deep</code></pre>
+          </div>
+          <p>Nếu chỉ đụng ít file, <code>--fast</code> hoặc <code>/ck:plan</code> mặc định thường đủ. Nếu scope phức tạp nhưng kiến trúc vẫn rõ, <code>--hard</code> thường hợp hơn. <code>--deep</code> đáng dùng khi một plan sai sẽ kéo theo nhiều giờ sửa lại phase, test và ownership.</p>
+
+          <h3 class="vi-readable-heading">Pipeline của <code>--deep</code></h3>
+          <div class="visual-diagram" aria-label="Pipeline của --deep">
+            <p class="diagram-kicker">Luồng đọc từ trái sang phải: context rộng trước, phase cụ thể sau.</p>
+            <div class="pipeline-diagram">
+              <div class="diagram-node" data-step="01"><strong>Researcher pass</strong><span>2-3 lượt nhìn kiến trúc và affected areas.</span></div>
+              <div class="diagram-node" data-step="02"><strong>Scout toàn vùng</strong><span>Docs, module chính, test hiện có, dependency lớn.</span></div>
+              <div class="diagram-node" data-step="03"><strong>Scout từng phase</strong><span>Mỗi phase có file inventory, test gap, interface cần giữ.</span></div>
+              <div class="diagram-node" data-step="04"><strong>Phase files</strong><span>Planner đưa dữ liệu scout vào từng phase.</span></div>
+              <div class="diagram-node" data-step="05"><strong>Red-team</strong><span>Bắt scope leak, thứ tự phase sai, rủi ro implementation.</span></div>
+              <div class="diagram-node" data-step="06"><strong>Validation</strong><span>Kiểm tra plan có đủ command, dependency, success criteria.</span></div>
+              <div class="diagram-node" data-step="07"><strong>Tasks</strong><span>Tạo task list, trừ khi dùng <code>--no-tasks</code>.</span></div>
+              <div class="diagram-node" data-step="08"><strong>Cook handoff</strong><span>In ra <code>/ck:cook &#123;path&#125;/plan.md</code>.</span></div>
+            </div>
+          </div>
+          <p>So với <code>--hard</code>, thường scout một vòng cho toàn plan, <code>--deep</code> đi thêm một lượt cho từng phase. Chi phí cao hơn, nhưng đổi lại phase file cụ thể hơn: file nào đụng, test nào thiếu, dependency nào rủi ro.</p>
+
+          <h3 class="vi-readable-heading">Phase file cần gì thêm khi dùng <code>--deep</code></h3>
+          <ul>
+            <li><strong>File inventory table</strong>, action create/modify/delete, rough size, test impact</li>
+            <li><strong>Test scenario matrix</strong>, critical/high/medium paths</li>
+            <li><strong>Dependency map</strong>, phase này link đến phase nào khác</li>
+            <li><strong>Function/interface checklist</strong>, hàm hoặc interface nào cần test bảo vệ</li>
+          </ul>
+          <p>Đây là phần khác biệt chính. Một phase không chỉ nói “refactor billing service”. Nó phải nói rõ file nào, test nào, edge nào, và phase này dựa vào phase nào.</p>
+        </section>
+
+        <section id="tdd">
+          <span class="section-number">Section 03</span>
+          <h2 class="vi-readable-heading"><code>--tdd</code>, khi sợ refactor phá behavior đang chạy</h2>
+          <h3 class="vi-readable-heading">Vấn đề mà <code>--tdd</code> giải quyết</h3>
+          <p>Flow mặc định của cook khá quen thuộc: đọc plan, implement từng task, type check sau mỗi file, rồi đến bước testing riêng sau đó. Với greenfield thì ổn. Với refactor code đang chạy, cách đó chưa đủ an toàn.</p>
+          <p>Trong ví dụ billing, behavior cũ có thể là:</p>
+          <ul>
+            <li>Retry chỉ chạy tối đa 3 lần, sau đó chuyển invoice sang <code>failed</code></li>
+            <li>Webhook cùng <code>event_id</code> chỉ được apply một lần</li>
+            <li>Refund không được chạy nếu invoice đã <code>voided</code></li>
+            <li>Admin UI vẫn phải hiện đúng status history sau khi service tách ra</li>
+          </ul>
+          <p>Happy path có thể vẫn pass. Bug thường nằm ở edge case. <code>--tdd</code> tạo regression gate trước khi đổi code. Ở đây “TDD” không phải viết test cho feature mới, mà là <strong>chụp behavior hiện tại trước khi refactor</strong>.</p>
+
+          <h3 class="vi-readable-heading">Khi nào <code>--tdd</code> có giá trị nhất</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Tình huống</th><th>Có nên dùng?</th><th>Với billing</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Greenfield code mới hoàn toàn</td><td>Thường không</td><td>Chưa có invoice/retry behavior để chụp</td></tr>
+                <tr><td>Refactor module đang có user dùng</td><td>Có</td><td>Cần giữ retry, idempotency, status transition</td></tr>
+                <tr><td>Đổi payment provider nhưng giữ contract cũ</td><td>Có</td><td>Dễ lệch API response hoặc webhook behavior</td></tr>
+                <tr><td>Fix 1-2 dòng rõ nguyên nhân</td><td>Thường không</td><td>Ví dụ sửa typo label trong admin UI</td></tr>
+                <tr><td>Prototype throwaway</td><td>Không</td><td>Chi phí test gate không hợp lý</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><code>--tdd</code> có giá trị nhất ở các module có async pattern, stateful workflow, database transaction, hoặc public API contract. Billing có đủ các nhóm này: background jobs, status transition, transaction boundary, webhook payload, admin actions.</p>
+
+          <h3 class="vi-readable-heading">Ở bước plan</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Phần trong phase file</th><th>Vai trò</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Test trước refactor</strong></td><td>Viết regression coverage trước khi đổi code, để ghi lại behavior hiện tại.</td></tr>
+                <tr><td><strong>Refactor</strong></td><td>Mô tả phần code được đổi và được các test trên bảo vệ.</td></tr>
+                <tr><td><strong>Test bổ sung</strong></td><td>Thêm test cho behavior mới trong phase, nếu có.</td></tr>
+                <tr><td><strong>Gate cuối phase</strong></td><td>Compile + test command cụ thể phải pass sau refactor.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="code-block">
+            <div class="code-head"><span>phase shape</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>Một phase dùng --tdd thường đọc theo thứ tự:
+1. Viết test bảo vệ behavior hiện tại
+2. Tách một điểm phụ thuộc nhỏ nếu code cũ khó test
+3. Refactor code
+4. Chạy lại compile + tests</code></pre>
+          </div>
+          <p>Phần làm code cũ test được thường bị bỏ qua. Có khi code cũ không test trực tiếp được: một function dài tự gọi database bên trong, không inject được dependency, không isolate được output. Khi đó cần tách một điểm phụ thuộc nhỏ trước, vẫn giữ behavior như cũ, nhưng làm cho code test được. Sau đó mới refactor thật.</p>
+
+          <h3 class="vi-readable-heading">Khi cook chạy</h3>
+          <div class="visual-diagram" aria-label="TDD cook flow">
+            <p class="diagram-kicker">Khi cook chạy với <code>--tdd</code></p>
+            <div class="tdd-diagram">
+              <div class="diagram-node"><strong>Viết test trước</strong><span>Ghi lại behavior hiện tại trước khi đổi code.</span></div>
+              <div class="diagram-arrow" aria-hidden="true">→</div>
+              <div class="diagram-node"><strong>Refactor</strong><span>Đổi cấu trúc, tách module, làm code cũ test được nếu cần.</span></div>
+              <div class="diagram-arrow" aria-hidden="true">→</div>
+              <div class="diagram-node"><strong>Chạy gate</strong><span>Test bảo vệ behavior cũ vẫn phải pass cùng compile gate.</span></div>
+            </div>
+          </div>
+          <p>Hiểu đơn giản: test viết trước là mốc so sánh cho behavior cũ. Sau refactor, nếu mốc này fail thì cook nên dừng lại để sửa phần behavior bị lệch, trước khi đi tiếp.</p>
+          <blockquote class="callout">
+            <span class="label">Tham chiếu version</span>
+            <p>Bài này đối chiếu với Engineer Kit <code>engineer@v2.19.1-beta.10</code> tại thời điểm viết, kiểm tra qua <code>ck -V</code>. Note này chỉ để tránh nhầm nếu workflow của <code>ck:plan</code> hoặc <code>ck:cook</code> thay đổi về sau.</p>
+          </blockquote>
+        </section>
+
+        <section id="combo">
+          <span class="section-number">Section 04</span>
+          <h2 class="vi-readable-heading">Vì sao <span class="command-pair"><code>--deep</code><code>--tdd</code></span> hay đi chung</h2>
+          <p><code>--deep</code> và <code>--tdd</code> giải quyết hai lớp rủi ro khác nhau.</p>
+          <div class="visual-diagram" aria-label="Hai rủi ro và lựa chọn tương ứng">
+            <p class="diagram-kicker">Nếu task có cả hai rủi ro, bật cả hai option.</p>
+            <div class="risk-diagram">
+              <div class="diagram-node"><strong>Không biết đủ scope</strong><span>Cần scout từng phase, file inventory, dependency map.</span></div>
+              <div class="diagram-node"><strong>Sợ lệch behavior cũ</strong><span>Cần test trước refactor và regression gate lúc cook.</span></div>
+              <div class="risk-result"><b>Kết luận</b><span><code>--deep</code> cho bản đồ. <code>--tdd</code> cho lớp kiểm chứng. Refactor lớn thường cần cả hai.</span></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Rủi ro</th><th>Cần gì</th><th>Option</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Không biết đủ scope</td><td>Scout từng phase, file inventory, dependency map</td><td><code>--deep</code></td></tr>
+                <tr><td>Refactor làm lệch behavior cũ</td><td>Test trước refactor, Regression Gate lúc cook</td><td><code>--tdd</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Một refactor lớn thường có cả hai rủi ro. Ví dụ:</p>
+          <div class="code-block">
+            <div class="code-head"><span>task shape</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>Tách billing module ra khỏi monolith.
+Giữ API contract hiện tại cho frontend.
+Giữ behavior cũ cho retry, idempotency, invoice status.
+Đụng database schema, background jobs, API routes, admin UI.</code></pre>
+          </div>
+          <p>Task billing này cần <code>--deep</code> vì scope rộng và dependency nhiều. Nó cũng cần <code>--tdd</code> vì retry, idempotency, refund và webhook đều là behavior cũ cần giữ.</p>
+          <p>Nếu chỉ bật <code>--deep</code>, plan có thể rất rõ nhưng refactor vẫn thiếu regression gate. Nếu chỉ bật <code>--tdd</code>, test flow có thể đúng nhưng phase file vẫn mơ hồ: test gì, ở đâu, module nào bị ảnh hưởng, dependency nào cần đi trước.</p>
+          <blockquote class="callout">
+            <span class="label">Nhớ nhanh</span>
+            <p>Task rộng thì dùng <code>--deep</code>. Có behavior cũ phải giữ thì thêm <code>--tdd</code>. Có cả hai mới bật cả cặp.</p>
+          </blockquote>
+        </section>
+
+        <section id="before-plan">
+          <span class="section-number">Section 05</span>
+          <h2 class="vi-readable-heading">Khi nào dùng <code>/ck:brainstorm</code> hoặc <code>/ck:scout</code> trước</h2>
+          <p>Một lỗi dễ gặp: dùng <code>--deep --tdd</code> khi approach còn mơ hồ. Plan mode không tự giải quyết ambiguity. Nó chỉ biến <strong>approach đã chọn</strong> thành các bước cụ thể hơn.</p>
+          <p>Ví dụ, nếu chưa quyết:</p>
+          <ul>
+            <li>Tách service thật hay chỉ modularize trong monolith?</li>
+            <li>Dùng queue mới hay giữ background job hiện tại?</li>
+            <li>Giữ invoice status enum hiện tại hay đổi sang state machine rõ hơn?</li>
+            <li>Rewrite admin UI flow hay refactor từng phần?</li>
+          </ul>
+          <p>Trường hợp đó nên dùng <code>/ck:brainstorm</code> trước để chốt approach, rồi mới plan.</p>
+          <p>Một layer nữa là <code>/ck:scout</code>. Hãy xem nó như bước gom context, không phải bước ra quyết định. Scout hợp khi chưa chắc code nằm ở đâu, module nào liên quan, test nào đang cover behavior hiện tại.</p>
+          <div class="visual-diagram" aria-label="Context-first planning flow">
+            <p class="diagram-kicker">Khi brief còn mơ hồ, đừng nhảy thẳng vào plan.</p>
+            <div class="context-flow">
+              <div class="diagram-node"><strong>1 · Scout</strong><span>Tìm code thật, tests thật, dependency thật.</span></div>
+              <div class="diagram-node"><strong>2 · Brainstorm</strong><span>Chọn approach và trade-off trước khi khóa plan.</span></div>
+              <div class="diagram-node"><strong>3 · Plan</strong><span>Dùng <code>--deep --tdd</code> khi approach đã đủ rõ.</span></div>
+            </div>
+          </div>
+          <div class="code-block">
+            <div class="code-head"><span>context-first flow</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>/ck:scout "billing retry flow, invoice status, background jobs, admin UI"
+/ck:brainstorm "Tách billing module nhưng giữ API contract hiện tại"
+/ck:plan --deep --tdd "Refactor billing module theo approach đã chốt..."</code></pre>
+          </div>
+          <p>Khi đã nắm rõ vùng code liên quan và các trade-off chính, bạn có thể bỏ lượt <code>/ck:scout</code> riêng. <code>/ck:plan --deep</code> vẫn có bước scout trong pipeline. Nhưng khi brief còn quá chung, scout trước giúp tránh một lỗi âm thầm: agent lập luận nghe hợp lý, nhưng đang bám vào bản đồ project sai.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Tình huống</th><th>Bắt đầu từ</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Chưa rõ project context / chưa biết code nằm đâu</td><td><code>/ck:scout</code> -> <code>/ck:brainstorm</code></td></tr>
+                <tr><td>Biết rõ <strong>làm gì</strong> và <strong>làm thế nào</strong></td><td><code>/ck:plan</code> trực tiếp</td></tr>
+                <tr><td>Biết <strong>làm gì</strong>, chưa chắc <strong>làm thế nào</strong></td><td><code>/ck:brainstorm</code> -> <code>/ck:plan</code></td></tr>
+                <tr><td>Chưa biết <strong>có nên làm không</strong></td><td><code>/ck:brainstorm</code> -> quyết -> plan hoặc bỏ</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="matrix">
+          <span class="section-number">Section 06</span>
+          <h2>Decision matrix</h2>
+          <div class="decision-band" aria-label="Primary decision shortcuts">
+            <div class="decision-card"><b>Scope unclear</b><span><code>/ck:scout</code> trước</span></div>
+            <div class="decision-card"><b>Approach unclear</b><span><code>/ck:brainstorm</code> trước</span></div>
+            <div class="decision-card"><b>Major refactor</b><span><code>/ck:plan --deep --tdd</code></span></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Tình huống</th><th>Lệnh</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Chưa rõ project context</td><td><code>/ck:scout</code> trước, rồi brainstorm/plan</td></tr>
+                <tr><td>Chưa chắc approach</td><td><code>/ck:brainstorm</code> trước</td></tr>
+                <tr><td>Fix nhỏ 1-2 file</td><td><code>/ck:plan --fast</code></td></tr>
+                <tr><td>Feature mới trung bình</td><td><code>/ck:plan</code> auto</td></tr>
+                <tr><td>Feature phức tạp, domain lạ</td><td><code>/ck:plan --hard</code></td></tr>
+                <tr><td>3+ module độc lập, song song</td><td><code>/ck:plan --parallel</code></td></tr>
+                <tr><td>Phân vân 2 approach cụ thể</td><td><code>/ck:plan --two</code></td></tr>
+                <tr><td><strong>Refactor 5+ vùng, có nợ kiến trúc</strong></td><td><code>/ck:plan --deep</code></td></tr>
+                <tr><td><strong>Refactor code đang chạy/dogfood, sợ regression</strong></td><td>Any mode + <code>--tdd</code></td></tr>
+                <tr><td><strong>Major refactor trên codebase có behavior cần giữ</strong></td><td><code>/ck:plan --deep --tdd</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Cặp <code>--deep --tdd</code> không phải một cơ chế duy nhất, mà là hai việc khác nhau đi cùng nhau. <code>--deep</code> cho <strong>bản đồ</strong>. <code>--tdd</code> cho <strong>lớp kiểm chứng</strong>. Chi phí planning tăng, nhưng cook bớt phải đoán scope và có regression gate rõ hơn.</p>
+        </section>
+
+        <section id="inside">
+          <span class="section-number">Section 07</span>
+          <h2 class="vi-readable-heading">Inside, cơ chế bên trong</h2>
+          <p>Phần này đi sâu hơn vào cách <code>--deep</code> và <code>--tdd</code> tác động ở lúc plan, lúc cook, và chi phí chạy.</p>
+          <h3 class="vi-readable-heading">7.1 <code>--deep</code> tốn hơn vì researcher + scout từng phase</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Mode</th><th>Researcher</th><th>Red Team</th><th>Validation</th><th>Scout từng phase</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>--fast</code></td><td>0</td><td>0</td><td>0</td><td>No</td></tr>
+                <tr><td><code>--hard</code></td><td>2</td><td>Yes</td><td>Optional</td><td>No</td></tr>
+                <tr><td><strong><code>--deep</code></strong></td><td><strong>2-3</strong></td><td><strong>Yes</strong></td><td><strong>Yes</strong></td><td><strong>Yes</strong></td></tr>
+                <tr><td><code>--parallel</code></td><td>2</td><td>Yes</td><td>Optional</td><td>No</td></tr>
+                <tr><td><code>--two</code></td><td>2+</td><td>Sau select</td><td>Sau select</td><td>No</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Chi phí của <code>--deep</code> chủ yếu đến từ 2-3 researcher cho high-level architecture analysis, red-team review, validation step, và lượt đọc lại theo từng phase.</p>
+          <p>Nói đơn giản, mỗi phase được soi riêng trước khi chốt plan: phase này đụng file nào, phụ thuộc phase nào, còn thiếu test gì, có edge case nào dễ miss.</p>
+          <p>Điểm cần tránh hiểu sai: chữ “scout” ở đây nói về <strong>việc phải đọc và kiểm tra lại theo từng phase</strong>, không phải cam kết lúc chạy luôn tạo một agent riêng. Điều quan trọng là <code>--deep</code> bắt plan đi qua nhiều lượt kiểm tra nhỏ hơn, thay vì chỉ nhìn scope một lần ở mức tổng quan.</p>
+
+          <h3 class="vi-readable-heading">7.2 <code>--tdd</code> không tạo agent mới</h3>
+          <p>Điểm dễ hiểu sai: <code>--tdd</code> không đổi mode đã chọn. Nó là flag cộng thêm: bạn vẫn chạy <code>--fast</code>, <code>--hard</code> hoặc <code>--deep</code> như bình thường, chỉ thêm cấu trúc tests-first.</p>
+          <p>Flag chỉ đổi <strong>2 thứ</strong>:</p>
+          <ul>
+            <li><strong>Phase file ở lúc plan.</strong> Phase thường có overview, yêu cầu, kiến trúc, file liên quan, implementation steps, success criteria, risk assessment. Khi <code>--tdd</code> bật, phase thêm phần test trước refactor, test sau refactor và gate cuối phase.</li>
+            <li><strong>Thứ tự thực thi ở lúc cook.</strong> Viết test bảo vệ behavior cũ trước, refactor sau, rồi chạy lại compile/test gate.</li>
+          </ul>
+          <p>Chi phí của <code>--tdd</code> thấp hơn <code>--deep</code> nhiều. Nó chủ yếu thêm cấu trúc vào phase file và đổi thứ tự thực thi lúc cook.</p>
+
+          <h3 class="compact-heading vi-readable-heading">7.3 Regression Gate cần command cụ thể</h3>
+          <p>Cook spec yêu cầu Regression Gate là <strong>compile/test command cụ thể</strong>. Với Go project, ví dụ:</p>
+          <div class="code-block">
+            <div class="code-head"><span>regression gate</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>Regression Gate: go test ./... && go vet ./...</code></pre>
+          </div>
+          <p>Nếu phase file viết mơ hồ “run tests to verify”, bước verify yếu đi vì cook không có exact command để bám vào. Flag <code>--tdd</code> không tự đảm bảo đoán đúng tool trong mọi repo. Nếu project dùng command riêng, nên ghi rõ ngay trong task description hoặc plan file.</p>
+          <div class="code-block">
+            <div class="code-head"><span>tooling hint</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>Project dùng go test ./..., frontend dùng npm test, E2E dùng Playwright.</code></pre>
+          </div>
+          <p>Khi task nêu rõ tooling, plan có cơ sở để ghi đúng Regression Gate cho từng phase.</p>
+        </section>
+
+        <section id="prompts">
+          <span class="section-number">Section 08</span>
+          <h2 class="vi-readable-heading">Cách chạy và template tổng quát</h2>
+          <p>Template dưới đây bám theo source skill của <code>ck:plan</code> và <code>ck:cook</code>: plan nhận task + mode/flag, cook nhận plan path và giữ <code>--tdd</code> nếu plan đã bật flag này.</p>
+          <p class="template-note">Template tổng quát</p>
+          <div class="code-block">
+            <div class="code-head"><span>general template</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>/ck:plan [mode] [--tdd] "[Việc cần làm].
+Phạm vi: [module/file/stack bị đụng].
+Giữ nguyên: [API contract, behavior cũ, compatibility].
+Đụng: [database, job, route, UI, shared type].
+Tooling: [compile/test command cụ thể].
+Known bugs / out of scope: [nếu có]."</code></pre>
+          </div>
+          <p>Lưu ý: nếu plan dùng <code>--tdd</code>, khi chạy cook cũng thêm <code>--tdd</code>:</p>
+          <div class="code-block">
+            <div class="code-head"><span>cook command</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>/ck:cook /absolute/path/to/plan.md --tdd</code></pre>
+          </div>
+          <p>Áp template vào vài tình huống phổ biến:</p>
+          <h3><code>--deep</code> cho planning/inventory phase</h3>
+          <div class="code-block">
+            <div class="code-head"><span>deep only</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>/ck:plan --deep "Lập plan inventory để chuẩn bị tách billing module ra package riêng.
+Scope: API routes, invoice service, payment jobs, admin UI, database schema.
+Output cần có: file inventory, dependency map, phase ownership, risk list.
+Chưa refactor behavior đang chạy trong round này."</code></pre>
+          </div>
+          <h3 class="vi-readable-heading"><code>--hard --tdd</code> cho refactor code đang chạy/dogfood</h3>
+          <div class="code-block">
+            <div class="code-head"><span>hard + tdd</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>/ck:plan --hard --tdd "Refactor invoiceStatusService: tách transition rules
+ra file riêng, giữ exact behavior cho retry, failed, refunded, voided."</code></pre>
+          </div>
+          <h3 class="vi-readable-heading"><code>--deep --tdd</code> cho major refactor có behavior cần giữ</h3>
+          <div class="code-block">
+            <div class="code-head"><span>deep + tdd</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>/ck:plan --deep --tdd "Tách billing module ra khỏi monolith.
+Giữ API contract cho frontend, giữ behavior retry/idempotency/refund/webhook.
+Đụng: database schema, payment jobs, API routes, admin UI. Project dùng
+go test ./..., frontend dùng npm test."</code></pre>
+          </div>
+          <p>Task description tốt thường có đủ:</p>
+          <ul>
+            <li><strong>Phạm vi</strong>, file/module/stack nào</li>
+            <li><strong>Ràng buộc</strong>, không được phá gì, giữ tương thích gì</li>
+            <li><strong>Tooling</strong>, test command, compile command, quan trọng cho <code>--tdd</code></li>
+            <li><strong>Kết quả mong muốn</strong>, ngắn gọn nhưng cụ thể</li>
+          </ul>
+          <p>Input quá mơ hồ, ví dụ <code>"refactor billing"</code>, sẽ cho ra plan mơ hồ. Scout không có anchor cụ thể thì output rất dễ chung chung.</p>
+        </section>
+
+        <section id="practices">
+          <span class="section-number">Section 09</span>
+          <h2 class="vi-readable-heading">Best practices và pitfalls</h2>
+          <h3 class="vi-readable-heading">Nên làm trước khi cook</h3>
+          <div class="practice-grid">
+            <article class="practice-card">
+              <div class="practice-index">Scope</div>
+              <div>
+                <h4 class="vi-readable-heading">Worktree sạch trước khi plan</h4>
+                <p>Nếu working dir có uncommitted changes từ task khác, scout dễ lẫn code hiện tại với code đang dở. Trước plan lớn: commit hoặc stash. Tốt hơn nữa là tạo worktree riêng qua <code>/ck:worktree</code>.</p>
+              </div>
+            </article>
+            <article class="practice-card">
+              <div class="practice-index">Review</div>
+              <div>
+                <h4 class="vi-readable-heading">Review phase file trước khi cook</h4>
+                <p><code>--deep --tdd</code> plan chạy khá lâu, nên đừng cook ngay khi chưa đọc lại <code>plan.md</code> và các file phase mà plan tạo ra.</p>
+              </div>
+            </article>
+          </div>
+          <div class="review-panel">
+            <p class="review-kicker">Phase review checklist</p>
+            <p>Đọc <code>plan.md</code> và các file phase qua 5 câu hỏi này trước khi cho cook chạy:</p>
+            <div class="review-grid">
+              <div class="review-item" data-q="Q1"><b>File inventory</b><span>Có file nào không muốn agent đụng?</span></div>
+              <div class="review-item" data-q="Q2"><b>Test scenario matrix</b><span>Có miss race condition hoặc edge case như duplicate webhook?</span></div>
+              <div class="review-item" data-q="Q3"><b>Phase order</b><span>Có thật độc lập, hay migration phải đi trước job?</span></div>
+              <div class="review-item" data-q="Q4"><b>Regression Gate</b><span>Đúng tool và đúng test subset chưa?</span></div>
+              <div class="review-item" data-q="Q5"><b>Known bugs</b><span>Cần fix hay cần preserve behavior cũ?</span></div>
+            </div>
+          </div>
+          <div class="practice-grid">
+            <article class="practice-card">
+              <div class="practice-index">Tooling</div>
+              <div>
+                <h4 class="vi-readable-heading">Khai báo test command trong task</h4>
+                <p>Với <code>--tdd</code>, repo dùng tool lạ như <code>bun</code> thay <code>npm</code>, <code>mise</code> thay <code>asdf</code>, <code>task</code> thay <code>make</code>? Khai báo luôn.</p>
+              </div>
+            </article>
+          </div>
+          <div class="code-block">
+            <div class="code-head"><span>tooling hint</span><button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>Project dùng go test ./..., frontend dùng npm test, E2E dùng Playwright.</code></pre>
+          </div>
+          <p>Không khai báo thì agent sẽ đoán. Đoán sai command làm Regression Gate yếu đi.</p>
+          <div class="practice-grid">
+            <article class="practice-card">
+              <div class="practice-index">Context</div>
+              <div>
+                <h4 class="vi-readable-heading"><code>/clear</code> giữa plan và cook</h4>
+                <p>Plan context trong task lớn thường rất nặng: research output, scout data, red-team feedback. Flow khuyến nghị: plan xong -> <code>/clear</code> -> mở lại -> <code>/ck:cook &#123;absolute-path&#125;/plan.md --tdd</code>. Cook đọc lại từ file plan, không cần planning context cũ.</p>
+              </div>
+            </article>
+          </div>
+
+          <h3 class="vi-readable-heading">Cần tránh</h3>
+          <div class="pitfall-list">
+            <article class="pitfall-item">
+              <div class="pitfall-tag">Cook flag</div>
+              <div>
+                <h4 class="vi-readable-heading">Quên <code>--tdd</code> ở <code>/ck:cook</code></h4>
+                <p>Plan có <code>--tdd</code>, cook không có -> cook vẫn đọc được phần test trước refactor, nhưng không enforce thứ tự test trước rồi mới refactor. Test có thể vẫn được viết, chỉ là viết sau code. Nên dùng đúng cook command suggestion trong output plan.</p>
+              </div>
+            </article>
+            <article class="pitfall-item">
+              <div class="pitfall-tag">Overkill</div>
+              <div>
+                <h4 class="vi-readable-heading"><code>--deep</code> cho task nhỏ</h4>
+                <p>Dưới khoảng 5 file thì thường không cần. Dùng <code>--hard</code> hoặc <code>--fast</code> sẽ gọn hơn.</p>
+              </div>
+            </article>
+            <article class="pitfall-item">
+              <div class="pitfall-tag">Greenfield</div>
+              <div>
+                <h4><code>--tdd</code> cho greenfield</h4>
+                <p>Code mới không có behavior hiện tại để test. Phần “test trước refactor” gần như rỗng, nên agent dễ viết test hình thức thay vì TDD thật. Greenfield dùng <code>--hard</code>, để test được viết theo flow thường.</p>
+              </div>
+            </article>
+            <article class="pitfall-item">
+              <div class="pitfall-tag">Blind spot</div>
+              <div>
+                <h4 class="vi-readable-heading">Tin tuyệt đối vào phase file</h4>
+                <p><code>--deep</code> scout kỹ hơn, nhưng vẫn có thể miss dependency ngầm. Trước khi cook, nên tự hỏi: phase sau có đang ngầm phụ thuộc thứ phase trước chưa tạo ra không?</p>
+              </div>
+            </article>
+            <article class="pitfall-item">
+              <div class="pitfall-tag">Known bug</div>
+              <div>
+                <h4 class="vi-readable-heading"><code>--tdd</code> chụp test cho code có bug sẵn</h4>
+                <p>Billing cũ có bug tiềm ẩn, ví dụ duplicate webhook đôi khi tạo 2 payment attempts. Nếu test trước refactor chụp luôn bug thành “behavior hiện tại”, refactor vô tình fix bug sẽ làm gate fail, rồi agent có thể sửa lại cho đúng bug cũ. Giải pháp: khai báo known bugs trong task, hoặc tách 2 plan: plan 1 fix bug, plan 2 refactor.</p>
+              </div>
+            </article>
+            <article class="pitfall-item">
+              <div class="pitfall-tag">Mode mix</div>
+              <div>
+                <h4 class="vi-readable-heading">Cố ghép <code>--deep</code> với <code>--parallel</code></h4>
+                <p><code>--deep</code> và <code>--parallel</code> đều là mode, nên không compose với nhau. Nếu cần chạy nhiều agent song song, dùng <code>--parallel --tdd</code> và kiểm tra ownership/test scope thật rõ. Nếu chưa chắc ownership và test isolation, bỏ <code>--parallel</code>, giữ <code>--deep --tdd</code>.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="summary">
+          <span class="section-number">Section 10</span>
+          <h2 class="vi-readable-heading">Tóm lại</h2>
+          <p><code>--deep --tdd</code> không dành cho mọi task.</p>
+          <p>Nó dành cho nhóm task có hai dấu hiệu:</p>
+          <ol>
+            <li>Scope đủ lớn để plan thường dễ thiếu bản đồ</li>
+            <li>Code hiện tại có behavior cần giữ sau refactor</li>
+          </ol>
+          <p><code>--deep</code> làm planning chậm hơn, nhưng đổi lại phase file rõ hơn: file inventory, test gap, dependency map, function/interface checklist.</p>
+          <p><code>--tdd</code> làm cook chậm hơn, nhưng đổi lại refactor có regression gate: viết test trước, refactor, rồi verify.</p>
+          <p>Nếu bạn ở vai trò PM/founder/product, chỉ cần biết hai option này tồn tại. Khi team chuẩn bị refactor module lớn như billing, hãy hỏi xem plan đã có scout từng phase và regression gate chưa.</p>
+          <p>Nếu bạn là dev, hãy thử ở task lớn kế tiếp. Lần đầu có thể thấy tốn thêm thời gian. Nhưng chỉ cần một lần test viết trước bắt được regression ngầm, phần chi phí đó sẽ dễ chấp nhận hơn nhiều.</p>
+          <aside class="closing-note" aria-label="Lưu ý cuối">
+            <span class="label">Lưu ý cuối</span>
+            <div class="closing-note-body">
+              <div class="closing-note-flow" aria-label="Fast mode and TDD trade-off">
+                <span class="closing-note-chip"><code>--fast</code></span>
+                <span class="closing-note-operator">+</span>
+                <span class="closing-note-chip is-heavy"><code>--tdd</code></span>
+                <span class="closing-note-operator">→</span>
+                <span class="closing-note-verdict">Trade-off yếu</span>
+              </div>
+              <p>Về nguyên tắc, <code>--tdd</code> đi được với mọi mode. Nhưng nếu đã chọn <code>--fast</code> để đi nhanh, thường không đáng thêm một flow test-first nặng hơn.</p>
+            </div>
+          </aside>
+        </section>
+      </article>
+
+    </div>
+
+    <footer class="post-footer">
+      <a class="home-link" href="/" aria-label="Về trang chủ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        <span>Về trang chủ</span>
+      </a>
+    </footer>
+  </main>
+
+  <script is:inline>
+    (function () {
+      var progressBar = document.getElementById('progress-bar');
+      var toc = document.getElementById('toc');
+      var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+      var toggle = document.querySelector('.mobile-toc-toggle');
+      var themeToggle = document.querySelector('.theme-toggle');
+      var sections = tocLinks
+        .map(function (link) { return document.querySelector(link.getAttribute('href')); })
+        .filter(Boolean);
+      var prefersDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+      function currentTheme() {
+        return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      }
+
+      function setTheme(theme, persist) {
+        document.documentElement.dataset.theme = theme;
+        if (themeToggle) {
+          var isDark = theme === 'dark';
+          themeToggle.textContent = isDark ? 'Light' : 'Dark';
+          themeToggle.setAttribute('aria-pressed', String(isDark));
+        }
+        if (persist) {
+          try { localStorage.setItem('theme', theme); } catch (_) {}
+        }
+      }
+
+      function updateProgress() {
+        var doc = document.documentElement;
+        var scrollable = Math.max(1, doc.scrollHeight - window.innerHeight);
+        var pct = Math.min(100, Math.max(0, (window.scrollY / scrollable) * 100));
+        progressBar.style.width = pct + '%';
+      }
+
+      function updateToc() {
+        var active = sections[0];
+        var marker = window.scrollY + 140;
+        sections.forEach(function (section) {
+          if (section.offsetTop <= marker) active = section;
+        });
+        tocLinks.forEach(function (link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + active.id);
+        });
+      }
+
+      function onScroll() {
+        updateProgress();
+        updateToc();
+      }
+
+      if (toggle && toc) {
+        toggle.addEventListener('click', function () {
+          var open = toc.classList.toggle('open');
+          toggle.setAttribute('aria-expanded', String(open));
+          toggle.textContent = open ? 'Đóng mục lục' : 'Mở mục lục';
+        });
+      }
+
+      if (themeToggle) {
+        setTheme(currentTheme(), false);
+        themeToggle.addEventListener('click', function () {
+          setTheme(currentTheme() === 'dark' ? 'light' : 'dark', true);
+        });
+      }
+
+      if (prefersDark && typeof prefersDark.addEventListener === 'function') {
+        prefersDark.addEventListener('change', function (event) {
+          try {
+            if (localStorage.getItem('theme')) return;
+          } catch (_) {}
+          setTheme(event.matches ? 'dark' : 'light', false);
+        });
+      }
+
+      document.querySelectorAll('.copy-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var block = button.closest('.code-block');
+          var code = block ? block.querySelector('pre code') : null;
+          if (!code) return;
+          navigator.clipboard.writeText(code.textContent).then(function () {
+            var old = button.textContent;
+            button.textContent = 'Copied';
+            setTimeout(function () { button.textContent = old; }, 1400);
+          }).catch(function () {
+            button.textContent = 'Select';
+          });
+        });
+      });
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      onScroll();
+    })();
+  </script>
+</body>
+</html>
