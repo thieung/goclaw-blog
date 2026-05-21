@@ -7,7 +7,7 @@ project: claudekit
 status: approved
 created: 2026-04-22
 updated: 2026-05-21
-slug: ck-plan-tdd-deep-modes
+slug: ck-plan-deep-tdd-when-to-use
 tags: [claudekit, planning, deep, tdd, refactor]
 ---
 
