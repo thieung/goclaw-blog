@@ -947,19 +947,37 @@
       .toc.open { display: block; }
       .mobile-toc-toggle { display: block; }
       article {
+        width: 100%;
         max-width: var(--max-reader);
         margin: 0 auto;
       }
     }
 
     @media (max-width: 720px) {
-      body { font-size: 16px; }
-      .page { padding-inline: 18px; }
+      body {
+        font-size: 16px;
+        line-height: 1.68;
+        overflow-x: hidden;
+      }
+      .page {
+        padding: 18px clamp(16px, 5vw, 20px) 64px;
+      }
+      .layout,
+      article,
+      section {
+        max-width: 100%;
+        min-width: 0;
+      }
       .topbar {
         align-items: flex-start;
         flex-direction: column;
         justify-content: flex-start;
         padding-bottom: 16px;
+      }
+      .series,
+      .meta-line {
+        width: 100%;
+        min-width: 0;
       }
       .series {
         align-items: flex-start;
@@ -970,31 +988,77 @@
         width: 24px;
       }
       .meta-line {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         justify-content: flex-start;
         text-align: left;
+      }
+      .home-link,
+      .theme-toggle {
+        justify-self: start;
+        max-width: 100%;
       }
       .hero {
         padding-bottom: 36px;
       }
       h1 {
-        font-size: clamp(36px, 12vw, 56px);
-        line-height: 1.04;
+        font-size: clamp(32px, 9vw, 44px);
+        line-height: 1.12;
       }
       .dek {
         margin-top: 22px;
-        font-size: 19px;
+        font-size: 18px;
+        line-height: 1.58;
       }
       .hero-card {
+        max-width: 100%;
         min-height: 0;
+      }
+      .mode-stack,
+      .mode {
+        min-width: 0;
+      }
+      .mode {
+        flex-wrap: wrap;
+      }
+      .hero-card p,
+      p {
+        text-wrap: normal;
+      }
+      .accent-mark,
+      h2 code,
+      h3 code,
+      .command-pair {
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      code {
+        overflow-wrap: anywhere;
       }
       section {
         padding-bottom: 34px;
       }
       h2 {
-        font-size: 34px;
+        font-size: clamp(27px, 8vw, 34px);
+        line-height: 1.16;
       }
       h3 {
-        font-size: 26px;
+        font-size: clamp(22px, 6.5vw, 28px);
+        line-height: 1.2;
+      }
+      .table-wrap {
+        max-width: 100%;
+        margin-inline: 0;
+        padding-inline: 0;
+        scrollbar-gutter: stable;
+      }
+      table {
+        min-width: 560px;
+        font-size: 14px;
+        line-height: 1.46;
+      }
+      th, td {
+        padding: 12px 10px;
       }
       .decision-band {
         grid-template-columns: 1fr;
@@ -1023,9 +1087,16 @@
       .risk-result {
         grid-template-columns: 1fr;
       }
+      .decision-card span {
+        font-size: 24px;
+        line-height: 1.16;
+      }
       pre {
         padding: 18px;
         font-size: 13px;
+        line-height: 1.58;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
       }
       .callout {
         padding: 24px 18px 22px 46px;
