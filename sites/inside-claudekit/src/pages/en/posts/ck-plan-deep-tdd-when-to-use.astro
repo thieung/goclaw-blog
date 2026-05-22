@@ -969,10 +969,13 @@
         min-width: 0;
       }
       .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding-bottom: 16px;
+        align-items: start;
+        display: grid;
+        gap: 12px;
+        justify-content: stretch;
+        min-height: 0;
+        margin-bottom: 42px;
+        padding-bottom: 18px;
       }
       .series,
       .meta-line {
@@ -980,23 +983,63 @@
         min-width: 0;
       }
       .series {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 6px;
+        align-items: center;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        line-height: 1.25;
+      }
+      .series-name {
+        letter-spacing: 0.12em;
+      }
+      .series-product {
+        gap: 8px;
+        letter-spacing: 0.08em;
+        white-space: normal;
       }
       .series-product::before {
-        width: 24px;
+        width: 20px;
       }
       .meta-line {
         display: grid;
-        grid-template-columns: minmax(0, 1fr);
+        align-items: center;
+        grid-template-columns: auto auto;
+        gap: 8px 12px;
         justify-content: flex-start;
         text-align: left;
       }
+      .meta-line > span {
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+        letter-spacing: 0.04em;
+      }
+      .meta-line > span + span::before {
+        content: "/";
+        margin-right: 12px;
+        color: color-mix(in oklch, var(--muted) 54%, transparent);
+      }
       .home-link,
       .theme-toggle {
-        justify-self: start;
         max-width: 100%;
+        min-height: 32px;
+        padding-inline: 10px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+      .home-link {
+        grid-column: 1;
+        margin-left: 0;
+      }
+      .theme-toggle {
+        grid-column: 2;
       }
       .hero {
         padding-bottom: 36px;
