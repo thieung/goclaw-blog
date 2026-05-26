@@ -1,6 +1,6 @@
 ---
 title: "Guard rails trong Claude Code và ClaudeKit"
-description: "Hooks, rules và hard-gate ngăn Claude làm bậy: scout-block, privacy-block, simplify-gate, plan-then-cook, và những chỗ guard rail còn hở"
+description: "Guard rail trong agentic coding là gì và hoạt động ra sao, rồi cách ClaudeKit hiện thực: scout-block, privacy-block, simplify-gate, hard-gate, và những chỗ còn hở"
 series: "Inside ClaudeKit"
 product: "ClaudeKit Engineer"
 project: claudekit
@@ -12,22 +12,117 @@ tags: [claudekit, hooks, safety, guard-rails, internals]
 
 # Guard rails trong Claude Code và ClaudeKit
 
-*Hooks chặn file, rules chặn drift, hard-gate chặn skip phase. Bài này mổ xẻ từng tầng guard rail, scenario nó bắt được, và những chỗ nó vẫn hở.*
+*Guard rail là gì trong agentic coding, hoạt động ra sao, rồi cách ClaudeKit hiện thực từng tầng: hooks chặn file, rules chặn drift, hard-gate chặn skip phase, kèm scenario nó bắt được và những chỗ vẫn hở.*
 
 Bạn giao task refactor module nhỏ. Agent đọc `node_modules/` để "hiểu thư viện", glob `**/*.ts` ở root, cat `.env` để "check API key value", rồi ship một diff 600 dòng không qua simplify. Không lâu sau, context đầy rác, secret leak vào transcript, PR đẩy lên review đỡ không kịp.
 
 Cùng một agent, cùng codebase, nhưng có guard rails đứng giữa: scout-block exit 2 khi đụng `node_modules`, privacy-block bật prompt approval cho `.env`, simplify-gate hard-block command `ship` khi diff vượt 400 LOC, hard-gate XML buộc plan trước cook. Cái cần chặn được chặn ở lớp hook chứ không phải hi vọng model "tự ngoan".
 
-ClaudeKit Engineer (CK) build trên Claude Code gắn vào đúng chỗ đó: vài hook code chạy thật, 9 rule files inject vào context, một bộ HARD-GATE XML trong skill markdown, và các guard skill chủ động. Bài này đi qua 6 nhóm guard rail, kèm scenario thật chúng bắt được, kèm các chỗ còn hở để ai dùng CK biết khi nào không nên tin.
+Bài này đi từ khái niệm chung (guard rail là gì trong agentic coding, hoạt động ra sao, lợi ích gì) rồi mới mổ xẻ cách ClaudeKit Engineer (CK) hiện thực từng tầng: hook code chạy thật, rule inject vào context, HARD-GATE XML trong skill markdown, guard skill chủ động, kèm scenario thật và các chỗ còn hở.
+
+
+## Section 01: Guard rail là gì trong agentic coding
+
+Guard rail là ràng buộc tự động đứng giữa agent và hành động của nó, chặn hoặc cảnh báo trước khi agent làm việc không mong muốn. Khác với một dòng instruction trong prompt (model tự nguyện tuân), guard rail chạy ở lớp system, không phụ thuộc model có "nhớ" hay không.
+
+Vì sao agentic coding cần lớp này. Một coding agent không chỉ sinh text. Nó đọc file thật, ghi file thật, chạy shell command thật, mở PR thật. Mỗi tool call là một hành động có hậu quả. Một quyết định sai lan rộng nhanh:
+
+- Đọc `node_modules/` để "hiểu thư viện" đốt vài chục nghìn token, đẩy context vào vùng degrade
+- `cat .env` để "check API key" leak secret value vào transcript, từ đó leak sang log và PR
+- Ship một diff 600 dòng chưa ai review vì agent thấy "code build pass là xong"
+
+Model càng mạnh càng chủ động, mà chủ động sai thì hậu quả cũng lớn hơn. Prompt instruction giảm được phần nào, nhưng instruction là lời khuyên, không phải hàng rào. Khi context dài, khi prompt user đè lên, khi model bug, instruction trượt. Guard rail bù đúng khoảng đó: việc gì tuyệt đối không được làm thì chặn bằng code, đừng chỉ dặn.
+
+### Phân biệt guard rail và instruction
+
+| | Guard rail (system) | Instruction (prompt) |
+|--|---------------------|----------------------|
+| Chạy ở đâu | Harness, ngoài model | Trong context, model đọc |
+| Ép buộc | Code chặn thật (block tool) | Model tự nguyện tuân |
+| Khi context dài | Vẫn chạy | Dễ bị quên / trượt |
+| Khi model bug | Vẫn chặn (nếu không crash) | Lệch theo model |
+| Sửa đổi | Cần đụng code/config | Sửa text là xong |
+
+Hai thứ không loại trừ nhau. Việc rủi ro cao dùng guard rail, việc mang tính phong cách (commit format, comment convention) dùng instruction là đủ.
+
+
+## Section 02: Guard rail hoạt động thế nào
+
+### Harness là chỗ gắn guard rail
+
+Coding agent không nói chuyện trực tiếp với filesystem. Giữa model và thế giới có một lớp orchestration gọi là harness: nó nhận output của model, dispatch tool call, quản lý permission, chạy hook lifecycle, rồi trả result về cho model. Harness là nơi tự nhiên để chèn guard rail, vì mọi hành động đều đi qua nó.
+
+Có bốn điểm chèn chính:
+
+| Điểm chèn | Lúc nào | Dùng để |
+|-----------|---------|---------|
+| Prompt gate | Khi nhận prompt user | Inject context, chặn trước khi model chạy (vd diff to thì cấm "ship") |
+| Pre-tool hook | Trước khi tool chạy | Chặn đọc/ghi file cấm, chặn glob quá rộng |
+| Post-tool hook | Sau khi tool chạy | Validate output, nhắc nhở, scan secret |
+| Workflow gate | Giữa các phase | Buộc plan trước code, review trước ship |
+
+### Flow một tool call qua guard rail
+
+```
+User prompt
+    │
+    ▼
+┌─────────────┐   block?   ┌──────────────────────┐
+│ Prompt gate │ ─────────► │ Chặn + nhắc user sửa  │
+└─────────────┘            └──────────────────────┘
+    │ pass
+    ▼
+┌─────────────┐
+│   Model     │  quyết định gọi tool
+└─────────────┘
+    │ tool call (Read / Bash / Edit ...)
+    ▼
+┌──────────────┐  exit 2   ┌──────────────────────┐
+│ Pre-tool hook│ ────────► │ Tool KHÔNG chạy       │
+│ (scout/privacy)│         │ Trả lý do về model    │
+└──────────────┘           └──────────────────────┘
+    │ exit 0 (allow)
+    ▼
+┌──────────────┐
+│  Tool exec   │  đọc/ghi/chạy thật
+└──────────────┘
+    │ result
+    ▼
+┌──────────────┐
+│ Post-tool hook│  validate, scan, nhắc
+└──────────────┘
+    │
+    ▼
+  Result về Model
+```
+
+Điểm mấu chốt: pre-tool hook trả exit code. Exit 0 cho tool chạy, exit 2 chặn và đẩy lý do về cho model đọc. Model thấy "bị chặn vì lý do X" và tự điều chỉnh, thay vì chạy mù.
+
+### Hai loại enforcement
+
+- **Hard (code)**: hook trả exit 2, tool không chạy. Model không thể bỏ qua. Nhưng nếu hook code crash, đa số harness chọn fail-open (cho qua) để không kẹt cả session. Nghĩa là bug ở hook đồng nghĩa guard tắt silently.
+- **Soft (text)**: inject một đoạn text vào context (rule, hard-gate). Model phải tự tuân. Mạnh hay yếu phụ thuộc model và độ rõ của instruction.
+
+Defense in depth thật sự là xếp nhiều lớp: hard chặn việc tuyệt đối cấm, soft định hướng phần còn lại.
+
+### Lợi ích
+
+- **Context hygiene**: không cho đọc thư mục rác, context sạch, các turn sau chất lượng hơn
+- **Secret safety**: chặn đọc `.env`, `id_rsa` trước khi value vào transcript
+- **Workflow discipline**: buộc plan trước code, simplify trước ship, review trước merge
+- **Giảm rework**: bắt lỗi ở lúc rẻ (trước khi ship) thay vì lúc đắt (sau khi merge)
+- **Defense in depth**: nhiều lớp bù nhau, một lớp hở thì lớp khác còn đỡ
+
+Trade-off luôn tồn tại: guard chặt thì friction cao, có lúc cản việc hợp lệ. Vì vậy guard rail tốt thường kèm cơ chế override tường minh (env var, config flag, user instruction). Phần dưới đi vào cách ClaudeKit hiện thực từng điểm chèn này.
+
+
+## Section 03: Sáu nhóm guard rail trong CK
 
 > **Ý chính**
 >
 > Guard rails trong CK gồm 2 lớp. Lớp **hook** chạy code thật (PreToolUse, UserPromptSubmit), fail-closed về behavior nhưng fail-open trên crash. Lớp **rule + hard-gate** là chỉ thị tự nhiên, Claude vẫn có thể lệch nếu prompt yếu. Hai lớp bù nhau, không thay nhau.
 >
 > Lưu ý quan trọng: native permission dialog của Claude Code bị tắt trong CK (`bypassPermissions: true`). Mọi file-access enforcement dồn vào hook layer. Hook crash đồng nghĩa guard của lớp đó biến mất silently.
-
-
-## Section 01: Sáu nhóm guard rail trong CK
 
 | Nhóm | Cơ chế | Ví dụ | Mức ép buộc |
 |------|--------|-------|-------------|
@@ -55,7 +150,7 @@ Phân biệt quan trọng: **hook** là code chạy ngoài model, có thể exit
 | Path traversal `../../.ssh/id_rsa` | privacy-block detect kèm `isSuspiciousPath()` |
 
 
-## Section 02: Settings và config landscape
+## Section 04: Settings và config landscape
 
 Hai file config quyết định hook nào thực sự bật:
 
@@ -84,7 +179,7 @@ Nghĩa là native permission dialog của Claude Code đã tắt hoàn toàn. M�
 ```
 scout-block: true
 privacy-block: true
-simplify-gate: true   (chú ý: xem Section 04)
+simplify-gate: true   (chú ý: xem Section 07)
 workflow-artifact-gate: false (opt-in)
 dev-rules-reminder: true
 ```
@@ -112,7 +207,7 @@ Nếu hook code crash, output sẽ có stack trace. Không thấy stack trace đ
 `sanitizePath()` (`lib/ck-config-utils.cjs:492-516`) chặn null byte và `../` traversal trong relative config value. Quan trọng vì project `.ck.json` được merge với global. Nếu attacker control project config có thể inject path escape. Sanitize trước khi merge là chặn class attack đó.
 
 
-## Section 03: scout-block, chặn đọc thư mục rác
+## Section 05: scout-block, chặn đọc thư mục rác
 
 ### Vấn đề mà scout-block giải quyết
 
@@ -148,7 +243,7 @@ Có một exception phải biết: **build commands luôn pass**. `BUILD_COMMAND
 Fail-open: bất kỳ parse error hoặc exception lạ đều dẫn tới exit 0, tool pass. Đây là design choice ưu tiên availability hơn strict enforcement. Nếu hook code có bug, guard rail cho lớp đó tắt silently, agent đọc thoải mái. Đây là gap đầu tiên cần biết.
 
 
-## Section 04: privacy-block, chặn đọc secret kèm approval flow
+## Section 06: privacy-block, chặn đọc secret kèm approval flow
 
 ### Vấn đề
 
@@ -198,7 +293,7 @@ Privacy-block chỉ chặn READ. Khi secret đã vào transcript, file không th
 Tốt nhất không tin "privacy-block đã bảo vệ", luôn rotate khi nghi ngờ.
 
 
-## Section 05: simplify-gate, chặn ship diff quá to
+## Section 07: simplify-gate, chặn ship diff quá to
 
 ### Vấn đề
 
@@ -247,7 +342,7 @@ Soft-warn (không block) khi prompt có `commit`, `finalize`, `release`. Cảnh 
 Khi cần ship gấp bỏ qua gate: `CK_SIMPLIFY_DISABLED=1` env var. Có chủ ý. Guard rail không nên block 100% mọi lúc, sẽ có lúc user biết rõ họ làm gì và cần override.
 
 
-## Section 06: workflow-artifact-gate, validate 5 artifact JSON
+## Section 08: workflow-artifact-gate, validate 5 artifact JSON
 
 ### Vấn đề
 
@@ -290,7 +385,7 @@ Validation:
 Với task nhỏ, ép có đủ 5 artifact là overkill. Default-off nghĩa là chỉ team nào explicit muốn discipline kiểu này mới bật. Trade-off rõ: cost-benefit không hợp cho mọi case, để user quyết.
 
 
-## Section 07: Hard-gate XML trong skill markdown
+## Section 09: Hard-gate XML trong skill markdown
 
 ### Vấn đề
 
@@ -330,7 +425,7 @@ Ngoài 4 tag XML, ck:fix có thêm một section markdown tên Anti-Rationalizat
 Hard ở đây không phải code-enforced. Đây là instruction in prompt, Claude vẫn phải tuân theo. Khác với hook ở chỗ: nếu model bỏ qua HARD-GATE, không có exit 2 nào chặn. Format XML cộng naming "HARD-GATE" làm signal đặc biệt mạnh để model không rationalize qua. Trong session revision dài, hard-gate giữ được phase ordering tốt hơn rule mềm. Nhưng vẫn không phải hook, model bug vẫn lệch được.
 
 
-## Section 08: Rules auto-load qua CLAUDE.md
+## Section 10: Rules auto-load qua CLAUDE.md
 
 ### Cơ chế inject
 
@@ -361,7 +456,7 @@ Rules là **text injection**, không phải code. Hệ quả:
 Bù lại: rule rất dễ thêm/sửa, không cần redeploy. Phù hợp cho stylistic guard (commit format, comment convention) hơn là security guard.
 
 
-## Section 09: Guard skills, lớp guard chủ động user gọi
+## Section 11: Guard skills, lớp guard chủ động user gọi
 
 Gọi bằng slash command trong Claude Code chat (`/ck:security-scan`, `/ck:predict`, v.v.).
 
@@ -379,14 +474,14 @@ Gọi bằng slash command trong Claude Code chat (`/ck:security-scan`, `/ck:pre
 `code-reviewer` agent chạy 9-item behavioural checklist: concurrency, error boundary, API contract, backwards compat, input validation, auth/authz, N+1, data leak, fact-check plan claim vs codebase. Đây là guard cuối trước merge.
 
 
-## Section 10: Các gap đã biết
+## Section 12: Các gap đã biết
 
 Honest list, biết để khỏi tin sai.
 
 1. **`bypassPermissions: true` đồng nghĩa mọi file-access guard phụ thuộc hook**. Hook crash đồng nghĩa lớp đó mở. Privacy-block và scout-block đều exit 0 trên unexpected error.
 2. **Bash exempt khỏi privacy-block** (`privacy-block.cjs:133` chỉ warn). Bất kỳ approved Bash flow nào đều bypass được approval prompt.
 3. **workflow-artifact-gate default off** (`DEFAULT_CONFIG.hooks["workflow-artifact-gate"]: false`). User không bật thì gate strongest ngủ yên.
-4. **simplify-gate dormant by default**. Hook chạy nhưng `DEFAULTS.gate.enabled = false`. Cần bật explicit qua project config (xem Section 05).
+4. **simplify-gate dormant by default**. Hook chạy nhưng `DEFAULTS.gate.enabled = false`. Cần bật explicit qua project config (xem Section 07).
 5. **simplify-gate dễ trượt qua bằng phrasing**. `"ship on Friday"`, `"don't ship"` đều exempt. Natural language workaround không cố ý vẫn bypass.
 6. **`.ckignore` baseline có thể negate `node_modules`**. Trong install hiện tại của tôi, `~/.claude/.ckignore` chỉ có một dòng `!node_modules`, allowlist `node_modules` trở lại. Default pattern khác trong `pattern-matcher.cjs` vẫn block. Kiểm tra `~/.claude/.ckignore` trực tiếp trước khi tin scout-block chặn `node_modules` ở install của bạn.
 7. **Rules là instruction, không phải code**. development-rules, team-coordination, review-audit-self-decision đều inject text. Claude có thể lệch. Không exit 2 nào ép.
@@ -397,7 +492,7 @@ Honest list, biết để khỏi tin sai.
 Một runaway agent có thể call hàng nghìn Read/Glob/Bash. Hook không count, không throttle. Cost guard không phải design goal của hook layer này, đó là job của Claude Code billing layer phía trên.
 
 
-## Section 11: Inside, chi tiết dễ bỏ sót
+## Section 13: Inside, chi tiết dễ bỏ sót
 
 Source citation cho ai muốn đọc code:
 
@@ -423,7 +518,7 @@ Ba insight chính sau khi đọc code:
 3. **Path extraction từ bash command là non-obvious**. `path-extractor.cjs` parse cả bash command để detect path, không chỉ `file_path` field. URI decode trước match (`privacy-checker.cjs:98-103`) bắt `%2e` obfuscation mà string match đơn giản bỏ sót. Đây là loại detail chỉ thấy khi đọc code, không thấy từ doc.
 
 
-## Section 12: Best practices và pitfalls
+## Section 14: Best practices và pitfalls
 
 ### Best practices
 
