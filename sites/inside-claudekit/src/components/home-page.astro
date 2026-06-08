@@ -70,6 +70,24 @@ interface Post {
 
 const posts: Post[] = [
   {
+    slug: 'guard-rails-in-claude-code-and-claudekit',
+    date: 'Jun 9, 2026',
+    tags: ['guard-rails', 'hooks', 'security', 'harness'],
+    status: 'published',
+    title: {
+      vi: 'Guard rails: lớp phanh giữa model và hành động',
+      en: 'Guard rails: the brake layer between model and action',
+      zh: 'Guard rails：模型与操作之间的制动层',
+      ja: 'Guard rails：モデルとアクションの間のブレーキ層',
+    },
+    excerpt: {
+      vi: 'Khi agent có quyền đọc file, chạy shell, sửa code và ship PR, một dòng dặn trong prompt là chưa đủ. Mổ xẻ 4 lớp guard, 7 nhóm guard rail và 8 gap đã biết trong CK.',
+      en: 'When an agent can read files, run shells, edit code and ship PRs, one line in the prompt is not enough. A breakdown of the 4 guard layers, 7 guard-rail groups and 8 known gaps in CK.',
+      zh: '当 agent 能读文件、跑 shell、改代码、ship PR 时，prompt 里一句叮嘱远远不够。拆解 CK 的 4 层 guard、7 组 guard rail 和 8 个已知 gap。',
+      ja: 'agent がファイル読み取り、shell 実行、コード編集、PR ship の権限を持つとき、prompt の一文では足りない。CK の 4 つの guard 層、7 つの guard rail グループ、8 つの既知の gap を解剖する。',
+    },
+  },
+  {
     slug: 'ck-plan-deep-tdd-when-to-use',
     date: 'May 21, 2026',
     tags: ['ck-plan', 'deep', 'tdd', 'refactor'],

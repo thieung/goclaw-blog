@@ -1,0 +1,1105 @@
+---
+import LangSwitcher from '@blog/core/components/LangSwitcher.astro';
+import Analytics from '@blog/core/components/Analytics.astro';
+import { getTranslation } from '@blog/core/utils/i18n-helpers';
+import translations from '@i18n/guard-rails-in-claude-code-and-claudekit.json';
+
+const locale = Astro.currentLocale || 'vi';
+const t = getTranslation(translations, locale);
+const slug = 'guard-rails-in-claude-code-and-claudekit';
+const homeHref = locale === 'vi' ? '/' : `/${locale}`;
+---
+<!DOCTYPE html>
+<html lang={locale} data-theme="dark">
+<head>
+<script is:inline>
+  (function () {
+    try {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    } catch (_) {}
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{t.page_title}</title>
+<meta name="description" content={t.page_desc}>
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content={t.page_title}>
+<meta property="og:description" content={t.page_desc}>
+<meta property="og:type" content="article">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style is:global>
+:root {
+  --serif: 'Spectral', Georgia, serif;
+  --mono: 'Space Mono', 'SF Mono', monospace;
+  --code-mono: 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  /* dark-first, warm */
+  --bg: #16110c;
+  --bg2: #1d1710;
+  --panel: #221b13;
+  --panel2: #2b2218;
+  --edge: rgba(212, 167, 90, 0.13);
+  --edge2: rgba(212, 167, 90, 0.28);
+  --fg: #e8ddca;
+  --dim: #9a8a6e;
+  --bright: #fbf3e1;
+  --gold: #d4a75a;
+  --gold-soft: #e3c585;
+  --gold-d: rgba(212, 167, 90, 0.1);
+  --rose: #d97a82;
+  --rose-d: rgba(217, 122, 130, 0.1);
+  --sage: #9caf6a;
+  --sage-d: rgba(156, 175, 106, 0.1);
+  --teal: #6cbcae;
+  --teal-d: rgba(108, 188, 174, 0.1);
+  --skill-bg: rgba(108, 188, 174, 0.14);
+  --skill-fg: #9edfd3;
+  --skill-border: rgba(108, 188, 174, 0.42);
+  --red: #e08a6f;
+  --red-d: rgba(224, 138, 111, 0.1);
+}
+[data-theme="light"] {
+  --bg: #f6efe2;
+  --bg2: #efe6d3;
+  --panel: #fdf9ee;
+  --panel2: #f3ead7;
+  --edge: rgba(120, 90, 40, 0.14);
+  --edge2: rgba(120, 90, 40, 0.3);
+  --fg: #322820;
+  --dim: #7c6a4f;
+  --bright: #1c150d;
+  --gold: #9a6f1e;
+  --gold-soft: #b8893a;
+  --gold-d: rgba(154, 111, 30, 0.1);
+  --rose: #a83644;
+  --rose-d: rgba(168, 54, 68, 0.1);
+  --sage: #5c7030;
+  --sage-d: rgba(92, 112, 48, 0.1);
+  --teal: #1c6b60;
+  --teal-d: rgba(28, 107, 96, 0.1);
+  --skill-bg: rgba(28, 107, 96, 0.08);
+  --skill-fg: #16584f;
+  --skill-border: rgba(28, 107, 96, 0.28);
+  --red: #ab3a22;
+  --red-d: rgba(171, 58, 34, 0.1);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--serif); font-size: 19px; line-height: 1.72;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(ellipse 80% 50% at 50% -5%, var(--gold-d), transparent 70%);
+  padding: 0 0 90px;
+}
+
+.tt {
+  position: fixed; top: 18px; right: 18px; z-index: 300;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--edge2); background: var(--panel);
+  color: var(--gold); cursor: pointer; font-size: 17px;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.tt:hover { color: var(--gold-soft); box-shadow: 0 0 0 4px var(--gold-d); }
+
+.nav-home {
+  position: fixed; top: 18px; left: 18px; z-index: 300;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--edge2); background: var(--panel);
+  color: var(--gold); font-size: 18px; text-decoration: none;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.nav-home:hover { color: var(--gold-soft); box-shadow: 0 0 0 4px var(--gold-d); }
+
+.lang-switcher {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 300;
+  display: flex; gap: 4px; padding: 4px;
+  border: 1px solid var(--edge2); background: var(--panel); border-radius: 999px;
+}
+.lang-switcher .lang-btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  color: var(--dim); text-decoration: none; padding: 4px 10px; border-radius: 999px;
+  transition: all 0.18s;
+}
+.lang-switcher .lang-btn:hover { color: var(--gold-soft); }
+.lang-switcher .lang-btn.active { background: var(--gold-d); color: var(--gold); }
+@media (max-width: 600px) {
+  .lang-switcher { gap: 2px; padding: 3px; }
+  .lang-switcher .lang-btn { padding: 4px 7px; font-size: 10px; }
+}
+
+.shell { max-width: 960px; margin: 0 auto; padding: 0 28px; }
+
+/* gold leaf divider */
+.leaf { display: flex; align-items: center; gap: 16px; color: var(--gold); margin: 0; }
+.leaf::before, .leaf::after { content: ''; height: 1px; background: linear-gradient(90deg, transparent, var(--edge2)); flex: 1; }
+.leaf span { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; }
+
+/* ───── masthead ───── */
+.top { padding: 26px 0; display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--dim); }
+.top b { color: var(--gold); }
+
+/* ───── hero ───── */
+.hero { padding: 30px 0 46px; text-align: center; }
+.hero__kick { font-family: var(--mono); font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 24px; }
+.hero h1 {
+  font-family: var(--serif); font-weight: 800; font-style: italic;
+  font-size: clamp(38px, 7vw, 76px); line-height: 1.04; letter-spacing: -1px;
+  margin: 0 auto 26px; color: var(--bright); max-width: 16ch;
+}
+.hero h1 .reg { font-style: normal; font-weight: 300; color: var(--gold-soft); }
+.hero h1 .brake-mark {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.12em 0.04em;
+  font-style: italic;
+  font-weight: 800;
+  color: var(--gold-soft);
+  text-shadow: 0 0 22px rgba(212, 167, 90, 0.24);
+}
+.hero h1 .brake-mark::before {
+  content: '';
+  position: absolute;
+  left: -0.04em; right: -0.04em; bottom: 0.08em;
+  height: 0.28em;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(212, 167, 90, 0.28), rgba(212, 167, 90, 0.12));
+  z-index: -1;
+}
+.hero h1 .brake-mark::after {
+  content: '';
+  position: absolute;
+  left: 0.05em; right: 0.05em; bottom: -0.02em;
+  height: 2px;
+  background: var(--gold-soft);
+  opacity: 0.85;
+}
+.hero__lead { font-size: 21px; font-weight: 300; line-height: 1.6; color: var(--fg); max-width: 60ch; margin: 0 auto 36px; }
+.stats { display: flex; justify-content: center; flex-wrap: wrap; gap: 0; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge); }
+.stats > div { padding: 22px 30px; border-right: 1px solid var(--edge); text-align: center; }
+.stats > div:last-child { border-right: none; }
+.stats b { font-family: var(--serif); font-weight: 800; font-size: 38px; color: var(--gold); display: block; line-height: 1; font-style: italic; }
+.stats span { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); display: block; margin-top: 8px; }
+@media (max-width: 600px) { .stats > div { padding: 16px 18px; } .stats b { font-size: 28px; } }
+
+/* ───── section ───── */
+.sec { padding: 48px 0 8px; scroll-margin-top: 16px; }
+.sec__label { font-family: var(--mono); font-size: 12px; letter-spacing: 3px; color: var(--gold); margin-bottom: 14px; }
+.group-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: -2px 0 12px;
+  padding: 5px 10px;
+  border: 1px solid var(--edge2);
+  border-radius: 999px;
+  background: var(--gold-d);
+  color: var(--gold-soft);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+.group-tag--text { background: var(--panel2); color: var(--dim); }
+.group-map {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 28px;
+}
+.group-map__item {
+  min-width: 0;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: rgba(212, 167, 90, 0.045);
+  padding: 12px 14px;
+}
+.group-map__item b {
+  display: block;
+  color: var(--bright);
+  font-size: 16px;
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+.group-map__item span {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--dim);
+}
+@media (max-width: 640px) { .group-map { grid-template-columns: 1fr; } }
+.sec h2 { font-family: var(--serif); font-weight: 700; font-size: clamp(26px, 4.5vw, 42px); line-height: 1.1; letter-spacing: -0.6px; margin: 0 0 28px; color: var(--bright); }
+.sec h3 { font-family: var(--serif); font-weight: 600; font-style: italic; font-size: 23px; margin: 34px 0 12px; color: var(--gold-soft); }
+.sec p { margin: 0 0 20px; }
+.sec ul, .sec ol { padding-left: 1.3em; }
+.sec li { margin-bottom: 9px; }
+.sec li::marker { color: var(--gold); }
+code { font-family: var(--code-mono); font-size: 0.78em; background: var(--panel2); color: var(--gold-soft); padding: 1px 6px; border-radius: 3px; border: 1px solid var(--edge); }
+code.skill-code { background: var(--skill-bg); color: var(--skill-fg); border-color: var(--skill-border); font-weight: 700; }
+strong { font-weight: 700; color: var(--bright); }
+em { font-style: italic; color: var(--gold-soft); }
+a { color: var(--gold-soft); }
+
+.dek { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 30px 0 14px; }
+
+/* ───── pull quote ───── */
+.pull { margin: 44px auto; text-align: center; max-width: 42ch; }
+.pull::before { content: '❝'; display: block; font-family: var(--serif); font-size: 52px; color: var(--gold); line-height: 0.5; margin-bottom: 18px; }
+.pull p { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 28px; line-height: 1.35; color: var(--bright); margin: 0; }
+
+/* ───── callout ───── */
+.cal { background: var(--panel); border: 1px solid var(--edge); border-left: 3px solid var(--c, var(--gold)); border-radius: 5px; padding: 20px 24px; margin: 28px 0; }
+.cal--warn { --c: var(--gold); }
+.cal--err { --c: var(--red); }
+.cal--ok { --c: var(--sage); }
+.cal--info { --c: var(--teal); }
+.cal--key { border-left-width: 5px; }
+.cal--incident {
+  --c: var(--red);
+  border-left-width: 6px;
+  border-color: rgba(224, 138, 111, 0.38);
+  background:
+    linear-gradient(90deg, rgba(224, 138, 111, 0.16), rgba(224, 138, 111, 0.035) 42%, transparent),
+    var(--panel);
+  box-shadow: 0 18px 40px -34px rgba(224, 138, 111, 0.9), inset 0 1px 0 rgba(255,255,255,0.035);
+}
+.cal--incident .cal__t { color: var(--red); }
+.cal--incident p { font-size: 19px; color: var(--bright); }
+.cal__t { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--c, var(--gold)); margin-bottom: 10px; }
+.cal p { margin: 0 0 10px; font-size: 17.5px; }
+.cal .cal__lead { font-size: 22px; line-height: 1.35; margin-bottom: 8px; color: var(--bright); }
+.cal p:last-child { margin-bottom: 0; }
+.cal ul { margin: 8px 0 0; }
+.cal li { font-size: 16.5px; }
+
+/* ───── compare ───── */
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--edge2); border: 1px solid var(--edge2); border-radius: 6px; overflow: hidden; margin: 30px 0; }
+.cmp > div { background: var(--panel); padding: 20px 22px; min-width: 0; }
+.cmp h4 { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 19px; margin: 0 0 12px; }
+.cmp--bad h4 { color: var(--red); }
+.cmp--good h4 { color: var(--sage); }
+.cmp ul { margin: 0; padding-left: 1.1em; font-size: 16px; }
+@media (max-width: 640px) { .cmp { grid-template-columns: 1fr; } }
+
+/* ───── table ───── */
+.tw { margin: 28px 0; overflow-x: auto; border: 1px solid var(--edge); border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+th { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--edge2); background: var(--panel2); white-space: nowrap; }
+td { padding: 13px 16px; border-bottom: 1px solid var(--edge); vertical-align: top; line-height: 1.5; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--gold-d); }
+td code, th code { font-size: 12.5px; }
+.label-table table { table-layout: fixed; }
+.label-table th:first-child, .label-table td:first-child { width: 190px; }
+.label-table td code { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.label-table td:first-child code { white-space: nowrap; }
+.hook-trigger-table td:first-child code { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.config-snippets { display: grid; gap: 8px; }
+.config-snippet { position: relative; display: block; background: rgba(238, 191, 103, 0.065); border: 1px solid var(--edge); border-radius: 5px; padding: 9px 64px 9px 11px; min-width: 0; }
+.config-snippet__file { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+.config-snippet code { display: block; background: transparent; border: 0; border-radius: 0; padding: 0; font-size: 12.5px; line-height: 1.5; color: var(--gold-soft); white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+.label-table .config-snippet code { white-space: pre-wrap; }
+@media (max-width: 640px) { .label-table th:first-child, .label-table td:first-child { width: 140px; } }
+
+/* ───── code ───── */
+.code { --code-accent: var(--gold); --code-header-h: 48px; --copy-h: 28px; --copy-w: 64px; position: relative; font-family: var(--code-mono); font-size: 13.5px; line-height: 1.75; background: var(--panel); border: 1px solid var(--edge2); border-radius: 6px; padding: 18px 84px 18px 20px; margin: 26px 0; white-space: pre-wrap; word-break: break-word; overflow-x: auto; color: var(--bright); box-shadow: 0 18px 36px -30px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.035); }
+.code[data-lang] { padding-top: calc(var(--code-header-h) + 18px); }
+.code[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; align-items: center;
+  height: var(--code-header-h);
+  font-family: var(--mono); font-size: 10.5px; line-height: 1;
+  letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--dim); background: var(--panel2); border-bottom: 1px solid var(--edge2);
+  padding: 0 calc(var(--copy-w) + 34px) 0 18px;
+}
+.copy-btn {
+  position: absolute; top: calc((var(--code-header-h, 48px) - var(--copy-h, 28px)) / 2); right: 12px; z-index: 2;
+  transform: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  border: 1px solid rgba(212, 167, 90, 0.42); border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(212, 167, 90, 0.16), rgba(212, 167, 90, 0.045)),
+    color-mix(in srgb, var(--panel2) 72%, var(--bg) 28%);
+  color: var(--gold-soft);
+  height: var(--copy-h, 28px); min-width: var(--copy-w, 64px); padding: 0 13px; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 22px -18px rgba(212, 167, 90, 0.8);
+  transition: transform 0.16s ease, border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+}
+.copy-btn:hover { transform: translateY(-1px); border-color: var(--gold); color: var(--bright); background: var(--panel2); }
+.copy-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.copy-btn.is-copied { color: var(--sage); border-color: var(--sage); }
+.config-snippet .copy-btn { top: 7px; right: 7px; transform: none; height: 24px; min-width: 46px; padding: 0 8px; font-size: 8.5px; box-shadow: none; }
+.config-snippet .copy-btn:hover { transform: none; }
+.code--json { --code-accent: var(--teal); }
+.code--shell { --code-accent: var(--gold); }
+.code--config { --code-accent: var(--sage); }
+.code--text { --code-accent: var(--dim); }
+.code--xml { --code-accent: var(--rose); }
+.code .cmt { color: var(--dim); font-style: italic; }
+
+.pathgrid, .hookgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 24px 0; }
+.pathgrid .code { margin: 0; height: 100%; }
+.hookcard { background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 14px 15px; min-width: 0; }
+.hookcard__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.hookcard__top code { font-size: 12px; }
+.hookcard__meta { font-family: var(--mono); font-size: 10.5px; line-height: 1.5; color: var(--dim); margin-bottom: 6px; }
+.hookcard p { font-size: 15px; line-height: 1.45; margin: 0; color: var(--fg); }
+@media (max-width: 760px) { .pathgrid, .hookgrid { grid-template-columns: 1fr; } }
+
+/* chips */
+.chip { font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 3px; white-space: nowrap; letter-spacing: 0.5px; }
+.chip--code { background: var(--red-d); color: var(--red); border: 1px solid var(--red); }
+.chip--text { background: var(--gold-d); color: var(--gold); border: 1px solid var(--gold); }
+.chip--off { background: var(--panel2); color: var(--dim); border: 1px solid var(--edge2); }
+.chip--true { background: var(--sage-d); color: var(--sage); border: 1px solid var(--sage); }
+.chip--false { background: var(--red-d); color: var(--red); border: 1px solid var(--red); }
+.chip--na { background: var(--panel2); color: var(--dim); border: 1px solid var(--edge2); }
+.chip--wired { background: var(--teal-d); color: var(--teal); border: 1px solid var(--teal); }
+.chip--flag { background: var(--sage-d); color: var(--sage); border: 1px solid var(--sage); }
+.chip--gate { background: var(--gold-d); color: var(--gold); border: 1px solid var(--gold); }
+.chip--nowire { background: var(--panel2); color: var(--dim); border: 1px solid var(--edge2); }
+.chip--gate-off { background: var(--red-d); color: var(--red); border: 1px solid var(--red); }
+
+/* flow */
+.flow { margin: 28px 0; }
+.flow__s { display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 16px 0; border-bottom: 1px solid var(--edge); align-items: baseline; }
+.flow__n { font-family: var(--serif); font-style: italic; font-weight: 800; font-size: 30px; color: var(--gold); line-height: 1; }
+.flow__c h4 { font-family: var(--mono); font-size: 13px; font-weight: 700; margin: 0 0 4px; color: var(--gold-soft); }
+.flow__c p { margin: 0; font-size: 16px; color: var(--dim); }
+
+/* flow diagram (inline SVG) */
+.diagram { margin: 28px 0; overflow-x: auto; }
+.diagram svg { min-width: 600px; }
+.svg-note { margin: -10px 0 30px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); }
+.refline { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); margin: -4px 0 24px; }
+.refline a { color: var(--gold-soft); }
+
+/* checklist */
+.checks { list-style: none; padding: 0; counter-reset: c; }
+.checks li { counter-increment: c; position: relative; padding: 14px 0 14px 50px; border-bottom: 1px solid var(--edge); font-size: 17.5px; }
+.checks li::before { content: counter(c, decimal-leading-zero); position: absolute; left: 0; top: 13px; font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--gold); border: 1px solid var(--gold); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+
+/* closing */
+.closing {
+  position: relative;
+  margin-top: 72px;
+  padding: 48px 54px;
+  text-align: center;
+  border: 1px solid var(--edge2);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(212, 167, 90, 0.11), rgba(212, 167, 90, 0.025) 42%, transparent),
+    var(--panel);
+  box-shadow: 0 28px 70px -56px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.closing::before {
+  content: '';
+  position: absolute; left: 48px; right: 48px; top: -28px;
+  height: 1px; background: linear-gradient(90deg, transparent, var(--edge2), transparent);
+}
+.closing h2 { font-family: var(--serif); font-style: italic; font-weight: 800; font-size: clamp(34px, 5.2vw, 58px); line-height: 1.05; margin: 0 0 26px; color: var(--bright); }
+.closing p { max-width: 72ch; margin: 0 auto 20px; font-size: 21px; line-height: 1.65; }
+.colophon { margin-top: 40px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--dim); }
+@media (max-width: 640px) { .closing { padding: 34px 24px; } .closing p { font-size: 18px; } }
+
+@keyframes fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.sec, .hero { animation: fade 0.6s ease-out both; }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; } html { scroll-behavior: auto; } }
+
+pre, .tw { scrollbar-width: thin; scrollbar-color: var(--edge2) transparent; }
+pre::-webkit-scrollbar, .tw::-webkit-scrollbar { height: 10px; width: 10px; }
+pre::-webkit-scrollbar-track, .tw::-webkit-scrollbar-track { background: transparent; }
+pre::-webkit-scrollbar-thumb, .tw::-webkit-scrollbar-thumb { background: var(--edge2); border-radius: 5px; }
+pre:hover::-webkit-scrollbar-thumb, .tw:hover::-webkit-scrollbar-thumb { background: var(--gold); }
+pre::-webkit-scrollbar-corner, .tw::-webkit-scrollbar-corner { background: transparent; }
+</style>
+<Analytics measurementId={import.meta.env.INSIDE_CLAUDEKIT_GA_ID || ''} />
+</head>
+<body>
+<a class="nav-home" href={homeHref} aria-label="Home">←</a>
+<LangSwitcher slug={slug} />
+<button class="tt" id="tt" aria-label="Toggle theme">☀</button>
+
+<div class="shell">
+  <div class="top"><span><b>Inside ClaudeKit</b> · No. 03</span><span>claudekit-engineer@2.19.1</span></div>
+
+  <header class="hero">
+    <div class="hero__kick">{t.hero_kick}</div>
+    <h1><Fragment set:html={t.hero_title} /></h1>
+    <p class="hero__lead">{t.hero_lead}</p>
+    <div class="stats">
+      <div><b>4</b><span>{t.stat_1}</span></div>
+      <div><b>7</b><span>{t.stat_2}</span></div>
+      <div><b>2</b><span>{t.stat_3}</span></div>
+      <div><b>8</b><span>{t.stat_4}</span></div>
+      <div><b>13</b><span>{t.stat_5}</span></div>
+    </div>
+  </header>
+
+  <!-- INTRO -->
+  <section class="sec" id="intro">
+    <div class="sec__label">{t.intro_label}</div>
+    <h2>{t.intro_title}</h2>
+    <p>{t.intro_p1}</p>
+    <p><Fragment set:html={t.intro_p2} /></p>
+
+    <div class="cmp">
+      <div class="cmp--bad"><h4>{t.intro_bad_title}</h4><ul><li><Fragment set:html={t.intro_bad_1} /></li><li><Fragment set:html={t.intro_bad_2} /></li><li>{t.intro_bad_3}</li><li>{t.intro_bad_4}</li></ul></div>
+      <div class="cmp--good"><h4>{t.intro_good_title}</h4><ul><li>{t.intro_good_1}</li><li><Fragment set:html={t.intro_good_2} /></li><li>{t.intro_good_3}</li><li>{t.intro_good_4}</li></ul></div>
+    </div>
+
+    <div class="pull"><p>{t.intro_pull}</p></div>
+
+    <div class="cal cal--info cal--key">
+      <div class="cal__t">{t.intro_key_t}</div>
+      <p class="cal__lead"><strong>{t.intro_key_lead}</strong></p>
+      <p>{t.intro_key_p}</p>
+    </div>
+  </section>
+
+  <p class="leaf"><span>{t.leaf_1}</span></p>
+
+  <!-- 01 -->
+  <section class="sec" id="s1">
+    <div class="sec__label">{t.s1_label}</div>
+    <h2>{t.s1_title}</h2>
+    <p><Fragment set:html={t.s1_p1} /></p>
+    <h3>{t.s1_h3}</h3>
+    <div class="tw"><table>
+      <thead><tr><th></th><th>{t.s1_th_guard}</th><th>{t.s1_th_instr}</th></tr></thead>
+      <tbody>
+        <tr><td>{t.s1_r1_k}</td><td>{t.s1_r1_g}</td><td>{t.s1_r1_i}</td></tr>
+        <tr><td>{t.s1_r2_k}</td><td>{t.s1_r2_g}</td><td>{t.s1_r2_i}</td></tr>
+        <tr><td>{t.s1_r3_k}</td><td>{t.s1_r3_g}</td><td>{t.s1_r3_i}</td></tr>
+        <tr><td>{t.s1_r4_k}</td><td>{t.s1_r4_g}</td><td>{t.s1_r4_i}</td></tr>
+        <tr><td>{t.s1_r5_k}</td><td>{t.s1_r5_g}</td><td>{t.s1_r5_i}</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 02 -->
+  <section class="sec" id="s2">
+    <div class="sec__label">{t.s2_label}</div>
+    <h2>{t.s2_title}</h2>
+    <p><Fragment set:html={t.s2_p1} /></p>
+    <p class="refline"><Fragment set:html={t.s2_refline} /></p>
+    <h3>{t.s2_h3_map}</h3>
+    <div class="diagram">
+<svg class="hooksmap" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 520" role="img" aria-label={t.s2_map_aria} style="width:100%;height:auto;display:block;font-family:var(--mono),monospace">
+  <defs>
+    <marker id="hm-gold" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 z" fill="var(--gold)"/></marker>
+    <marker id="hm-teal" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 z" fill="var(--teal)"/></marker>
+    <marker id="hm-rose" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 z" fill="var(--rose)"/></marker>
+    <marker id="hm-sage" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 z" fill="var(--sage)"/></marker>
+  </defs>
+
+  <rect x="186" y="64" width="328" height="360" rx="14" fill="var(--teal-d)" stroke="var(--teal)" stroke-width="1.3" stroke-dasharray="7 7"/>
+  <text x="350" y="84" text-anchor="middle" font-size="11" font-weight="700" fill="var(--teal)">CLAUDE CODE LIFECYCLE</text>
+
+  <rect x="16" y="108" width="150" height="56" rx="7" fill="var(--gold-d)" stroke="var(--gold)" stroke-width="1.5"/>
+  <text x="91" y="131" text-anchor="middle" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_user_prompt}</text>
+  <text x="91" y="150" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_user_prompt_sub}</text>
+
+  <rect x="16" y="214" width="150" height="56" rx="7" fill="var(--panel)" stroke="var(--teal)" stroke-width="1.5"/>
+  <text x="91" y="238" text-anchor="middle" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_model}</text>
+  <text x="91" y="257" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_model_sub}</text>
+
+  <line x1="91" y1="164" x2="91" y2="214" stroke="var(--gold)" stroke-width="2" marker-end="url(#hm-gold)"/>
+  <path d="M166 242 C190 242 190 128 216 128" stroke="var(--gold)" stroke-width="2" fill="none" marker-end="url(#hm-gold)"/>
+  <path d="M166 242 C190 242 190 210 216 210" stroke="var(--teal)" stroke-width="2" fill="none" marker-end="url(#hm-teal)"/>
+
+  <rect x="216" y="104" width="248" height="58" rx="7" fill="var(--panel)" stroke="var(--teal)" stroke-width="1.4"/>
+  <text x="234" y="128" font-size="14" font-weight="700" fill="var(--bright)">UserPromptSubmit</text>
+  <text x="234" y="147" font-size="10.5" fill="var(--dim)">simplify-gate · dev-rules-reminder</text>
+
+  <rect x="216" y="186" width="248" height="58" rx="7" fill="var(--panel)" stroke="var(--teal)" stroke-width="1.4"/>
+  <text x="234" y="210" font-size="14" font-weight="700" fill="var(--bright)">PreToolUse</text>
+  <text x="234" y="229" font-size="10.5" fill="var(--dim)">scout-block · privacy-block</text>
+
+  <rect x="216" y="268" width="248" height="58" rx="7" fill="var(--panel)" stroke="var(--sage)" stroke-width="1.4"/>
+  <text x="234" y="292" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_tool_run}</text>
+  <text x="234" y="311" font-size="10.5" fill="var(--dim)">Read · Bash · Edit · Write</text>
+
+  <rect x="216" y="350" width="248" height="58" rx="7" fill="var(--panel)" stroke="var(--edge2)" stroke-width="1.4"/>
+  <text x="234" y="374" font-size="14" font-weight="700" fill="var(--bright)">PostToolUse / Stop</text>
+  <text x="234" y="393" font-size="10.5" fill="var(--dim)">plan-format · session-state</text>
+
+  <line x1="340" y1="162" x2="340" y2="186" stroke="var(--gold)" stroke-width="2" marker-end="url(#hm-gold)"/>
+  <line x1="340" y1="244" x2="340" y2="268" stroke="var(--gold)" stroke-width="2" marker-end="url(#hm-gold)"/>
+  <line x1="340" y1="326" x2="340" y2="350" stroke="var(--gold)" stroke-width="2" marker-end="url(#hm-gold)"/>
+
+  <rect x="552" y="86" width="170" height="54" rx="7" fill="var(--sage-d)" stroke="var(--sage)" stroke-width="1.5"/>
+  <text x="637" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="var(--sage)">allow</text>
+  <text x="637" y="127" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_allow_sub}</text>
+
+  <rect x="552" y="174" width="170" height="54" rx="7" fill="var(--rose-d)" stroke="var(--rose)" stroke-width="1.5"/>
+  <text x="637" y="196" text-anchor="middle" font-size="14" font-weight="700" fill="var(--rose)">block</text>
+  <text x="637" y="215" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_block_sub}</text>
+
+  <rect x="552" y="262" width="170" height="54" rx="7" fill="var(--teal-d)" stroke="var(--teal)" stroke-width="1.5"/>
+  <text x="637" y="284" text-anchor="middle" font-size="14" font-weight="700" fill="var(--teal)">inject</text>
+  <text x="637" y="303" text-anchor="middle" font-size="10.5" fill="var(--dim)">additionalContext</text>
+
+  <rect x="552" y="350" width="170" height="54" rx="7" fill="var(--gold-d)" stroke="var(--gold)" stroke-width="1.5"/>
+  <text x="637" y="372" text-anchor="middle" font-size="14" font-weight="700" fill="var(--gold-soft)">remember</text>
+  <text x="637" y="391" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_remember_sub}</text>
+
+  <path d="M464 133 C502 133 508 113 552 113" stroke="var(--sage)" stroke-width="2" fill="none" marker-end="url(#hm-sage)"/>
+  <path d="M464 215 C505 215 510 201 552 201" stroke="var(--rose)" stroke-width="2" fill="none" marker-end="url(#hm-rose)"/>
+  <path d="M464 133 C510 133 506 289 552 289" stroke="var(--teal)" stroke-width="2" fill="none" marker-end="url(#hm-teal)"/>
+  <path d="M464 379 C500 379 510 377 552 377" stroke="var(--gold)" stroke-width="2" fill="none" marker-end="url(#hm-gold)"/>
+
+  <rect x="176" y="446" width="120" height="44" rx="7" fill="var(--panel)" stroke="var(--gold)" stroke-width="1.3"/>
+  <text x="236" y="465" text-anchor="middle" font-size="13" font-weight="700" fill="var(--bright)">settings.json</text>
+  <text x="236" y="481" text-anchor="middle" font-size="10" fill="var(--dim)">{t.svg_wire_event}</text>
+
+  <rect x="320" y="446" width="120" height="44" rx="7" fill="var(--panel)" stroke="var(--sage)" stroke-width="1.3"/>
+  <text x="380" y="465" text-anchor="middle" font-size="13" font-weight="700" fill="var(--bright)">.ck.json</text>
+  <text x="380" y="481" text-anchor="middle" font-size="10" fill="var(--dim)">{t.svg_runtime_flag}</text>
+
+  <rect x="464" y="446" width="120" height="44" rx="7" fill="var(--panel)" stroke="var(--rose)" stroke-width="1.3"/>
+  <text x="524" y="465" text-anchor="middle" font-size="13" font-weight="700" fill="var(--bright)">ENV</text>
+  <text x="524" y="481" text-anchor="middle" font-size="10" fill="var(--dim)">{t.svg_override}</text>
+
+  <line x1="236" y1="446" x2="236" y2="424" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.78"/>
+  <line x1="380" y1="446" x2="380" y2="424" stroke="var(--sage)" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.78"/>
+  <path d="M524 446 L504 424" stroke="var(--rose)" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.78" fill="none"/>
+
+  <rect x="222" y="30" width="236" height="30" rx="6" fill="var(--bg)" stroke="var(--edge2)" stroke-width="1"/>
+  <text x="340" y="50" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_payload}</text>
+</svg>
+    </div>
+    <p class="svg-note"><Fragment set:html={t.s2_svgnote} /></p>
+    <h3>{t.s2_h3_flow}</h3>
+    <div class="diagram">
+<svg class="flowsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 644" role="img" aria-label={t.s2_flow_aria} style="width:100%;height:auto;display:block;font-family:var(--mono),monospace">
+  <defs>
+    <marker id="ah" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 z" fill="var(--gold)"/></marker>
+    <marker id="ahb" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 z" fill="var(--rose)"/></marker>
+  </defs>
+  <rect x="92" y="86" width="316" height="474" rx="14" fill="var(--teal-d)" stroke="var(--teal)" stroke-width="1.3" stroke-dasharray="7 7"/>
+  <text x="112" y="101" font-size="11" font-weight="700" fill="var(--teal)">HARNESS RUNTIME</text>
+  <rect x="135.0" y="20" width="230" height="44" rx="7" fill="var(--gold-d)" stroke="var(--gold)" stroke-width="1.5"/>
+  <text x="250.0" y="47.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--gold-soft)">{t.svg_user_prompt}</text>
+  <line x1="250" y1="64" x2="250" y2="104" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="135.0" y="104" width="230" height="54" rx="7" fill="var(--panel)" stroke="var(--teal)" stroke-width="1.5"/>
+  <text x="250.0" y="127.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_prompt_gate}</text>
+  <text x="250.0" y="145.0" text-anchor="middle" font-size="10.5" fill="var(--dim)">UserPromptSubmit · block?</text>
+  <line x1="250" y1="158" x2="250" y2="200" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="258" y="183.0" font-size="10.5" fill="var(--dim)">{t.svg_pass}</text>
+  <rect x="135.0" y="200" width="230" height="54" rx="7" fill="var(--panel)" stroke="var(--edge2)" stroke-width="1.5"/>
+  <text x="250.0" y="223.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_model}</text>
+  <text x="250.0" y="241.0" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_model_decide}</text>
+  <line x1="250" y1="254" x2="250" y2="296" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="258" y="279.0" font-size="10.5" fill="var(--dim)">{t.svg_toolcall}</text>
+  <rect x="135.0" y="296" width="230" height="54" rx="7" fill="var(--panel)" stroke="var(--teal)" stroke-width="1.5"/>
+  <text x="250.0" y="319.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_pretool}</text>
+  <text x="250.0" y="337.0" text-anchor="middle" font-size="10.5" fill="var(--dim)">PreToolUse · scout / privacy</text>
+  <line x1="250" y1="350" x2="250" y2="392" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="258" y="375.0" font-size="10.5" fill="var(--dim)">{t.svg_exit0}</text>
+  <rect x="135.0" y="392" width="230" height="54" rx="7" fill="var(--panel)" stroke="var(--sage)" stroke-width="1.5"/>
+  <text x="250.0" y="415.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_toolexec}</text>
+  <text x="250.0" y="433.0" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_toolexec_sub}</text>
+  <line x1="250" y1="446" x2="250" y2="488" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="258" y="471.0" font-size="10.5" fill="var(--dim)">{t.svg_result}</text>
+  <rect x="135.0" y="488" width="230" height="54" rx="7" fill="var(--panel)" stroke="var(--edge2)" stroke-width="1.5"/>
+  <text x="250.0" y="511.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--bright)">{t.svg_posttool}</text>
+  <text x="250.0" y="529.0" text-anchor="middle" font-size="10.5" fill="var(--dim)">PostToolUse · validate, scan</text>
+  <line x1="250" y1="542" x2="250" y2="584" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="135.0" y="584" width="230" height="44" rx="7" fill="var(--gold-d)" stroke="var(--gold)" stroke-width="1.5"/>
+  <text x="250.0" y="611.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--gold-soft)">{t.svg_result_back}</text>
+  <line x1="365.0" y1="131.0" x2="530" y2="131.0" stroke="var(--rose)" stroke-width="2" marker-end="url(#ahb)"/>
+  <text x="447.5" y="125.0" text-anchor="middle" font-size="10.5" fill="var(--rose)">block</text>
+  <rect x="530" y="104.0" width="200" height="54" rx="7" fill="var(--rose-d)" stroke="var(--rose)" stroke-width="1.5"/>
+  <text x="630.0" y="127.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--rose)">{t.svg_block_box}</text>
+  <text x="630.0" y="145.0" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_block_box_sub}</text>
+  <line x1="365.0" y1="323.0" x2="530" y2="323.0" stroke="var(--rose)" stroke-width="2" marker-end="url(#ahb)"/>
+  <text x="447.5" y="317.0" text-anchor="middle" font-size="10.5" fill="var(--rose)">exit 2</text>
+  <rect x="530" y="292.0" width="200" height="62" rx="7" fill="var(--rose-d)" stroke="var(--rose)" stroke-width="1.5"/>
+  <text x="630.0" y="319.0" text-anchor="middle" font-size="14" font-weight="700" fill="var(--rose)">{t.svg_tool_noexec}</text>
+  <text x="630.0" y="337.0" text-anchor="middle" font-size="10.5" fill="var(--dim)">{t.svg_tool_noexec_sub}</text>
+</svg>
+    </div>
+    <p><Fragment set:html={t.s2_flow_p} /></p>
+    <div class="cal cal--info"><div class="cal__t">{t.s2_exit_t}</div><p>{t.s2_exit_p}</p>
+      <ul>
+        <li><Fragment set:html={t.s2_exit_li1} /></li>
+        <li><Fragment set:html={t.s2_exit_li2} /></li>
+        <li><Fragment set:html={t.s2_exit_li3} /></li>
+      </ul>
+      <p style="margin-bottom:0"><Fragment set:html={t.s2_exit_end} /></p></div>
+    <h3>{t.s2_h3_2kinds}</h3>
+    <div class="cmp">
+      <div class="cmp--bad"><h4>{t.s2_hard_title}</h4><p style="margin:0;font-size:16px"><Fragment set:html={t.s2_hard_p} /></p></div>
+      <div class="cmp--good" style="--c:var(--gold)"><h4 style="color:var(--gold)">{t.s2_soft_title}</h4><p style="margin:0;font-size:16px">{t.s2_soft_p}</p></div>
+    </div>
+    <div class="cal cal--ok"><div class="cal__t">{t.s2_benefit_t}</div><ul><li>{t.s2_benefit_1}</li><li>{t.s2_benefit_2}</li><li><Fragment set:html={t.s2_benefit_3} /></li><li>{t.s2_benefit_4}</li></ul></div>
+  </section>
+
+  <p class="leaf"><span>{t.leaf_2}</span></p>
+
+  <!-- 03 -->
+  <section class="sec" id="s3">
+    <div class="sec__label">{t.s3_label}</div>
+    <h2>{t.s3_title}</h2>
+    <div class="cal cal--err"><div class="cal__t">{t.s3_note_t}</div><p><Fragment set:html={t.s3_note_p} /></p></div>
+    <div class="tw"><table>
+      <thead><tr><th>{t.s3_th_group}</th><th>{t.s3_th_mech}</th><th>{t.s3_th_ex}</th><th>{t.s3_th_enforce}</th></tr></thead>
+      <tbody>
+        <tr><td>{t.s3_g1}</td><td>PreToolUse</td><td><code>scout-block</code></td><td><span class="chip chip--code">{t.s3_e1}</span></td></tr>
+        <tr><td>{t.s3_g2}</td><td>UserPromptSubmit</td><td><code>simplify-gate</code></td><td><span class="chip chip--code">code</span></td></tr>
+        <tr><td>{t.s3_g3}</td><td>UserPromptSubmit</td><td><code>dev-rules-reminder</code></td><td><span class="chip chip--code">code</span></td></tr>
+        <tr><td>{t.s3_g4}</td><td>Pre/Post/Stop</td><td><code>descriptive-name</code></td><td><span class="chip chip--code">{t.s3_e4}</span></td></tr>
+        <tr><td>{t.s3_g5}</td><td>XML markdown</td><td><code>&lt;HARD-GATE&gt;</code></td><td><span class="chip chip--text">{t.s3_e5}</span></td></tr>
+        <tr><td>{t.s3_g6}</td><td>CLAUDE.md</td><td><code>review-audit</code></td><td><span class="chip chip--text">{t.s3_e5}</span></td></tr>
+        <tr><td>{t.s3_g7}</td><td>{t.s3_g7_mech}</td><td><code class="skill-code">ck:security-scan</code></td><td><span class="chip chip--off">user</span></td></tr>
+      </tbody>
+    </table></div>
+    <h3>{t.s3_h3_where}</h3>
+    <div class="group-map">
+      <div class="group-map__item"><b>{t.s3_g1}</b><span><Fragment set:html={t.s3_map1} /></span></div>
+      <div class="group-map__item"><b>{t.s3_g2}</b><span><Fragment set:html={t.s3_map2} /></span></div>
+      <div class="group-map__item"><b>{t.s3_g3}</b><span><Fragment set:html={t.s3_map3} /></span></div>
+      <div class="group-map__item"><b>{t.s3_g4}</b><span><Fragment set:html={t.s3_map4} /></span></div>
+      <div class="group-map__item"><b>{t.s3_g5}</b><span><Fragment set:html={t.s3_map5} /></span></div>
+      <div class="group-map__item"><b>{t.s3_g6}</b><span><Fragment set:html={t.s3_map6} /></span></div>
+      <div class="group-map__item"><b>{t.s3_g7}</b><span><Fragment set:html={t.s3_map7} /></span></div>
+    </div>
+    <h3>{t.s3_h3_9cases}</h3>
+    <div class="tw"><table>
+      <thead><tr><th>{t.s3_th_case}</th><th>{t.s3_th_layer}</th></tr></thead>
+      <tbody>
+        <tr><td><Fragment set:html={t.s3_c1} /></td><td>{t.s3_c1_l}</td></tr>
+        <tr><td><Fragment set:html={t.s3_c2} /></td><td>{t.s3_c2_l}</td></tr>
+        <tr><td><Fragment set:html={t.s3_c3} /></td><td>{t.s3_c3_l}</td></tr>
+        <tr><td>{t.s3_c4}</td><td><Fragment set:html={t.s3_c4_l} /></td></tr>
+        <tr><td>{t.s3_c5}</td><td><Fragment set:html={t.s3_c5_l} /></td></tr>
+        <tr><td>{t.s3_c6}</td><td>{t.s3_c6_l}</td></tr>
+        <tr><td>{t.s3_c7}</td><td>descriptive-name, PreToolUse(Write)</td></tr>
+        <tr><td>{t.s3_c8}</td><td>plan-format-kanban, PostToolUse(Edit/Write/MultiEdit)</td></tr>
+        <tr><td>{t.s3_c9}</td><td>{t.s3_c9_l}</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 04 -->
+  <section class="sec" id="s4">
+    <div class="sec__label">{t.s4_label}</div>
+    <div class="group-tag group-tag--text">{t.s4_tag}</div>
+    <h2>{t.s4_title}</h2>
+    <p><Fragment set:html={t.s4_p1} /></p>
+    <div class="pathgrid">
+      <pre class="code code--shell" data-lang="global"><span class="cmt">{t.s4_global_cmt}</span>
+~/.claude/settings.json
+~/.claude/.ck.json
+~/.claude/hooks/*.cjs</pre>
+      <pre class="code code--shell" data-lang="project"><span class="cmt">{t.s4_project_cmt}</span>
+.claude/settings.json
+.claude/.ck.json
+.claude/hooks/*.cjs</pre>
+    </div>
+    <h3>{t.s4_h3_settings}</h3>
+    <p><Fragment set:html={t.s4_settings_p} /></p>
+    <pre class="code code--json" data-lang={t.s4_settings_lang}>{`{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Glob|Grep|Read|Edit|Write",
+        "hooks": [
+          { "command": "node \\".claude/hooks/scout-block.cjs\\"" },
+          { "command": "node \\".claude/hooks/privacy-block.cjs\\"" }
+        ]
+      }
+    ]
+  }
+}`}</pre>
+    <p><Fragment set:html={t.s4_settings_p2} /></p>
+    <h3>{t.s4_h3_3labels}</h3>
+    <p>{t.s4_3labels_p}</p>
+    <div class="tw label-table"><table>
+      <thead><tr><th>{t.s4_th_label}</th><th>{t.s4_th_meaning}</th></tr></thead>
+      <tbody>
+        <tr><td><code>script file</code></td><td><Fragment set:html={t.s4_lbl_script} /></td></tr>
+        <tr><td><code>wired</code></td><td><Fragment set:html={t.s4_lbl_wired} /></td></tr>
+        <tr><td><code>runtime flag</code></td><td><Fragment set:html={t.s4_lbl_runtime} /></td></tr>
+      </tbody>
+    </table></div>
+    <p><Fragment set:html={t.s4_16hooks_p} /></p>
+    <div class="hookgrid">
+      <div class="hookcard"><div class="hookcard__top"><code>session-init</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_session_init_m}</div><p>{t.s4_hk_session_init_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>usage-quota-cache-refresh</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_quota_m}</div><p>{t.s4_hk_quota_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>simplify-gate</code><span class="chip chip--gate-off">{t.s4_chip_gateoff}</span></div><div class="hookcard__meta">{t.s4_hk_simplify_m}</div><p><Fragment set:html={t.s4_hk_simplify_p} /></p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>dev-rules-reminder</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_devrules_m}</div><p>{t.s4_hk_devrules_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>subagent-init</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_subinit_m}</div><p>{t.s4_hk_subinit_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>descriptive-name</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_descname_m}</div><p>{t.s4_hk_descname_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>scout-block</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_scout_m}</div><p>{t.s4_hk_scout_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>privacy-block</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_privacy_m}</div><p>{t.s4_hk_privacy_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>plan-format-kanban</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_plan_m}</div><p>{t.s4_hk_plan_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>session-state</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_sstate_m}</div><p>{t.s4_hk_sstate_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>cook-after-plan-reminder</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_cook_m}</div><p><Fragment set:html={t.s4_hk_cook_p} /></p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>workflow-artifact-gate</code><span class="chip chip--nowire">{t.s4_chip_nowire}</span></div><div class="hookcard__meta">{t.s4_hk_wag_m}</div><p>{t.s4_hk_wag_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>task-completed-handler</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_taskc_m}</div><p>{t.s4_hk_taskc_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>teammate-idle-handler</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_idle_m}</div><p>{t.s4_hk_idle_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>team-context-inject</code><span class="chip chip--nowire">{t.s4_chip_nowire}</span></div><div class="hookcard__meta">{t.s4_hk_teamctx_m}</div><p><Fragment set:html={t.s4_hk_teamctx_p} /></p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>usage-context-awareness</code><span class="chip chip--nowire">{t.s4_chip_nowire}</span></div><div class="hookcard__meta">{t.s4_hk_uca_m}</div><p><Fragment set:html={t.s4_hk_uca_p} /></p></div>
+    </div>
+    <p><Fragment set:html={t.s4_isHookEnabled_p} /></p>
+    <h3>{t.s4_h3_manual}</h3>
+    <p><Fragment set:html={t.s4_manual_p} /></p>
+    <pre class="code code--json" data-lang="json"><span class="cmt">{t.s4_ckjson_cmt}</span>
+{`{
+  "hooks": {
+    "scout-block": false,
+    "privacy-block": true
+  },
+  "privacyBlock": true,
+  "simplify": {
+    "gate": {
+      "enabled": true
+    }
+  }
+}`}</pre>
+    <div class="tw label-table"><table>
+      <thead><tr><th>{t.s4_th_want}</th><th>{t.s4_th_where}</th><th>{t.s4_th_note}</th></tr></thead>
+      <tbody>
+        <tr><td>{t.s4_do1}</td><td><div class="config-snippets"><div class="config-snippet"><span class="config-snippet__file">.ck.json</span><code>{`{"hooks":{"scout-block":false}}`}</code></div></div></td><td>{t.s4_do1_note}</td></tr>
+        <tr><td>{t.s4_do2}</td><td><div class="config-snippets"><div class="config-snippet"><span class="config-snippet__file">project .ck.json</span><code>{`{"hooks":{"scout-block":true}}`}</code></div></div></td><td>{t.s4_do2_note}</td></tr>
+        <tr><td>{t.s4_do3}</td><td><div class="config-snippets"><div class="config-snippet"><span class="config-snippet__file">.ck.json</span><code>{`{"hooks":{"privacy-block":false}}`}</code></div><div class="config-snippet"><span class="config-snippet__file">{t.s4_do3_oldkey}</span><code>{`{"privacyBlock":false}`}</code></div></div></td><td><Fragment set:html={t.s4_do3_note} /></td></tr>
+        <tr><td>{t.s4_do4}</td><td><div class="config-snippets"><div class="config-snippet"><span class="config-snippet__file">.ck.json</span><code>{`{
+  "hooks": {
+    "simplify-gate": true
+  },
+  "simplify": {
+    "gate": {
+      "enabled": true
+    }
+  }
+}`}</code></div></div></td><td><Fragment set:html={t.s4_do4_note} /></td></tr>
+        <tr><td>{t.s4_do5}</td><td><div class="config-snippets"><div class="config-snippet"><span class="config-snippet__file">settings.json</span><code>{`{
+  "env": {
+    "CK_SIMPLIFY_DISABLED": "1"
+  }
+}`}</code></div></div></td><td>{t.s4_do5_note}</td></tr>
+        <tr><td>{t.s4_do6}</td><td><div class="config-snippets"><div class="config-snippet"><span class="config-snippet__file">settings.json</span><code>{t.s4_do6_wire}</code></div><div class="config-snippet"><span class="config-snippet__file">.ck.json</span><code>{`{"hooks":{"workflow-artifact-gate":true}}`}</code></div></div></td><td>{t.s4_do6_note}</td></tr>
+      </tbody>
+    </table></div>
+    <p><Fragment set:html={t.s4_trigger_p} /></p>
+    <div class="tw label-table hook-trigger-table"><table>
+      <thead><tr><th>Hook</th><th>{t.s4_th_trigger}</th><th>{t.s4_th_ghichu}</th></tr></thead>
+      <tbody>
+        <tr><td><code>session-init</code></td><td>{t.s4_tr_session}</td><td><Fragment set:html={t.s4_tr_session_n} /></td></tr>
+        <tr><td><code>usage-quota-cache-refresh</code></td><td>{t.s4_tr_quota}</td><td>{t.s4_tr_quota_n}</td></tr>
+        <tr><td><code>simplify-gate</code></td><td>{t.s4_tr_simplify}</td><td><Fragment set:html={t.s4_tr_simplify_n} /></td></tr>
+        <tr><td><code>dev-rules-reminder</code></td><td>{t.s4_tr_devrules}</td><td><Fragment set:html={t.s4_tr_devrules_n} /></td></tr>
+        <tr><td><code>subagent-init</code></td><td>{t.s4_tr_subinit}</td><td><code>SubagentStart</code>.</td></tr>
+        <tr><td><code>descriptive-name</code></td><td><Fragment set:html={t.s4_tr_descname} /></td><td><Fragment set:html={t.s4_tr_descname_n} /></td></tr>
+        <tr><td><code>scout-block</code></td><td><Fragment set:html={t.s4_tr_scout} /></td><td><Fragment set:html={t.s4_tr_scout_n} /></td></tr>
+        <tr><td><code>privacy-block</code></td><td><Fragment set:html={t.s4_tr_privacy} /></td><td><Fragment set:html={t.s4_tr_privacy_n} /></td></tr>
+        <tr><td><code>plan-format-kanban</code></td><td>{t.s4_tr_plan}</td><td><Fragment set:html={t.s4_tr_plan_n} /></td></tr>
+        <tr><td><code>session-state</code></td><td>{t.s4_tr_sstate}</td><td><Fragment set:html={t.s4_tr_sstate_n} /></td></tr>
+        <tr><td><code>cook-after-plan-reminder</code></td><td>{t.s4_tr_cook}</td><td><Fragment set:html={t.s4_tr_cook_n} /></td></tr>
+        <tr><td><code>workflow-artifact-gate</code></td><td><Fragment set:html={t.s4_tr_wag} /></td><td>{t.s4_tr_wag_n}</td></tr>
+        <tr><td><code>task-completed-handler</code></td><td>{t.s4_tr_taskc}</td><td><Fragment set:html={t.s4_tr_taskc_n} /></td></tr>
+        <tr><td><code>teammate-idle-handler</code></td><td>{t.s4_tr_idle}</td><td><Fragment set:html={t.s4_tr_idle_n} /></td></tr>
+        <tr><td><code>team-context-inject</code></td><td><Fragment set:html={t.s4_tr_teamctx} /></td><td>{t.s4_tr_teamctx_n}</td></tr>
+        <tr><td><code>usage-context-awareness</code></td><td>{t.s4_tr_uca}</td><td>{t.s4_tr_uca_n}</td></tr>
+      </tbody>
+    </table></div>
+    <pre class="code code--json" data-lang="json"><span class="cmt">{t.s4_env_cmt}</span>
+{`{
+  "env": {
+    "CK_SIMPLIFY_DISABLED": "1"
+  }
+}`}</pre>
+  </section>
+
+  <!-- 05 -->
+  <section class="sec" id="s5">
+    <div class="sec__label">{t.s5_label}</div>
+    <div class="group-tag">{t.s5_tag}</div>
+    <h2>{t.s5_title}</h2>
+    <p><Fragment set:html={t.s5_p1} /></p>
+    <pre class="code code--text" data-lang="plaintext"><span class="cmt">{t.s5_baseline_cmt}</span>
+node_modules
+dist
+build
+.next
+.nuxt
+__pycache__
+.venv
+venv
+vendor
+target
+.git
+coverage</pre>
+    <div class="cal cal--warn"><div class="cal__t">{t.s5_allow_t}</div><p><Fragment set:html={t.s5_allow_p} /></p></div>
+    <div class="cal cal--err"><div class="cal__t">{t.s5_gap1_t}</div><p>{t.s5_gap1_p}</p></div>
+  </section>
+
+  <!-- 06 -->
+  <section class="sec" id="s6">
+    <div class="sec__label">{t.s6_label}</div>
+    <div class="group-tag">{t.s6_tag}</div>
+    <h2>{t.s6_title}</h2>
+    <p><Fragment set:html={t.s6_p1} /></p>
+    <pre class="code code--text" data-lang="text">@@PRIVACY_PROMPT_START@@
+{`{ "type": "PRIVACY_PROMPT", "question": {...}, "options": [...] }`}
+@@PRIVACY_PROMPT_END@@</pre>
+    <p><Fragment set:html={t.s6_p2} /></p>
+    <div class="cal cal--err"><div class="cal__t">{t.s6_gap2_t}</div><p><Fragment set:html={t.s6_gap2_p} /></p></div>
+    <div class="cal cal--incident"><div class="cal__t">{t.s6_incident_t}</div><p><Fragment set:html={t.s6_incident_p} /></p></div>
+  </section>
+
+  <!-- 07 -->
+  <section class="sec" id="s7">
+    <div class="sec__label">{t.s7_label}</div>
+    <div class="group-tag">{t.s7_tag}</div>
+    <h2>{t.s7_title}</h2>
+    <p><Fragment set:html={t.s7_p1} /></p>
+    <div class="stats" style="margin:24px 0;border-radius:6px">
+      <div><b>400</b><span>{t.s7_stat1}</span></div>
+      <div><b>8</b><span>{t.s7_stat2}</span></div>
+      <div><b>200</b><span>{t.s7_stat3}</span></div>
+    </div>
+    <div class="cal cal--err"><div class="cal__t">{t.s7_gap3_t}</div><p><Fragment set:html={t.s7_gap3_p} /></p></div>
+    <pre class="code code--json" data-lang="json"><span class="cmt">{t.s7_code_cmt}</span>
+{`{ "simplify": { "gate": { "enabled": true } } }`}</pre>
+    <p><Fragment set:html={t.s7_p2} /></p>
+  </section>
+
+  <!-- 08 -->
+  <section class="sec" id="s8">
+    <div class="sec__label">{t.s8_label}</div>
+    <div class="group-tag">{t.s8_tag}</div>
+    <h2>{t.s8_title}</h2>
+    <p>{t.s8_p1}</p>
+    <div class="tw"><table>
+      <thead><tr><th>{t.s8_th_artifact}</th><th>{t.s8_th_phase}</th><th>{t.s8_th_content}</th></tr></thead>
+      <tbody>
+        <tr><td><code>context-snippets.json</code></td><td>scout/plan</td><td>{t.s8_a1}</td></tr>
+        <tr><td><code>risk-gate.json</code></td><td>predict</td><td>{t.s8_a2}</td></tr>
+        <tr><td><code>verification.json</code></td><td>fix/cook</td><td>{t.s8_a3}</td></tr>
+        <tr><td><code>review-decision.json</code></td><td>code-review</td><td>{t.s8_a4}</td></tr>
+        <tr><td><code>adversarial-validation.json</code></td><td>adversarial</td><td>{t.s8_a5}</td></tr>
+      </tbody>
+    </table></div>
+    <p><Fragment set:html={t.s8_p2} /></p>
+    <div class="cal cal--err"><div class="cal__t">{t.s8_gap4_t}</div><p><Fragment set:html={t.s8_gap4_p} /></p></div>
+  </section>
+
+  <!-- 09 -->
+  <section class="sec" id="s9">
+    <div class="sec__label">{t.s9_label}</div>
+    <div class="group-tag">{t.s9_tag}</div>
+    <h2>{t.s9_title}</h2>
+    <p><Fragment set:html={t.s9_p1} /></p>
+    <pre class="code code--xml" data-lang="xml">{`<HARD-GATE>
+Do NOT write implementation code until a plan exists
+and has been reviewed. Exception: --fast skips research
+but still requires a plan step. User override: if user
+explicitly says 'just code it', respect their instruction.
+</HARD-GATE>`}</pre>
+    <p><Fragment set:html={t.s9_p2} /></p>
+    <div class="cal cal--warn"><div class="cal__t">{t.s9_why_t}</div><p><Fragment set:html={t.s9_why_p} /></p></div>
+  </section>
+
+  <!-- 10 -->
+  <section class="sec" id="s10">
+    <div class="sec__label">{t.s10_label}</div>
+    <div class="group-tag">{t.s10_tag}</div>
+    <h2>{t.s10_title}</h2>
+    <p><Fragment set:html={t.s10_p1} /></p>
+    <div class="tw"><table>
+      <thead><tr><th>{t.s10_th_file}</th><th>{t.s10_th_against}</th><th>{t.s10_th_trait}</th></tr></thead>
+      <tbody>
+        <tr><td><code>review-audit-self-decision</code></td><td>{t.s10_r1_a}</td><td>{t.s10_r1_t}</td></tr>
+        <tr><td><code>development-rules</code></td><td>{t.s10_r2_a}</td><td>YAGNI/KISS/DRY</td></tr>
+        <tr><td><code>team-coordination-rules</code></td><td>{t.s10_r3_a}</td><td>{t.s10_r3_t}</td></tr>
+        <tr><td><code>commit-messages</code></td><td>{t.s10_r4_a}</td><td>single-line</td></tr>
+        <tr><td><code>orchestration-protocol</code></td><td>{t.s10_r5_a}</td><td>{t.s10_r5_t}</td></tr>
+      </tbody>
+    </table></div>
+    <div class="cal cal--info"><div class="cal__t">{t.s10_common_t}</div><p><Fragment set:html={t.s10_common_p} /></p></div>
+  </section>
+
+  <!-- 11 -->
+  <section class="sec" id="s11">
+    <div class="sec__label">{t.s11_label}</div>
+    <div class="group-tag">{t.s11_tag}</div>
+    <h2>{t.s11_title}</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Skill</th><th>{t.s11_th_when}</th><th>{t.s11_th_catch}</th></tr></thead>
+      <tbody>
+        <tr><td><code class="skill-code">ck:security-scan</code></td><td>{t.s11_s1_w}</td><td>{t.s11_s1_c}</td></tr>
+        <tr><td><code class="skill-code">ck:predict</code></td><td>{t.s11_s2_w}</td><td>{t.s11_s2_c}</td></tr>
+        <tr><td><code class="skill-code">ck:scenario</code></td><td>{t.s11_s3_w}</td><td>{t.s11_s3_c}</td></tr>
+        <tr><td><code class="skill-code">ck:ship</code></td><td>{t.s11_s4_w}</td><td>{t.s11_s4_c}</td></tr>
+      </tbody>
+    </table></div>
+    <p><Fragment set:html={t.s11_p1} /></p>
+  </section>
+
+  <p class="leaf"><span>{t.leaf_3}</span></p>
+
+  <!-- 12 -->
+  <section class="sec" id="s12">
+    <div class="sec__label">{t.s12_label}</div>
+    <h2>{t.s12_title}</h2>
+    <div class="cal cal--err"><div class="cal__t">{t.s12_misunderstand_t}</div>
+      <ol>
+        <li><Fragment set:html={t.s12_g1} /></li>
+        <li><Fragment set:html={t.s12_g2} /></li>
+        <li><Fragment set:html={t.s12_g3} /></li>
+        <li><Fragment set:html={t.s12_g4} /></li>
+        <li><Fragment set:html={t.s12_g5} /></li>
+        <li><Fragment set:html={t.s12_g6} /></li>
+        <li><Fragment set:html={t.s12_g7} /></li>
+        <li><Fragment set:html={t.s12_g8} /></li>
+      </ol>
+    </div>
+    <div class="cal cal--warn"><div class="cal__t">{t.s12_norate_t}</div><p>{t.s12_norate_p}</p></div>
+  </section>
+
+  <!-- 13 -->
+  <section class="sec" id="s13">
+    <div class="sec__label">{t.s13_label}</div>
+    <h2>{t.s13_title}</h2>
+    <div class="cmp">
+      <div class="cmp--good"><h4>{t.s13_bp_title}</h4><ul><li>{t.s13_bp1}</li><li>{t.s13_bp2}</li><li><Fragment set:html={t.s13_bp3} /></li><li><Fragment set:html={t.s13_bp4} /></li><li><Fragment set:html={t.s13_bp5} /></li></ul></div>
+      <div class="cmp--bad"><h4>{t.s13_pit_title}</h4><ul><li>{t.s13_pit1}</li><li>{t.s13_pit2}</li><li>{t.s13_pit3}</li><li>{t.s13_pit4}</li><li>{t.s13_pit5}</li></ul></div>
+    </div>
+    <h3>{t.s13_h3_6q}</h3>
+    <ul class="checks">
+      <li><Fragment set:html={t.s13_q1} /></li>
+      <li><Fragment set:html={t.s13_q2} /></li>
+      <li>{t.s13_q3}</li>
+      <li><Fragment set:html={t.s13_q4} /></li>
+      <li>{t.s13_q5}</li>
+      <li>{t.s13_q6}</li>
+    </ul>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section class="sec" id="glossary">
+    <div class="sec__label">{t.gloss_label}</div>
+    <h2>{t.gloss_title}</h2>
+    <div class="tw"><table>
+      <thead><tr><th>{t.gloss_th_term}</th><th>{t.gloss_th_def}</th></tr></thead>
+      <tbody>
+        <tr><td><strong>harness</strong></td><td>{t.gloss_harness}</td></tr>
+        <tr><td><strong>hook</strong></td><td>{t.gloss_hook}</td></tr>
+        <tr><td><strong>lifecycle event</strong></td><td><Fragment set:html={t.gloss_lifecycle} /></td></tr>
+        <tr><td><strong>exit code</strong></td><td><Fragment set:html={t.gloss_exitcode} /></td></tr>
+        <tr><td><strong>fail-open</strong></td><td>{t.gloss_failopen}</td></tr>
+        <tr><td><strong>transcript</strong></td><td>{t.gloss_transcript}</td></tr>
+        <tr><td><strong>context</strong></td><td>{t.gloss_context}</td></tr>
+        <tr><td><strong>glob</strong></td><td><Fragment set:html={t.gloss_glob} /></td></tr>
+        <tr><td><strong>secret</strong></td><td>{t.gloss_secret}</td></tr>
+        <tr><td><strong>LOC</strong></td><td>{t.gloss_loc}</td></tr>
+        <tr><td><strong>artifact</strong></td><td>{t.gloss_artifact}</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <div class="closing">
+    <h2>{t.closing_title}</h2>
+    <p><Fragment set:html={t.closing_p1} /></p>
+    <p>{t.closing_p2}</p>
+  </div>
+
+  <div class="colophon">{t.colophon}</div>
+</div>
+
+<script is:inline>
+(function(){
+  var tt = document.getElementById('tt');
+  var cur0 = document.documentElement.getAttribute('data-theme') || 'dark';
+  tt.textContent = cur0 === 'dark' ? '☀' : '☾';
+  tt.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var nx = cur === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', nx);
+    try { localStorage.setItem('theme', nx); } catch (_) {}
+    tt.textContent = nx === 'dark' ? '☀' : '☾';
+  });
+})();
+
+(function(){
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+      } catch (err) {
+        reject(err);
+      } finally {
+        document.body.removeChild(ta);
+      }
+    });
+  }
+
+  function addCopyButton(node, getText) {
+    if (node.querySelector(':scope > .copy-btn')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Copy code');
+    btn.addEventListener('click', function() {
+      copyText(getText().trim()).then(function() {
+        btn.textContent = 'Copied';
+        btn.classList.add('is-copied');
+        window.setTimeout(function() {
+          btn.textContent = 'Copy';
+          btn.classList.remove('is-copied');
+        }, 1200);
+      }).catch(function() {
+        btn.textContent = 'Error';
+        window.setTimeout(function() { btn.textContent = 'Copy'; }, 1200);
+      });
+    });
+    node.appendChild(btn);
+  }
+
+  document.querySelectorAll('pre.code').forEach(function(pre) {
+    addCopyButton(pre, function() {
+      var clone = pre.cloneNode(true);
+      clone.querySelectorAll('.copy-btn').forEach(function(btn) { btn.remove(); });
+      return clone.textContent;
+    });
+  });
+
+  document.querySelectorAll('.config-snippet').forEach(function(box) {
+    addCopyButton(box, function() {
+      var code = box.querySelector('code');
+      return code ? code.textContent : '';
+    });
+  });
+})();
+</script>
+</body>
+</html>
