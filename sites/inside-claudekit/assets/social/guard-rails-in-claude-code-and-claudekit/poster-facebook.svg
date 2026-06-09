@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1500" viewBox="0 0 1200 1500">
+  <defs>
+    <linearGradient id="leftShade" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#16110c" stop-opacity="0.96"/>
+      <stop offset="0.52" stop-color="#16110c" stop-opacity="0.74"/>
+      <stop offset="0.82" stop-color="#16110c" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#16110c" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="goldWash" cx="0.22" cy="0.18" r="0.78">
+      <stop offset="0" stop-color="#d4a75a" stop-opacity="0.18"/>
+      <stop offset="0.42" stop-color="#d4a75a" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#d4a75a" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .mono { font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif; letter-spacing: 5px; text-transform: uppercase; }
+      .serif { font-family: Georgia, "Times New Roman", serif; }
+      .cream { fill: #fbf3e1; }
+      .gold { fill: #e3c585; }
+      .dim { fill: #b9a989; }
+    </style>
+  </defs>
+
+  <image href="poster-background-imagegen.png" x="120" y="-188" width="960" height="1500" preserveAspectRatio="xMidYMid slice"/>
+  <rect width="1200" height="1500" fill="#16110c" opacity="0.28"/>
+  <rect width="1200" height="1500" fill="url(#leftShade)"/>
+  <rect width="1200" height="1500" fill="url(#goldWash)"/>
+
+  <path d="M92 96 H420" stroke="#d4a75a" stroke-opacity="0.48" stroke-width="2"/>
+  <text x="92" y="154" class="mono gold" font-size="22" font-weight="700">Inside ClaudeKit</text>
+  <text x="92" y="216" class="mono dim" font-size="15" font-weight="700">Guard rails deep dive</text>
+
+  <text x="92" y="430" class="serif cream" font-size="104" font-weight="700" letter-spacing="-1">
+    <tspan x="92" dy="0">Guard</tspan>
+    <tspan x="92" dy="104">rails</tspan>
+  </text>
+  <rect x="92" y="552" width="458" height="18" rx="3" fill="#d4a75a" opacity="0.28"/>
+  <text x="92" y="652" class="serif gold" font-size="55" font-style="italic" font-weight="700">
+    <tspan x="92" dy="0">lớp phanh giữa</tspan>
+    <tspan x="92" dy="66">model và hành động</tspan>
+  </text>
+
+  <text x="96" y="830" class="serif cream" font-size="32" opacity="0.92">
+    <tspan x="96" dy="0">Hook chặn sớm trước khi</tspan>
+    <tspan x="96" dy="44">tool thật sự chạm vào file,</tspan>
+    <tspan x="96" dy="44">shell và PR.</tspan>
+  </text>
+
+  <g transform="translate(92 1035)">
+    <rect width="430" height="108" rx="10" fill="#221b13" opacity="0.84" stroke="#d4a75a" stroke-opacity="0.28"/>
+    <circle cx="54" cy="54" r="19" fill="none" stroke="#9caf6a" stroke-width="4"/>
+    <path d="M43 55 L51 63 L68 43" fill="none" stroke="#9caf6a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="95" y="45" class="mono gold" font-size="16" font-weight="700">exit 2</text>
+    <text x="95" y="78" class="serif dim" font-size="25">chặn tool call rủi ro</text>
+  </g>
+
+  <text x="92" y="1385" class="mono dim" font-size="17" font-weight="700">fb.com/shinantori</text>
+</svg>

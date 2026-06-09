@@ -1,0 +1,13 @@
+Use case: ads-marketing
+Asset type: Facebook feed poster, vertical 4:5, designed to become a 1200x1500 social poster after text overlay
+Primary request: Create a premium warm-dark editorial illustration inspired by an article about agentic coding guard rails: a protective runtime layer between an AI model and real machine actions.
+Scene/backdrop: dark coffee-brown and black editorial workspace abstraction, subtle parchment texture, thin gold rail lines, a guarded command path, small luminous nodes for hooks, a restrained red warning accent, a soft teal system accent, and a central visual metaphor of a golden brake/guard rail stopping risky tool calls before they reach files, shell, and pull requests.
+Subject: abstract AI agent workflow, guard rail, hook lifecycle, safe boundary between model intent and tool execution.
+Style/medium: sophisticated magazine-cover digital illustration, warm dark, tactile paper grain, refined serif-editorial mood, high-end technical publication aesthetic, cinematic but restrained.
+Composition/framing: vertical 4:5 poster with generous clear negative space in the upper-left and lower-left for later Vietnamese text overlay; visual weight on the right and lower-right; strong first-glance silhouette; no clutter.
+Lighting/mood: warm gold highlights on dark brown background, quiet serious safety mood, soft glow, crisp edges.
+Color palette: #16110c, #221b13, #d4a75a, #e3c585, muted rose warning accent, muted teal accent, cream highlights.
+Materials/textures: matte paper, fine grain, thin metallic gold linework, subtle glass UI panels, no shiny sci-fi overload.
+Text: none.
+Constraints: no readable text, no letters, no numbers, no logos, no watermark, no UI screenshots, leave clean empty areas for overlay text, polished enough for a Facebook technical article poster.
+Avoid: cyberpunk neon, purple gradients, generic robot faces, busy dashboards, fake code text, random glyphs, misspelled text.

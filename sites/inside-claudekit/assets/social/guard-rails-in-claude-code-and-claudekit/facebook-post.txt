@@ -1,0 +1,1 @@
+Khi agent có quyền đọc file, chạy shell, sửa code và mở PR, vấn đề không còn là model có "nghe lời" hay không. Một dòng prompt không đủ để giữ secret, scope và workflow an toàn. Bài này bóc tách guard rails trong ClaudeKit: hook nằm ở đâu, exit 2 chặn tool call thế nào, vì sao fail-open nguy hiểm, và 6 câu nên tự hỏi trước khi tin một guard rail đang thật sự bảo vệ bạn.
