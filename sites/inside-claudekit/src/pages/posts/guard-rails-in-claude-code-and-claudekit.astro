@@ -8,6 +8,8 @@ const locale = Astro.currentLocale || 'vi';
 const t = getTranslation(translations, locale);
 const slug = 'guard-rails-in-claude-code-and-claudekit';
 const homeHref = locale === 'vi' ? '/' : `/${locale}`;
+const hooksGuideHref = locale === 'vi' ? 'https://www.vividkit.dev/vi/guides/hooks' : 'https://www.vividkit.dev/guides/hooks';
+const claudeKitReferralHref = 'https://claudekit.cc/?ref=OMG49S8R';
 ---
 <!DOCTYPE html>
 <html lang={locale} data-theme="dark">
@@ -187,6 +189,7 @@ body {
 .stats > div:last-child { border-right: none; }
 .stats b { font-family: var(--serif); font-weight: 800; font-size: 38px; color: var(--gold); display: block; line-height: 1; font-style: italic; }
 .stats span { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); display: block; margin-top: 8px; }
+.stats-note { margin: -12px 0 26px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); }
 @media (max-width: 600px) { .stats > div { padding: 16px 18px; } .stats b { font-size: 28px; } }
 
 /* ───── section ───── */
@@ -388,6 +391,9 @@ td code, th code { font-size: 12.5px; }
 .svg-note { margin: -10px 0 30px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); }
 .refline { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); margin: -4px 0 24px; }
 .refline a { color: var(--gold-soft); }
+.guide-note { margin: -6px 0 28px; font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--dim); }
+.guide-note a { color: var(--gold-soft); text-decoration: none; border-bottom: 1px solid currentColor; }
+.guide-note a:hover { color: var(--gold); }
 
 /* checklist */
 .checks { list-style: none; padding: 0; counter-reset: c; }
@@ -414,6 +420,11 @@ td code, th code { font-size: 12.5px; }
 }
 .closing h2 { font-family: var(--serif); font-style: italic; font-weight: 800; font-size: clamp(34px, 5.2vw, 58px); line-height: 1.05; margin: 0 0 26px; color: var(--bright); }
 .closing p { max-width: 72ch; margin: 0 auto 20px; font-size: 21px; line-height: 1.65; }
+.referral-note { max-width: 720px; margin: 34px auto 0; padding: 20px 22px; text-align: left; border: 1px solid var(--edge2); border-left: 4px solid var(--gold); border-radius: 7px; background: linear-gradient(135deg, var(--gold-d), transparent 68%), var(--panel); }
+.referral-note__kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 1.7px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.referral-note p { margin: 0 0 14px; font-size: 17px; line-height: 1.55; color: var(--fg); }
+.referral-note a { display: inline-flex; align-items: center; min-height: 34px; padding: 6px 12px; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--bg); background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 5px; text-decoration: none; }
+.referral-note a:hover { background: var(--gold); }
 .colophon { margin-top: 40px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--dim); }
 @media (max-width: 640px) { .closing { padding: 34px 24px; } .closing p { font-size: 18px; } }
 
@@ -499,6 +510,9 @@ pre::-webkit-scrollbar-corner, .tw::-webkit-scrollbar-corner { background: trans
     <p><Fragment set:html={t.s2_p1} /></p>
     <p class="refline"><Fragment set:html={t.s2_refline} /></p>
     <h3>{t.s2_h3_map}</h3>
+    <p class="guide-note">
+      {t.s2_hooks_guide_before}<a href={hooksGuideHref} target="_blank" rel="noopener noreferrer">{t.s2_hooks_guide_link}</a>{t.s2_hooks_guide_after}
+    </p>
     <div class="diagram">
 <svg class="hooksmap" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 520" role="img" aria-label={t.s2_map_aria} style="width:100%;height:auto;display:block;font-family:var(--mono),monospace">
   <defs>
@@ -876,6 +890,7 @@ coverage</pre>
       <div><b>8</b><span>{t.s7_stat2}</span></div>
       <div><b>200</b><span>{t.s7_stat3}</span></div>
     </div>
+    <p class="stats-note"><Fragment set:html={t.s7_stats_note} /></p>
     <div class="cal cal--err"><div class="cal__t">{t.s7_gap3_t}</div><p><Fragment set:html={t.s7_gap3_p} /></p></div>
     <pre class="code code--json" data-lang="json"><span class="cmt">{t.s7_code_cmt}</span>
 {`{ "simplify": { "gate": { "enabled": true } } }`}</pre>
@@ -1020,6 +1035,11 @@ explicitly says 'just code it', respect their instruction.
     <h2>{t.closing_title}</h2>
     <p><Fragment set:html={t.closing_p1} /></p>
     <p>{t.closing_p2}</p>
+    <div class="referral-note">
+      <div class="referral-note__kicker">{t.closing_referral_kicker}</div>
+      <p>{t.closing_referral_title} {t.closing_referral_body}</p>
+      <a href={claudeKitReferralHref} target="_blank" rel="noopener noreferrer sponsored">{t.closing_referral_cta}</a>
+    </div>
   </div>
 
   <div class="colophon">{t.colophon}</div>
