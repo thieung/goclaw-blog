@@ -392,6 +392,7 @@ td code, th code { font-size: 12.5px; }
 .chip--gate { background: var(--gold-d); color: var(--gold); border: 1px solid var(--gold); }
 .chip--nowire { background: var(--panel2); color: var(--dim); border: 1px solid var(--edge2); }
 .chip--gate-off { background: var(--red-d); color: var(--red); border: 1px solid var(--red); }
+.chip--beta { background: var(--gold-d); color: var(--gold-soft); border: 1px solid var(--gold); }
 
 /* flow */
 .flow { margin: 28px 0; }
@@ -782,8 +783,8 @@ pre::-webkit-scrollbar-corner, .tw::-webkit-scrollbar-corner { background: trans
       <div class="hookcard"><div class="hookcard__top"><code>session-state</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_sstate_m}</div><p>{t.s4_hk_sstate_p}</p></div>
       <div class="hookcard"><div class="hookcard__top"><code>cook-after-plan-reminder</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_cook_m}</div><p><Fragment set:html={t.s4_hk_cook_p} /></p></div>
       <div class="hookcard"><div class="hookcard__top"><code>workflow-artifact-gate</code><span class="chip chip--nowire">{t.s4_chip_nowire}</span></div><div class="hookcard__meta">{t.s4_hk_wag_m}</div><p>{t.s4_hk_wag_p}</p></div>
-      <div class="hookcard"><div class="hookcard__top"><code>task-completed-handler</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_taskc_m}</div><p>{t.s4_hk_taskc_p}</p></div>
-      <div class="hookcard"><div class="hookcard__top"><code>teammate-idle-handler</code><span class="chip chip--wired">wired</span></div><div class="hookcard__meta">{t.s4_hk_idle_m}</div><p>{t.s4_hk_idle_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>task-completed-handler</code><span class="chip chip--beta">{t.s4_chip_removing}</span></div><div class="hookcard__meta">{t.s4_hk_taskc_m}</div><p>{t.s4_hk_taskc_p}</p></div>
+      <div class="hookcard"><div class="hookcard__top"><code>teammate-idle-handler</code><span class="chip chip--beta">{t.s4_chip_removing}</span></div><div class="hookcard__meta">{t.s4_hk_idle_m}</div><p>{t.s4_hk_idle_p}</p></div>
       <div class="hookcard"><div class="hookcard__top"><code>team-context-inject</code><span class="chip chip--nowire">{t.s4_chip_nowire}</span></div><div class="hookcard__meta">{t.s4_hk_teamctx_m}</div><p><Fragment set:html={t.s4_hk_teamctx_p} /></p></div>
       <div class="hookcard"><div class="hookcard__top"><code>usage-context-awareness</code><span class="chip chip--nowire">{t.s4_chip_nowire}</span></div><div class="hookcard__meta">{t.s4_hk_uca_m}</div><p><Fragment set:html={t.s4_hk_uca_p} /></p></div>
     </div>
