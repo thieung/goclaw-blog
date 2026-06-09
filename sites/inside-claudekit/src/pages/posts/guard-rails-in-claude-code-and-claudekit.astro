@@ -10,6 +10,10 @@ const slug = 'guard-rails-in-claude-code-and-claudekit';
 const homeHref = locale === 'vi' ? '/' : `/${locale}`;
 const hooksGuideHref = locale === 'vi' ? 'https://www.vividkit.dev/vi/guides/hooks' : 'https://www.vividkit.dev/guides/hooks';
 const claudeKitReferralHref = 'https://claudekit.cc/?ref=OMG49S8R';
+const siteUrl = 'https://claudekit.thieunv.space';
+const canonicalPath = locale === 'vi' ? `/posts/${slug}` : `/${locale}/posts/${slug}`;
+const canonicalUrl = `${siteUrl}${canonicalPath}`;
+const ogImageUrl = `${siteUrl}/og/${slug}.png`;
 ---
 <!DOCTYPE html>
 <html lang={locale} data-theme="dark">
@@ -29,9 +33,20 @@ const claudeKitReferralHref = 'https://claudekit.cc/?ref=OMG49S8R';
 <title>{t.page_title}</title>
 <meta name="description" content={t.page_desc}>
 <meta name="color-scheme" content="light dark">
+<link rel="canonical" href={canonicalUrl}>
 <meta property="og:title" content={t.page_title}>
 <meta property="og:description" content={t.page_desc}>
 <meta property="og:type" content="article">
+<meta property="og:url" content={canonicalUrl}>
+<meta property="og:site_name" content="Inside ClaudeKit">
+<meta property="og:image" content={ogImageUrl}>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content={t.page_title}>
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content={t.page_title}>
+<meta name="twitter:description" content={t.page_desc}>
+<meta name="twitter:image" content={ogImageUrl}>
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

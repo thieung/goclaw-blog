@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;0,700;0,800;1,700;1,800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #16110c;
+  }
+  body {
+    font-family: "Spectral", Georgia, serif;
+    color: #e8ddca;
+    -webkit-font-smoothing: antialiased;
+  }
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -5%, rgba(212, 167, 90, 0.12), transparent 70%),
+      linear-gradient(180deg, #16110c 0%, #1d1710 100%);
+  }
+  .canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, transparent, rgba(212, 167, 90, 0.11), transparent) 50% 96px / 880px 1px no-repeat,
+      linear-gradient(90deg, transparent, rgba(212, 167, 90, 0.08), transparent) 50% 530px / 960px 1px no-repeat;
+    pointer-events: none;
+  }
+  .shell {
+    position: relative;
+    z-index: 2;
+    width: 1032px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 30px 0 44px;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Space Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    color: #9a8a6e;
+  }
+  .top b { color: #d4a75a; }
+  .hero {
+    padding: 50px 0 0;
+    text-align: center;
+  }
+  .hero__kick {
+    font-family: "Space Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #d4a75a;
+    margin-bottom: 24px;
+  }
+  h1 {
+    max-width: 880px;
+    margin: 0 auto 28px;
+    font-family: "Spectral", Georgia, serif;
+    font-size: 78px;
+    line-height: 1.02;
+    letter-spacing: -1px;
+    font-weight: 800;
+    font-style: italic;
+    color: #fbf3e1;
+  }
+  .brake-mark {
+    position: relative;
+    display: inline-block;
+    padding: 0 0.12em 0.04em;
+    color: #e3c585;
+    text-shadow: 0 0 22px rgba(212, 167, 90, 0.24);
+  }
+  .brake-mark::before {
+    content: "";
+    position: absolute;
+    left: -0.04em;
+    right: -0.04em;
+    bottom: 0.08em;
+    height: 0.28em;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(212, 167, 90, 0.28), rgba(212, 167, 90, 0.12));
+    z-index: -1;
+  }
+  .brake-mark::after {
+    content: "";
+    position: absolute;
+    left: 0.05em;
+    right: 0.05em;
+    bottom: -0.02em;
+    height: 2px;
+    background: #e3c585;
+    opacity: 0.85;
+  }
+  .hero__lead {
+    max-width: 780px;
+    margin: 0 auto 34px;
+    font-size: 25px;
+    font-weight: 300;
+    line-height: 1.52;
+    color: #e8ddca;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-top: 1px solid rgba(212, 167, 90, 0.13);
+    border-bottom: 1px solid rgba(212, 167, 90, 0.13);
+  }
+  .stats > div {
+    min-height: 94px;
+    padding: 18px 18px 16px;
+    border-right: 1px solid rgba(212, 167, 90, 0.13);
+    text-align: center;
+  }
+  .stats > div:last-child { border-right: 0; }
+  .stats b {
+    display: block;
+    font-family: "Spectral", Georgia, serif;
+    font-size: 42px;
+    line-height: 1;
+    font-weight: 800;
+    font-style: italic;
+    color: #d4a75a;
+  }
+  .stats span {
+    display: block;
+    margin-top: 8px;
+    font-family: "Space Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 1.4px;
+    line-height: 1.35;
+    text-transform: uppercase;
+    color: #9a8a6e;
+  }
+  .chips {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 22px;
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .chip {
+    padding: 6px 10px;
+    border: 1px solid rgba(212, 167, 90, 0.28);
+    border-radius: 5px;
+    background: rgba(212, 167, 90, 0.10);
+    color: #e3c585;
+  }
+  .chip:nth-child(2) {
+    border-color: rgba(108, 188, 174, 0.34);
+    background: rgba(108, 188, 174, 0.11);
+    color: #9edfd3;
+  }
+  .chip:nth-child(3) {
+    border-color: rgba(217, 122, 130, 0.36);
+    background: rgba(217, 122, 130, 0.11);
+    color: #efa3a9;
+  }
+</style>
+</head>
+<body>
+  <main class="canvas">
+    <div class="shell">
+      <div class="top"><span><b>Inside ClaudeKit</b> · No. 03</span><span>claudekit-engineer@2.19.1</span></div>
+
+      <section class="hero">
+        <div class="hero__kick">Inside ClaudeKit · Guard rails deep dives</div>
+        <h1>Guard rails: <span class="brake-mark">lớp phanh</span> giữa model và hành động</h1>
+        <p class="hero__lead">Khi agent có quyền đọc file, chạy shell, sửa code và ship PR, một dòng dặn trong prompt là chưa đủ.</p>
+        <div class="stats">
+          <div><b>4</b><span>lớp bảo vệ</span></div>
+          <div><b>7</b><span>nhóm guard rail</span></div>
+          <div><b>2</b><span>kiểu chặn</span></div>
+          <div><b>8</b><span>hook được soi</span></div>
+          <div><b>13</b><span>pitfall cần tránh</span></div>
+        </div>
+        <div class="chips">
+          <span class="chip">exit 2</span>
+          <span class="chip">PreToolUse</span>
+          <span class="chip">fail-open</span>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
