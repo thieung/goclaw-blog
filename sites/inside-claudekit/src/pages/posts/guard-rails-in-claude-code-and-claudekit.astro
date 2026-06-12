@@ -13,7 +13,8 @@ const claudeKitReferralHref = 'https://claudekit.cc/?ref=OMG49S8R';
 const siteUrl = 'https://claudekit.thieunv.space';
 const canonicalPath = locale === 'vi' ? `/posts/${slug}` : `/${locale}/posts/${slug}`;
 const canonicalUrl = `${siteUrl}${canonicalPath}`;
-const ogImageUrl = `${siteUrl}/og/${slug}.png`;
+const ogImageSlug = locale === 'vi' ? slug : `${slug}-en`;
+const ogImageUrl = `${siteUrl}/og/${ogImageSlug}.png`;
 ---
 <!DOCTYPE html>
 <html lang={locale} data-theme="dark">

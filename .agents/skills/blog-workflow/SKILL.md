@@ -376,15 +376,20 @@ Quan trọng:
    - `thumbnail.html` — interactive thumbnail with controls
    - `thumbnail-og.html` — static Open Graph thumbnail source, 1200×630
    - `thumbnail-og.png` — exported preview image for visual QA
-3. Copy the approved OG image to `$SITE/public/og/<slug>.png` so Astro publishes it at `/og/<slug>.png`.
+   - `thumbnail-og-en.html` — English Open Graph thumbnail source for non-VI locale previews
+   - `thumbnail-og-en.png` — exported English OG preview image
+3. Copy approved OG images to public assets so Astro publishes them:
+   - VI: `$SITE/public/og/<slug>.png`
+   - non-VI fallback: `$SITE/public/og/<slug>-en.png`
 4. Wire route `<head>` metadata for every published locale:
-   - `<meta property="og:image" content="https://<site-domain>/og/<slug>.png">`
+   - VI routes use `<meta property="og:image" content="https://<site-domain>/og/<slug>.png">`
+   - EN/ZH/JA routes use `<meta property="og:image" content="https://<site-domain>/og/<slug>-en.png">` unless locale-specific images are intentionally generated
    - `<meta property="og:image:width" content="1200">`
    - `<meta property="og:image:height" content="630">`
    - `<meta name="twitter:card" content="summary_large_image">`
-   - `<meta name="twitter:image" content="https://<site-domain>/og/<slug>.png">`
+   - `<meta name="twitter:image">` must match the locale-aware `og:image`
    - `<meta property="og:url">` and `<link rel="canonical">` must use the locale-aware public URL.
-5. Verify the built HTML contains the OG/Twitter image tags and the built image exists at `dist/og/<slug>.png`.
+5. Verify the built HTML contains the OG/Twitter image tags and the built images exist at `dist/og/<slug>.png` and `dist/og/<slug>-en.png`.
 6. Print summary with file paths
 
 ### Social Content Format
@@ -420,6 +425,11 @@ Quan trọng:
 - Must be exported to both:
   - `$SOCIAL/<slug>/thumbnail-og.png` for source review.
   - `$SITE/public/og/<slug>.png` for production serving.
+- For multilingual posts, also generate an English fallback:
+  - `$SOCIAL/<slug>/thumbnail-og-en.html`
+  - `$SOCIAL/<slug>/thumbnail-og-en.png`
+  - `$SITE/public/og/<slug>-en.png`
+- Route rule: VI uses `<slug>.png`; EN/ZH/JA use `<slug>-en.png` unless dedicated locale images exist.
 - Use absolute production URLs in route meta tags. Social crawlers cannot read local `assets/social/...` files and will not execute the admin thumbnail controls.
 - Keep title readable when cropped in small social cards; central 80% safe zone; no tiny body copy.
 - Verify with `sips -g pixelWidth -g pixelHeight` or equivalent that the final PNG is exactly 1200×630.
