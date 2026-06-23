@@ -1,5 +1,4 @@
 ---
-import LangSwitcher from '@blog/core/components/LangSwitcher.astro';
 import Analytics from '@blog/core/components/Analytics.astro';
 import { getTranslation } from '@blog/core/utils/i18n-helpers';
 import translations from '@i18n/ck-visual-automation-toolkit.json';
@@ -12,6 +11,9 @@ const site = 'https://claudekit.thieunv.space';
 const ogImage = locale === 'vi' ? `${site}/og/${slug}.png` : `${site}/og/${slug}-en.png`;
 const canonical = locale === 'vi' ? `${site}/posts/${slug}` : `${site}/${locale}/posts/${slug}`;
 const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] || 'vi_VN';
+const claudeKitReferralHref = 'https://claudekit.cc/?ref=OMG49S8R';
+const vividKitGuideHref = locale === 'vi' ? 'https://vividkit.dev/vi/guides' : 'https://vividkit.dev/guides';
+const footerHomeHref = locale === 'vi' ? '/' : `/${locale}`;
 ---
 <html lang={locale}>
 <head>
@@ -44,7 +46,7 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
       }
     })();
   </script>
-  <style>
+  <style is:global>
     @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500..800&display=swap");
 
     :root {
@@ -252,6 +254,19 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
       max-width: 860px;
       margin: 0;
       font-size: clamp(3.4rem, 7vw, 6.6rem);
+    }
+
+    html[lang="ja"] h1 {
+      max-width: 900px;
+      font-family: "Newsreader", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, serif;
+      font-size: clamp(2.62rem, 5vw, 5.2rem);
+      line-height: 1.12;
+      font-feature-settings: "palt" 1;
+    }
+
+    html[lang="ja"] .ja-title-line {
+      display: inline-block;
+      white-space: nowrap;
     }
 
     .visual-highlight {
@@ -1025,6 +1040,76 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
       font-size: 0.93rem;
     }
 
+    .referral-funnel {
+      max-width: min(100%, 920px);
+      margin: 46px auto 0;
+      padding: clamp(18px, 3vw, 24px);
+      border: 1px solid color-mix(in srgb, var(--gold) 46%, var(--line));
+      border-left: 4px solid var(--gold);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--gold) 9%, transparent), transparent 68%),
+        var(--panel);
+      box-shadow: 0 14px 32px rgba(30, 33, 27, 0.08);
+    }
+
+    .referral-funnel__kicker {
+      margin: 0 0 10px;
+      color: var(--gold);
+      font: 800 0.72rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: 0.04em;
+    }
+
+    .referral-funnel p {
+      max-width: 760px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-family: "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: clamp(0.94rem, 1vw, 1.02rem);
+      font-weight: 500;
+      line-height: 1.75;
+    }
+
+    .referral-funnel__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .referral-funnel__cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 13px;
+      border: 1px solid color-mix(in srgb, var(--gold) 78%, var(--ink));
+      border-radius: 7px;
+      color: #fffdf5;
+      background: color-mix(in srgb, var(--gold) 82%, var(--panel));
+      box-shadow: inset 0 -2px 0 rgba(32, 26, 12, 0.16);
+      font: 820 0.78rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      text-decoration: none;
+      transition: transform 180ms ease, color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .referral-funnel__cta:hover {
+      transform: translateY(-1px);
+      background: var(--gold);
+    }
+
+    .referral-funnel__cta--secondary {
+      color: var(--ink);
+      background: color-mix(in srgb, var(--paper-strong) 72%, transparent);
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .referral-funnel__cta--secondary:hover {
+      color: var(--teal);
+      border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+      background: var(--panel);
+    }
+
     .aside-stat {
       padding: 14px 0;
       border-top: 1px solid var(--faint);
@@ -1048,11 +1133,44 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
     }
 
     .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
       margin-top: 58px;
       padding: 24px 0 0;
       border-top: 1px solid var(--line);
       color: var(--muted);
       font-size: 0.9rem;
+    }
+
+    .footer > span {
+      min-width: 0;
+    }
+
+    .footer-home-link {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      margin-left: auto;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--panel) 78%, transparent);
+      font: 800 0.74rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 180ms ease, color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .footer-home-link:hover {
+      transform: translateY(-1px);
+      color: var(--teal);
+      border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+      background: var(--panel);
     }
 
     @media (max-width: 1240px) {
@@ -1103,6 +1221,14 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
       .theme-switch {
         top: 10px;
         right: 10px;
+        padding: 2px;
+      }
+
+      .theme-switch button {
+        min-width: 44px;
+        min-height: 34px;
+        padding: 0 7px;
+        font-size: 0.68rem;
       }
 
       .home-link {
@@ -1111,6 +1237,15 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
         min-height: 34px;
         padding: 0 10px;
         font-size: 0.72rem;
+      }
+
+      .referral-funnel {
+        margin-top: 36px;
+        padding: 18px;
+      }
+
+      .referral-funnel p {
+        font-size: 0.94rem;
       }
 
       h1 {
@@ -1176,7 +1311,6 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
 </head>
 <body>
   <a class="home-link" href="/" aria-label="Về trang chủ">{t.home_link}</a>
-  <LangSwitcher slug="ck-visual-automation-toolkit" />
   <div class="theme-switch" aria-label="Chọn giao diện">
     <button type="button" data-theme-choice="light" aria-pressed="true">{t.theme_light}</button>
     <button type="button" data-theme-choice="dark" aria-pressed="false">{t.theme_dark}</button>
@@ -1632,7 +1766,7 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
               </div>
               <div class="summary-item">
                 <b>{t.summary_q6_b}</b>
-                <p>{t.summary_q6_p}</p>
+                <p><Fragment set:html={t.summary_q6_p} /></p>
               </div>
             </div>
             <p><Fragment set:html={t.summary_p} /></p>
@@ -1666,8 +1800,18 @@ const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] 
       </aside>
     </div>
 
+    <section class="referral-funnel" aria-label={t.referral_kicker}>
+      <div class="referral-funnel__kicker">{t.referral_kicker}</div>
+      <p><Fragment set:html={t.referral_body} /></p>
+      <div class="referral-funnel__actions">
+        <a class="referral-funnel__cta referral-funnel__cta--secondary" href={vividKitGuideHref} target="_blank" rel="noopener noreferrer">{t.referral_guide_cta}</a>
+        <a class="referral-funnel__cta" href={claudeKitReferralHref} target="_blank" rel="noopener noreferrer sponsored">{t.referral_cta}</a>
+      </div>
+    </section>
+
     <footer class="footer">
-      {t.footer}
+      <span>{t.footer}</span>
+      <a class="footer-home-link" href={footerHomeHref}>{t.home_link}</a>
     </footer>
   </div>
 
