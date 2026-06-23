@@ -1,0 +1,27 @@
+{
+  "slug": "ck-visual-automation-toolkit",
+  "urls": {
+    "vi": "https://claudekit.thieunv.space/posts/ck-visual-automation-toolkit",
+    "en": "https://claudekit.thieunv.space/en/posts/ck-visual-automation-toolkit",
+    "zh": "https://claudekit.thieunv.space/zh/posts/ck-visual-automation-toolkit",
+    "ja": "https://claudekit.thieunv.space/ja/posts/ck-visual-automation-toolkit"
+  },
+  "posts": {
+    "facebook": {
+      "lang": "vi",
+      "content": "Bài mới trong series Inside ClaudeKit: ClaudeKit không có một lệnh vạn năng để trực quan hóa, mà cả một hệ skill, mỗi cái một việc. Gọi nhầm là ra tài liệu kiến trúc trông như landing page, hoặc UI sản phẩm lại giống tài liệu nội bộ.\n\nCách phân biệt gọn nhất: output phục vụ tư duy hay phục vụ sản phẩm.\n\n🔹 `/ck:preview` điều phối tư duy: explain, slides, diagram, review cho team đọc và đối chiếu.\n🔹 `/ck:frontend-design` thực thi giao diện: UI hoàn thiện cho người dùng cuối thao tác.\n🔹 `/ck:tech-graph` và `/ck:mermaidjs-v11` lo sơ đồ; `/ck:show-off` đóng gói showcase.\n🔹 `/ck:stitch` tự suy diễn UI khi không có thiết kế nguồn; `/ck:frontend-design` tái hiện khi đã có.\n\nPhần hay nhất: một case study chạy thật, visual hóa trọn một plan file qua 4 bước (tech-graph, frontend-design, preview slides, show-off), screenshot giữ nguyên làm bằng chứng.\n\nLink ở comment 👇\n\n#ClaudeKit #ClaudeCode #DevTools"
+    },
+    "threads": {
+      "lang": "vi",
+      "content": "ClaudeKit không có nút trực quan hóa vạn năng, mà cả một hệ skill.\n\nPhân biệt gọn nhất: output phục vụ tư duy hay phục vụ sản phẩm.\n\nTư duy thì dùng `/ck:preview`, tech-graph, mermaid. Sản phẩm thì `/ck:frontend-design`, show-off.\n\nKhông có thiết kế nguồn thì `/ck:stitch` tự suy diễn UI. Có rồi thì frontend-design tái hiện.\n\nBài có case study chạy thật, visual hóa trọn một plan file.\n\nhttps://claudekit.thieunv.space/posts/ck-visual-automation-toolkit"
+    },
+    "x": {
+      "lang": "en",
+      "content": "New Inside ClaudeKit post: ClaudeKit has no single visualization command, it has a whole skill system, and calling the wrong one is the most common mistake.\n\nThe cleanest way to pick: does the output serve thinking, or serve a product?\n\n• `/ck:preview` orchestrates thinking. It produces explanations, slides, diagrams, and diff dashboards for a team to read and reconcile. Consistent presets, mandatory theme toggle.\n• `/ck:frontend-design` executes UI. It builds polished product interfaces for end users, with anti-slop rules and Design Dials.\n• `/ck:tech-graph` and `/ck:mermaidjs-v11` handle diagrams; `/ck:show-off` packages a self-contained showcase.\n• `/ck:frontend-design` replicates from a source design; `/ck:stitch` extrapolates UI when there is none.\n\nThe core of the post is a real run: visualizing an entire plan file end to end through four steps, with screenshots kept as evidence.\n\nLink below."
+    },
+    "linkedin": {
+      "lang": "en",
+      "content": "I published a new Inside ClaudeKit writeup on a question that comes up whenever you ask an AI to \"make this visual\": which skill should actually do the work.\n\nClaudeKit does not fold visualization into one universal command. It splits the job across a small skill system, and the most common mistake is treating them as interchangeable, then getting architecture docs that look like a landing page, or product UI that reads like an internal memo.\n\nThe positioning map runs on two axes: thinking vs execution.\n\n• `/ck:preview` orchestrates thinking. It turns a topic or git context into explanations, slides, diagrams, or diff dashboards meant for a team to read and make decisions. Its style philosophy is consistency: a fixed set of presets and a mandatory light/dark theme toggle on every page.\n• `/ck:frontend-design` executes interfaces. It builds polished UI for end users and leans the opposite way, toward difference, controlled by Design Dials and anti-slop rules.\n\nAround those two axes sit the satellites: `/ck:ui-ux-pro-max` for design intelligence, `/ck:tech-graph` and `/ck:mermaidjs-v11` for diagrams, `/ck:markdown-novel-viewer` and `/ck:show-off` for reading and packaging.\n\nThe post also separates `/ck:frontend-design` (replication, when you have a source design) from `/ck:stitch` (extrapolation, when you do not), with three guardrails for letting AI infer screens on its own.\n\nThe center of the post is a real case study: visualizing an entire plan file end to end through four steps, tech-graph then frontend-design then preview slides then show-off, with the screenshots kept as evidence.\n\nLink in comments.\n\n#ClaudeKit #ClaudeCode #DeveloperTools #SoftwareEngineering #DesignSystems"
+    }
+  }
+}

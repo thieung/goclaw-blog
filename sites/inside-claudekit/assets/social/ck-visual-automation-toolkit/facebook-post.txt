@@ -1,0 +1,14 @@
+Bài mới trong series Inside ClaudeKit: ClaudeKit không có một lệnh vạn năng để trực quan hóa, mà cả một hệ skill, mỗi cái một việc. Gọi nhầm là ra tài liệu kiến trúc trông như landing page, hoặc UI sản phẩm lại giống tài liệu nội bộ.
+
+Cách phân biệt gọn nhất: output phục vụ tư duy hay phục vụ sản phẩm.
+
+🔹 `/ck:preview` điều phối tư duy: explain, slides, diagram, review cho team đọc và đối chiếu.
+🔹 `/ck:frontend-design` thực thi giao diện: UI hoàn thiện cho người dùng cuối thao tác.
+🔹 `/ck:tech-graph` và `/ck:mermaidjs-v11` lo sơ đồ; `/ck:show-off` đóng gói showcase.
+🔹 `/ck:stitch` tự suy diễn UI khi không có thiết kế nguồn; `/ck:frontend-design` tái hiện khi đã có.
+
+Phần hay nhất: một case study chạy thật, visual hóa trọn một plan file qua 4 bước (tech-graph, frontend-design, preview slides, show-off), screenshot giữ nguyên làm bằng chứng.
+
+Link ở comment 👇
+
+#ClaudeKit #ClaudeCode #DevTools

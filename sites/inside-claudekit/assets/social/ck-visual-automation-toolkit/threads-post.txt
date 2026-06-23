@@ -1,0 +1,11 @@
+ClaudeKit không có nút trực quan hóa vạn năng, mà cả một hệ skill.
+
+Phân biệt gọn nhất: output phục vụ tư duy hay phục vụ sản phẩm.
+
+Tư duy thì dùng `/ck:preview`, tech-graph, mermaid. Sản phẩm thì `/ck:frontend-design`, show-off.
+
+Không có thiết kế nguồn thì `/ck:stitch` tự suy diễn UI. Có rồi thì frontend-design tái hiện.
+
+Bài có case study chạy thật, visual hóa trọn một plan file.
+
+https://claudekit.thieunv.space/posts/ck-visual-automation-toolkit

@@ -1,0 +1,18 @@
+I published a new Inside ClaudeKit writeup on a question that comes up whenever you ask an AI to "make this visual": which skill should actually do the work.
+
+ClaudeKit does not fold visualization into one universal command. It splits the job across a small skill system, and the most common mistake is treating them as interchangeable, then getting architecture docs that look like a landing page, or product UI that reads like an internal memo.
+
+The positioning map runs on two axes: thinking vs execution.
+
+• `/ck:preview` orchestrates thinking. It turns a topic or git context into explanations, slides, diagrams, or diff dashboards meant for a team to read and make decisions. Its style philosophy is consistency: a fixed set of presets and a mandatory light/dark theme toggle on every page.
+• `/ck:frontend-design` executes interfaces. It builds polished UI for end users and leans the opposite way, toward difference, controlled by Design Dials and anti-slop rules.
+
+Around those two axes sit the satellites: `/ck:ui-ux-pro-max` for design intelligence, `/ck:tech-graph` and `/ck:mermaidjs-v11` for diagrams, `/ck:markdown-novel-viewer` and `/ck:show-off` for reading and packaging.
+
+The post also separates `/ck:frontend-design` (replication, when you have a source design) from `/ck:stitch` (extrapolation, when you do not), with three guardrails for letting AI infer screens on its own.
+
+The center of the post is a real case study: visualizing an entire plan file end to end through four steps, tech-graph then frontend-design then preview slides then show-off, with the screenshots kept as evidence.
+
+Link in comments.
+
+#ClaudeKit #ClaudeCode #DeveloperTools #SoftwareEngineering #DesignSystems

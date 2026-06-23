@@ -1,0 +1,1712 @@
+---
+import LangSwitcher from '@blog/core/components/LangSwitcher.astro';
+import Analytics from '@blog/core/components/Analytics.astro';
+import { getTranslation } from '@blog/core/utils/i18n-helpers';
+import translations from '@i18n/ck-visual-automation-toolkit.json';
+
+const locale = Astro.currentLocale || 'vi';
+const t = getTranslation(translations, locale);
+
+const slug = 'ck-visual-automation-toolkit';
+const site = 'https://claudekit.thieunv.space';
+const ogImage = locale === 'vi' ? `${site}/og/${slug}.png` : `${site}/og/${slug}-en.png`;
+const canonical = locale === 'vi' ? `${site}/posts/${slug}` : `${site}/${locale}/posts/${slug}`;
+const ogLocale = { vi: 'vi_VN', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[locale] || 'vi_VN';
+---
+<html lang={locale}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/favicon.ico">
+  <title>{t.page_title}</title>
+  <meta name="description" content={t.page_desc}>
+  <link rel="canonical" href={canonical}>
+  <meta property="og:type" content="article">
+  <meta property="og:url" content={canonical}>
+  <meta property="og:title" content={t.page_title}>
+  <meta property="og:description" content={t.page_desc}>
+  <meta property="og:image" content={ogImage}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content={ogLocale}>
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content={t.page_title}>
+  <meta name="twitter:description" content={t.page_desc}>
+  <meta name="twitter:image" content={ogImage}>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        document.documentElement.dataset.theme = (stored === 'light' || stored === 'dark') ? stored : 'dark';
+      } catch (_) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    })();
+  </script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500..800&display=swap");
+
+    :root {
+      --paper: #f1f1eb;
+      --paper-strong: #fffdf5;
+      --ink: #20251f;
+      --muted: #62695f;
+      --faint: #dde0d6;
+      --line: #c6cebf;
+      --panel: #fffefa;
+      --panel-soft: #e9eee6;
+      --rust: #a74622;
+      --teal: #0e7068;
+      --gold: #a77a21;
+      --blue: #365b83;
+      --violet: #6b5678;
+      --code-bg: #171a17;
+      --code-ink: #f3eddc;
+      --black: #000000;
+      --chrome-bg: #111411;
+      --chrome-ink: #c5cbbb;
+      --gold-ink: #201a0c;
+      --media-bg: #111111;
+      --scroll-bg: #121511;
+      --dark-paper: #151915;
+      --dark-paper-strong: #1d211c;
+      --dark-ink: #f0eadf;
+      --dark-muted: #b7bcae;
+      --dark-faint: #343a33;
+      --dark-line: #4b544b;
+      --dark-panel: #20261f;
+      --dark-panel-soft: #1a211e;
+      --dark-rust: #df8a5f;
+      --dark-teal: #64c3b7;
+      --dark-gold: #dfbc61;
+      --dark-blue: #8fb3d8;
+      --dark-violet: #c2a7d0;
+      --dark-code-bg: #0d0f0d;
+      --dark-code-ink: #f6ead4;
+      --shadow: 0 18px 45px rgba(33, 37, 29, 0.11);
+      --radius: 8px;
+      --measure: 790px;
+      --progress: 0%;
+    }
+
+    [data-theme="dark"] {
+      --paper: var(--dark-paper);
+      --paper-strong: var(--dark-paper-strong);
+      --ink: var(--dark-ink);
+      --muted: var(--dark-muted);
+      --faint: var(--dark-faint);
+      --line: var(--dark-line);
+      --panel: var(--dark-panel);
+      --panel-soft: var(--dark-panel-soft);
+      --rust: var(--dark-rust);
+      --teal: var(--dark-teal);
+      --gold: var(--dark-gold);
+      --blue: var(--dark-blue);
+      --violet: var(--dark-violet);
+      --code-bg: var(--dark-code-bg);
+      --code-ink: var(--dark-code-ink);
+      --shadow: 0 20px 46px rgba(0, 0, 0, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 82%, transparent), transparent 560px),
+        linear-gradient(90deg, rgba(32, 37, 31, 0.035) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, rgba(32, 37, 31, 0.032) 0 1px, transparent 1px 100%),
+        var(--paper);
+      background-size: auto, 96px 96px, 96px 96px, auto;
+      font-family: "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    .home-link {
+      position: fixed;
+      z-index: 30;
+      top: 16px;
+      left: 16px;
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      font: 700 0.78rem/1 "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-decoration: none;
+    }
+
+    .home-link:hover {
+      border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+      color: var(--teal);
+    }
+
+    .theme-switch {
+      position: fixed;
+      z-index: 30;
+      top: 16px;
+      right: 16px;
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 3px;
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .theme-switch button {
+      min-width: 58px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 6px;
+      color: var(--muted);
+      background: transparent;
+      font: 700 0.76rem/1 "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      cursor: pointer;
+    }
+
+    .theme-switch button[aria-pressed="true"] {
+      color: var(--paper-strong);
+      background: var(--ink);
+    }
+
+    .progress {
+      position: fixed;
+      z-index: 25;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: transparent;
+    }
+
+    .progress::before {
+      content: "";
+      display: block;
+      width: var(--progress);
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--rust), var(--gold));
+    }
+
+    a {
+      color: var(--teal);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.18em;
+    }
+
+    code,
+    pre,
+    kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .page {
+      width: min(1320px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 52px 0 72px;
+    }
+
+    .article-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.75fr);
+      gap: 32px;
+      align-items: stretch;
+      min-height: min(880px, calc(100dvh - 72px));
+      padding: 62px 0 34px;
+    }
+
+    .kicker {
+      margin: 0 0 20px;
+      color: var(--rust);
+      font: 800 0.78rem/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: "Newsreader", Georgia, "Times New Roman", serif;
+      font-weight: 680;
+      line-height: 1.08;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    h1 {
+      max-width: 860px;
+      margin: 0;
+      font-size: clamp(3.4rem, 7vw, 6.6rem);
+    }
+
+    .visual-highlight {
+      position: relative;
+      display: inline-block;
+      isolation: isolate;
+      color: var(--rust);
+      padding: 0 0.04em 0.02em;
+    }
+
+    .visual-highlight::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      left: -0.03em;
+      right: -0.03em;
+      bottom: 0.08em;
+      height: 0.3em;
+      border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+      border-radius: 5px;
+      background:
+        linear-gradient(90deg,
+          color-mix(in srgb, var(--gold) 38%, transparent),
+          color-mix(in srgb, var(--rust) 25%, transparent),
+          color-mix(in srgb, var(--teal) 20%, transparent));
+      transform: rotate(-1deg);
+    }
+
+    .visual-highlight::after {
+      content: "";
+      position: absolute;
+      right: -0.04em;
+      bottom: 0.02em;
+      width: 0.22em;
+      height: 0.22em;
+      border-right: 0.04em solid var(--teal);
+      border-bottom: 0.04em solid var(--teal);
+    }
+
+    .dek {
+      max-width: 760px;
+      margin: 28px 0 0;
+      color: var(--muted);
+      font-size: 1.2rem;
+      line-height: 1.7;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .hero-meta span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--panel) 68%, transparent);
+      font-size: 0.83rem;
+      font-weight: 750;
+    }
+
+    .lead-stack {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hero-map {
+      position: relative;
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      overflow: hidden;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--ink) 4%, transparent) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, color-mix(in srgb, var(--ink) 3%, transparent) 0 1px, transparent 1px 100%),
+        linear-gradient(135deg, color-mix(in srgb, var(--panel) 96%, transparent), color-mix(in srgb, var(--panel-soft) 68%, transparent));
+      background-size: 42px 42px, 42px 42px, auto;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-map::before {
+      content: "";
+      position: absolute;
+      inset: 17px;
+      border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .hero-map::after {
+      content: "";
+      position: absolute;
+      top: 26px;
+      right: 26px;
+      width: 68px;
+      height: 68px;
+      border-top: 2px solid color-mix(in srgb, var(--teal) 72%, transparent);
+      border-right: 2px solid color-mix(in srgb, var(--rust) 65%, transparent);
+      opacity: 0.72;
+      pointer-events: none;
+    }
+
+    .map-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 4px 0 14px;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    }
+
+    .map-head span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid color-mix(in srgb, var(--teal) 42%, var(--line));
+      border-radius: 999px;
+      color: var(--teal);
+      background: color-mix(in srgb, var(--panel) 82%, transparent);
+      font: 800 0.74rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .map-head strong {
+      max-width: 220px;
+      color: var(--ink);
+      text-align: right;
+      font-family: "Newsreader", Georgia, "Times New Roman", serif;
+      font-size: 1.34rem;
+      line-height: 1.06;
+    }
+
+    .axis-board {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 14px;
+      min-height: 0;
+      padding: 44px 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg,
+          color-mix(in srgb, var(--teal) 7%, transparent) 0 50%,
+          color-mix(in srgb, var(--rust) 6%, transparent) 50% 100%),
+        linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 88%, transparent), color-mix(in srgb, var(--panel-soft) 62%, transparent));
+    }
+
+    .axis-board::before,
+    .axis-board::after {
+      content: "";
+      position: absolute;
+      background: color-mix(in srgb, var(--line) 76%, transparent);
+      pointer-events: none;
+    }
+
+    .axis-board::before {
+      top: 44px;
+      bottom: 16px;
+      left: 50%;
+      width: 1px;
+    }
+
+    .axis-board::after {
+      right: 16px;
+      left: 16px;
+      top: 50%;
+      height: 1px;
+    }
+
+    .axis-ribbon {
+      position: absolute;
+      top: 12px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      font: 800 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .axis-ribbon.thought {
+      left: 14px;
+      color: var(--teal);
+    }
+
+    .axis-ribbon.execution {
+      right: 14px;
+      color: var(--rust);
+    }
+
+    .axis-card {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      overflow: hidden;
+      min-height: 156px;
+      padding: 16px 16px 15px;
+      border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel) 84%, transparent);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--panel) 90%, transparent);
+    }
+
+    .axis-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--teal);
+    }
+
+    .axis-role {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border: 1px solid color-mix(in srgb, currentColor 42%, var(--line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 84%, transparent);
+      font: 800 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .axis-card strong {
+      display: block;
+      font-size: 1.02rem;
+      line-height: 1.18;
+    }
+
+    .axis-card small {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.48;
+    }
+
+    .axis-card.preview {
+      color: var(--teal);
+    }
+
+    .axis-card.frontend {
+      color: var(--rust);
+    }
+
+    .axis-card.satellite {
+      color: var(--gold);
+    }
+
+    .axis-card.publish {
+      color: var(--blue);
+    }
+
+    .axis-card.frontend::before {
+      background: var(--rust);
+    }
+
+    .axis-card.satellite::before {
+      background: var(--gold);
+    }
+
+    .axis-card.publish::before {
+      background: var(--blue);
+    }
+
+    .axis-card strong,
+    .axis-card small {
+      color: var(--ink);
+    }
+
+    .axis-card small {
+      color: var(--muted);
+    }
+
+    .axis-caption {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      padding: 14px 16px;
+      border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+      border-radius: 8px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--panel) 74%, transparent);
+      font-size: 0.92rem;
+      line-height: 1.62;
+    }
+
+    .axis-caption strong {
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .article-layout {
+      display: grid;
+      grid-template-columns: minmax(0, var(--measure)) minmax(240px, 292px);
+      gap: clamp(28px, 5vw, 62px);
+      justify-content: center;
+      align-items: start;
+    }
+
+    .rail {
+      position: sticky;
+      top: 82px;
+      align-self: start;
+    }
+
+    .left-rail {
+      grid-column: 1 / -1;
+      top: 12px;
+      z-index: 18;
+    }
+
+    main {
+      grid-column: 1;
+      min-width: 0;
+    }
+
+    .right-rail {
+      grid-column: 2;
+    }
+
+    .toc,
+    .reading-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      box-shadow: 0 12px 26px rgba(30, 33, 27, 0.06);
+      backdrop-filter: blur(12px);
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+    }
+
+    .toc h2,
+    .reading-card h2 {
+      margin: 0 0 12px;
+      font-family: "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      color: var(--rust);
+    }
+
+    .toc h2 {
+      margin: 0 8px 0 4px;
+      white-space: nowrap;
+    }
+
+    .toc a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--faint);
+      border-radius: 7px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--paper-strong) 62%, transparent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.35;
+      text-decoration: none;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .toc a:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+      color: var(--teal);
+      background: var(--panel);
+    }
+
+    .reading-card {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .reading-card b {
+      color: var(--ink);
+    }
+
+    .reading-card code {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    article {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 34px;
+      min-width: 0;
+    }
+
+    section {
+      min-width: 0;
+      padding: 34px 0 10px;
+      border-top: 1px solid var(--line);
+      scroll-margin-top: 80px;
+    }
+
+    section:first-child {
+      border-top: 0;
+    }
+
+    .section-number {
+      margin: 0 0 10px;
+      color: var(--rust);
+      font: 800 0.78rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    h2 {
+      margin: 0 0 20px;
+      font-size: 2.45rem;
+    }
+
+    h3 {
+      margin: 34px 0 14px;
+      font-size: 1.58rem;
+    }
+
+    p {
+      margin: 0 0 18px;
+      font-size: 1.02rem;
+      text-wrap: pretty;
+    }
+
+    strong {
+      color: var(--ink);
+    }
+
+    .note {
+      margin: 24px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--rust);
+      border-radius: 0 8px 8px 0;
+      background: color-mix(in srgb, var(--panel-soft) 82%, transparent);
+    }
+
+    .note p:last-child {
+      margin-bottom: 0;
+    }
+
+    .callout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .callout {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .callout h3 {
+      margin: 0 0 10px;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 1rem;
+      line-height: 1.3;
+    }
+
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .code-block {
+      margin: 22px 0;
+      border: 1px solid color-mix(in srgb, var(--line) 58%, var(--black));
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--code-bg);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .code-label {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 12px;
+      color: var(--chrome-ink);
+      background: var(--chrome-bg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font: 800 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      font-size: 0.83rem;
+      line-height: 1.75;
+    }
+
+    .table-wrap {
+      margin: 24px 0;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--faint);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    th {
+      color: var(--ink);
+      background: color-mix(in srgb, var(--panel-soft) 70%, transparent);
+      font-size: 0.78rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .role-map {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .role {
+      min-height: 188px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .role b {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .role span {
+      display: inline-flex;
+      margin-bottom: 14px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: var(--paper-strong);
+      background: var(--teal);
+      font: 800 0.7rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .role:nth-child(2) span {
+      background: var(--blue);
+    }
+
+    .role:nth-child(3) span {
+      background: var(--gold);
+      color: var(--gold-ink);
+    }
+
+    .role p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.91rem;
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 12px;
+      margin: 24px 0;
+      counter-reset: step;
+    }
+
+    .pipe-step {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .pipe-step::before {
+      counter-increment: step;
+      content: "0" counter(step);
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--rust);
+      background: var(--paper-strong);
+      font: 800 0.9rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .pipe-step b {
+      display: block;
+      line-height: 1.25;
+    }
+
+    .pipe-step span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .pipe-step code {
+      display: inline-flex;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      background: var(--panel-soft);
+      font-size: 0.75rem;
+    }
+
+    figure {
+      margin: 28px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: var(--media-bg);
+    }
+
+    figcaption {
+      display: grid;
+      gap: 4px;
+      padding: 13px 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    figcaption b {
+      color: var(--ink);
+    }
+
+    .figure-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 28px 0;
+    }
+
+    .figure-pair figure {
+      margin: 0;
+    }
+
+    .scroll-shot {
+      max-height: 820px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--scroll-bg);
+    }
+
+    .scroll-shot img {
+      min-height: 1260px;
+      object-fit: contain;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 10px;
+      margin: 24px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      position: relative;
+      display: block;
+      min-height: 58px;
+      padding: 15px 16px 15px 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.65;
+    }
+
+    .checklist li::before {
+      content: "";
+      position: absolute;
+      top: 20px;
+      left: 18px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      background: var(--rust);
+      box-shadow: inset 0 0 0 4px var(--panel);
+      border: 1px solid var(--rust);
+    }
+
+    .checklist li strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .summary-item {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .summary-item b {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--rust);
+      font: 800 0.75rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .summary-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .aside-stat {
+      padding: 14px 0;
+      border-top: 1px solid var(--faint);
+    }
+
+    .aside-stat:first-of-type {
+      border-top: 0;
+    }
+
+    .aside-stat strong {
+      display: block;
+      color: var(--ink);
+      font: 800 1.65rem/1 "Newsreader", Georgia, "Times New Roman", serif;
+    }
+
+    .aside-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    .footer {
+      margin-top: 58px;
+      padding: 24px 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1240px) {
+      .article-hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      h1 {
+        font-size: 3.7rem;
+      }
+
+      .article-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .rail {
+        position: static;
+      }
+
+      .left-rail {
+        grid-column: 1;
+        order: -1;
+      }
+
+      main,
+      .right-rail {
+        grid-column: 1;
+      }
+
+      .right-rail {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .reading-card {
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 24px, 1220px);
+        padding-top: 72px;
+      }
+
+      .theme-switch {
+        top: 10px;
+        right: 10px;
+      }
+
+      .home-link {
+        top: 10px;
+        left: 10px;
+        min-height: 34px;
+        padding: 0 10px;
+        font-size: 0.72rem;
+      }
+
+      h1 {
+        font-size: 2.72rem;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      .dek {
+        font-size: 1.04rem;
+      }
+
+      .axis-board,
+      .callout-grid,
+      .role-map,
+      .figure-pair,
+      .summary-grid,
+      .right-rail {
+        grid-template-columns: 1fr;
+      }
+
+      .axis-board {
+        min-height: 0;
+      }
+
+      .map-head {
+        flex-direction: column;
+      }
+
+      .map-head strong {
+        max-width: none;
+        text-align: left;
+      }
+
+      .axis-board {
+        gap: 14px;
+        padding-top: 72px;
+      }
+
+      .axis-board::before,
+      .axis-board::after {
+        display: none;
+      }
+
+      .axis-ribbon.execution {
+        left: 14px;
+        right: auto;
+        top: 38px;
+      }
+
+      .pipe-step {
+        grid-template-columns: 48px minmax(0, 1fr);
+      }
+
+      .pipe-step code {
+        grid-column: 2;
+        width: fit-content;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="home-link" href="/" aria-label="Về trang chủ">{t.home_link}</a>
+  <LangSwitcher slug="ck-visual-automation-toolkit" />
+  <div class="theme-switch" aria-label="Chọn giao diện">
+    <button type="button" data-theme-choice="light" aria-pressed="true">{t.theme_light}</button>
+    <button type="button" data-theme-choice="dark" aria-pressed="false">{t.theme_dark}</button>
+  </div>
+  <div class="progress" aria-hidden="true"></div>
+
+  <div class="page">
+    <header class="article-hero">
+      <div class="lead-stack">
+        <p class="kicker">{t.kicker}</p>
+        <h1><Fragment set:html={t.hero_title} /></h1>
+        <p class="dek">{t.hero_dek}</p>
+        <div class="hero-meta" aria-label="Thông tin bài viết">
+          <span>{t.hero_meta1}</span>
+          <span>{t.hero_meta2}</span>
+          <span>{t.hero_meta3}</span>
+        </div>
+      </div>
+
+      <aside class="hero-map" aria-label="Bản đồ định vị skill">
+        <div class="map-head">
+          <span>{t.map_badge}</span>
+        </div>
+        <div class="axis-board">
+          <span class="axis-ribbon thought">{t.map_ribbon_thought}</span>
+          <span class="axis-ribbon execution">{t.map_ribbon_exec}</span>
+          <div class="axis-card preview">
+            <span class="axis-role">{t.map_card_preview_role}</span>
+            <strong>/ck:preview</strong>
+            <small>{t.map_card_preview_desc}</small>
+          </div>
+          <div class="axis-card frontend">
+            <span class="axis-role">{t.map_card_frontend_role}</span>
+            <strong>/ck:frontend-design</strong>
+            <small>{t.map_card_frontend_desc}</small>
+          </div>
+          <div class="axis-card satellite">
+            <span class="axis-role">{t.map_card_satellite_role}</span>
+            <strong>tech-graph · mermaid</strong>
+            <small>{t.map_card_satellite_desc}</small>
+          </div>
+          <div class="axis-card publish">
+            <span class="axis-role">{t.map_card_publish_role}</span>
+            <strong>show-off · novel-viewer</strong>
+            <small>{t.map_card_publish_desc}</small>
+          </div>
+        </div>
+        <p class="axis-caption">
+          <Fragment set:html={t.map_caption} />
+        </p>
+      </aside>
+    </header>
+
+    <div class="article-layout">
+      <aside class="rail left-rail">
+        <nav class="toc" aria-label="Mục lục">
+          <h2>{t.toc_label}</h2>
+          <a href="#intro">{t.toc_intro}</a>
+          <a href="#preview-vs-frontend">{t.toc_01}</a>
+          <a href="#satellites">{t.toc_02}</a>
+          <a href="#case-study">{t.toc_03}</a>
+          <a href="#frontend-vs-stitch">{t.toc_04}</a>
+          <a href="#pitfalls">{t.toc_05}</a>
+          <a href="#summary">{t.toc_summary}</a>
+        </nav>
+      </aside>
+
+      <main>
+        <article>
+          <section id="intro" data-od-id="intro">
+            <p class="section-number">{t.intro_num}</p>
+            <h2>{t.intro_h2}</h2>
+            <p>{t.intro_p1}</p>
+            <p><Fragment set:html={t.intro_p2} /></p>
+            <div class="note">
+              <p><Fragment set:html={t.intro_note1} /></p>
+              <p><Fragment set:html={t.intro_note2} /></p>
+            </div>
+          </section>
+
+          <section id="preview-vs-frontend" data-od-id="preview-vs-frontend">
+            <p class="section-number">{t.s01_num}</p>
+            <h2><Fragment set:html={t.s01_h2} /></h2>
+            <p><Fragment set:html={t.s01_p1} /></p>
+
+            <div class="callout-grid">
+              <div class="callout">
+                <h3><Fragment set:html={t.s01_callout1_h3} /></h3>
+                <p><Fragment set:html={t.s01_callout1_p} /></p>
+              </div>
+              <div class="callout">
+                <h3><Fragment set:html={t.s01_callout2_h3} /></h3>
+                <p>{t.s01_callout2_p}</p>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-label"><span>{t.s01_codelabel1a}</span><span>{t.s01_codelabel1b}</span></div>
+              <pre><code>/ck:preview --html --explain "i18n pipeline của blog: từ HTML source qua JSON tới 4 locale route"
+/ck:preview --html --slides "kiến trúc monorepo Astro + Turborepo"
+/ck:preview --diff HEAD~3</code></pre>
+            </div>
+
+            <p><Fragment set:html={t.s01_p2} /></p>
+
+            <div class="code-block">
+              <div class="code-label"><span>{t.s01_codelabel2a}</span><span>{t.s01_codelabel2b}</span></div>
+              <pre><code>/ck:frontend-design Replicate UI trong screenshot này bằng HTML/Tailwind  [+ đính kèm ảnh]
+/ck:frontend-design Dashboard quản lý đơn hàng, dải dữ liệu dày. DESIGN_VARIANCE=4, VISUAL_DENSITY=8</code></pre>
+            </div>
+
+            <p><Fragment set:html={t.s01_p3} /></p>
+
+            <div class="table-wrap" aria-label="Design Dials">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t.dials_th_dial}</th>
+                    <th>{t.dials_th_default}</th>
+                    <th>{t.dials_th_low}</th>
+                    <th>{t.dials_th_high}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>DESIGN_VARIANCE</code></td>
+                    <td>8</td>
+                    <td>{t.dials_r1_low}</td>
+                    <td>{t.dials_r1_high}</td>
+                  </tr>
+                  <tr>
+                    <td><code>MOTION_INTENSITY</code></td>
+                    <td>6</td>
+                    <td>{t.dials_r2_low}</td>
+                    <td>{t.dials_r2_high}</td>
+                  </tr>
+                  <tr>
+                    <td><code>VISUAL_DENSITY</code></td>
+                    <td>4</td>
+                    <td>{t.dials_r3_low}</td>
+                    <td>{t.dials_r3_high}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>{t.routing_h3}</h3>
+            <div class="table-wrap" aria-label="Bảng routing nhanh">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t.routing_th_input}</th>
+                    <th>{t.routing_th_call}</th>
+                    <th>{t.routing_th_why}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{t.routing_r1_input}</td>
+                    <td><code>preview --html --explain "&lt;topic&gt;"</code></td>
+                    <td>{t.routing_r1_why}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.routing_r2_input}</td>
+                    <td><code>preview --html --slides "&lt;topic&gt;"</code></td>
+                    <td>{t.routing_r2_why}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.routing_r3_input}</td>
+                    <td><code>preview --diff &lt;ref&gt;</code></td>
+                    <td>{t.routing_r3_why}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.routing_r4_input}</td>
+                    <td><code>preview --plan-review &lt;plan&gt;</code></td>
+                    <td>{t.routing_r4_why}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.routing_r5_input}</td>
+                    <td><Fragment set:html={t.routing_r5_call} /></td>
+                    <td>{t.routing_r5_why}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.routing_r6_input}</td>
+                    <td><code>frontend-design</code></td>
+                    <td>{t.routing_r6_why}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p><Fragment set:html={t.s01_p4} /></p>
+          </section>
+
+          <section id="satellites" data-od-id="satellites">
+            <p class="section-number">{t.s02_num}</p>
+            <h2>{t.s02_h2}</h2>
+            <p>{t.s02_p1}</p>
+
+            <div class="role-map" aria-label="Ba nhóm skill vệ tinh">
+              <div class="role">
+                <span>{t.s02_role1_tag}</span>
+                <b>{t.s02_role1_b}</b>
+                <p><Fragment set:html={t.s02_role1_p} /></p>
+              </div>
+              <div class="role">
+                <span>{t.s02_role2_tag}</span>
+                <b>{t.s02_role2_b}</b>
+                <p><Fragment set:html={t.s02_role2_p} /></p>
+              </div>
+              <div class="role">
+                <span style="background: var(--rust); color: var(--panel);">{t.s02_role3_tag}</span>
+                <b>{t.s02_role3_b}</b>
+                <p><Fragment set:html={t.s02_role3_p} /></p>
+              </div>
+            </div>
+
+            <h3>{t.s02_g1_h3}</h3>
+            <p><Fragment set:html={t.s02_g1_p1} /></p>
+            <p><Fragment set:html={t.s02_g1_p2} /></p>
+
+            <h3>{t.s02_g2_h3}</h3>
+            <p><Fragment set:html={t.s02_g2_p1} /></p>
+            <p><Fragment set:html={t.s02_g2_p2} /></p>
+            <div class="note">
+              <p><Fragment set:html={t.s02_g2_note} /></p>
+            </div>
+
+            <h3>{t.s02_g3_h3}</h3>
+            <p><Fragment set:html={t.s02_g3_p1} /></p>
+            <p><Fragment set:html={t.s02_g3_p2} /></p>
+          </section>
+
+          <section id="case-study" data-od-id="case-study">
+            <p class="section-number">{t.s03_num}</p>
+            <h2>{t.s03_h2}</h2>
+            <p><Fragment set:html={t.s03_p1} /></p>
+            <p>{t.s03_p2}</p>
+            <div class="note">
+              <p><Fragment set:html={t.s03_note} /></p>
+            </div>
+
+            <h3>{t.s03_p1_h3}</h3>
+            <p><em>{t.s03_p1_em}</em></p>
+            <div class="code-block">
+              <div class="code-label"><span>{t.s03_p1_codelabel_a}</span><span>{t.s03_p1_codelabel_b}</span></div>
+              <pre><code>/ck:preview --html --explain "expense approval app: 5 layer từ SPA xuống PostgreSQL,
+  state machine draft→submitted→under_review→approved→paid, 5 surface"
+
+/ck:stitch "tự suy diễn UI screens cho expense approval app từ workflow trong plan;
+  liệt kê screen list cho tôi duyệt trước khi gen"</code></pre>
+            </div>
+            <ul class="checklist">
+              <li><Fragment set:html={t.s03_p1_li1} /></li>
+              <li><Fragment set:html={t.s03_p1_li2} /></li>
+            </ul>
+
+            <h3>{t.s03_p2_h3}</h3>
+            <p><em>{t.s03_p2_em}</em></p>
+
+            <div class="pipeline" aria-label="Comprehensive flow 4 bước">
+              <div class="pipe-step">
+                <div>
+                  <b>{t.s03_pipe1_b}</b>
+                  <span>{t.s03_pipe1_s}</span>
+                </div>
+                <code>architecture</code>
+              </div>
+              <div class="pipe-step">
+                <div>
+                  <b>{t.s03_pipe2_b}</b>
+                  <span>{t.s03_pipe2_s}</span>
+                </div>
+                <code>approval queue</code>
+              </div>
+              <div class="pipe-step">
+                <div>
+                  <b>{t.s03_pipe3_b}</b>
+                  <span>{t.s03_pipe3_s}</span>
+                </div>
+                <code>state machine</code>
+              </div>
+              <div class="pipe-step">
+                <div>
+                  <b>{t.s03_pipe4_b}</b>
+                  <span>{t.s03_pipe4_s}</span>
+                </div>
+                <code>showcase</code>
+              </div>
+            </div>
+
+            <h3><Fragment set:html={t.s03_step1_h3} /></h3>
+            <div class="code-block">
+              <div class="code-label"><span>{t.s03_step1_codelabel_a}</span><span>{t.s03_step1_codelabel_b}</span></div>
+              <pre><code>/ck:tech-graph Sơ đồ kiến trúc expense approval app: 5 layer Frontend (5 screen) →
+  API (role-based) → Service (ClaimService owns state machine, Approval, Payment, Audit)
+  → Data (PostgreSQL) + Storage (receipts). Style Blueprint.</code></pre>
+            </div>
+            <p>{t.s03_step1_p}</p>
+            <figure>
+              <img src="/posts/ck-visual-automation-toolkit/tech-graph-architecture.png" alt="Sơ đồ kiến trúc 5 layer của expense app, style Blueprint" loading="lazy">
+              <figcaption>
+                <b>{t.s03_step1_figcap_b}</b>
+                {t.s03_step1_figcap_t}
+              </figcaption>
+            </figure>
+
+            <h3><Fragment set:html={t.s03_step2_h3} /></h3>
+            <div class="code-block">
+              <div class="code-label"><span>{t.s03_step2_codelabel_a}</span><span>{t.s03_step2_codelabel_b}</span></div>
+              <pre><code>/ck:frontend-design Màn hình Approval Queue cho expense approval app (desktop, dev-tool style).
+  Sidebar nav + master-detail: danh sách claim chờ duyệt bên trái, chi tiết line item + nút
+  approve/reject bên phải. Badge màu theo trạng thái. DESIGN_VARIANCE=4, VISUAL_DENSITY=8</code></pre>
+            </div>
+            <p><Fragment set:html={t.s03_step2_p} /></p>
+            <figure>
+              <img src="/posts/ck-visual-automation-toolkit/frontend-design-approval-queue.png" alt="Màn hình Approval Queue dựng từ frontend-design, density cao" loading="lazy">
+              <figcaption>
+                <b>{t.s03_step2_figcap_b}</b>
+                {t.s03_step2_figcap_t}
+              </figcaption>
+            </figure>
+
+            <h3><Fragment set:html={t.s03_step3_h3} /></h3>
+            <div class="code-block">
+              <div class="code-label"><span>{t.s03_step3_codelabel_a}</span><span>{t.s03_step3_codelabel_b}</span></div>
+              <pre><code>/ck:preview --html --slides "vòng đời một expense claim: employee tạo & nộp → manager
+  duyệt → accountant thanh toán, kèm state machine và 3 guardrail"</code></pre>
+            </div>
+            <p>{t.s03_step3_p}</p>
+            <div class="figure-pair">
+              <figure>
+                <img src="/posts/ck-visual-automation-toolkit/preview-slides-title.png" alt="Slide title của deck workflow, preset Editorial dark" loading="lazy">
+                <figcaption><b>{t.s03_step3_figcap_a_b}</b> {t.s03_step3_figcap_a_t}</figcaption>
+              </figure>
+              <figure>
+                <img src="/posts/ck-visual-automation-toolkit/preview-slides-statemachine.png" alt="Slide state machine cùng deck ở light theme" loading="lazy">
+                <figcaption><b>{t.s03_step3_figcap_b_b}</b> {t.s03_step3_figcap_b_t}</figcaption>
+              </figure>
+            </div>
+
+            <h3><Fragment set:html={t.s03_step4_h3} /></h3>
+            <div class="code-block">
+              <div class="code-label"><span>{t.s03_step4_codelabel_a}</span><span>{t.s03_step4_codelabel_b}</span></div>
+              <pre><code>/ck:show-off Trang showcase "Expense Approval — bộ hồ sơ trực quan", gộp sơ đồ kiến trúc
+  (bước 1), màn hình Approval Queue (bước 2), và slide workflow (bước 3) thành các section
+  có nav anchor, mở thẳng browser không cần server.</code></pre>
+            </div>
+            <p><Fragment set:html={t.s03_step4_p} /></p>
+            <figure>
+              <div class="scroll-shot">
+                <img src="/posts/ck-visual-automation-toolkit/show-off-showcase-full.png" alt="Trang showcase gộp cả 3 asset thành một deliverable self-contained" loading="lazy">
+              </div>
+              <figcaption>
+                <b>{t.s03_step4_figcap_b}</b>
+                {t.s03_step4_figcap_t}
+              </figcaption>
+            </figure>
+
+            <div class="note">
+              <p><Fragment set:html={t.s03_note2} /></p>
+            </div>
+          </section>
+
+          <section id="frontend-vs-stitch" data-od-id="frontend-vs-stitch">
+            <p class="section-number">{t.s04_num}</p>
+            <h2><Fragment set:html={t.s04_h2} /></h2>
+            <p>{t.s04_p1}</p>
+
+            <div class="callout-grid">
+              <div class="callout">
+                <h3><Fragment set:html={t.s04_callout1_h3} /></h3>
+                <p>{t.s04_callout1_p}</p>
+              </div>
+              <div class="callout">
+                <h3><Fragment set:html={t.s04_callout2_h3} /></h3>
+                <p>{t.s04_callout2_p}</p>
+              </div>
+            </div>
+
+            <div class="table-wrap" aria-label="Frontend design và stitch">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t.s04_th_case}</th>
+                    <th>{t.s04_th_skill}</th>
+                    <th>{t.s04_th_nature}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{t.s04_r1_case}</td>
+                    <td><code>frontend-design</code></td>
+                    <td>{t.s04_r1_nature}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.s04_r2_case}</td>
+                    <td><code>stitch</code></td>
+                    <td>{t.s04_r2_nature}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>{t.s04_h3}</h3>
+            <ul class="checklist">
+              <li><Fragment set:html={t.s04_li1} /></li>
+              <li><Fragment set:html={t.s04_li2} /></li>
+              <li><Fragment set:html={t.s04_li3} /></li>
+            </ul>
+
+            <p><Fragment set:html={t.s04_p2} /></p>
+          </section>
+
+          <section id="pitfalls" data-od-id="pitfalls">
+            <p class="section-number">{t.s05_num}</p>
+            <h2>{t.s05_h2}</h2>
+            <p><Fragment set:html={t.s05_p1} /></p>
+
+            <ul class="checklist">
+              <li><Fragment set:html={t.s05_li1} /></li>
+              <li><Fragment set:html={t.s05_li2} /></li>
+              <li><Fragment set:html={t.s05_li3} /></li>
+              <li><Fragment set:html={t.s05_li4} /></li>
+              <li><Fragment set:html={t.s05_li5} /></li>
+              <li><Fragment set:html={t.s05_li6} /></li>
+            </ul>
+          </section>
+
+          <section id="summary" data-od-id="summary">
+            <p class="section-number">{t.summary_num}</p>
+            <h2>{t.summary_h2}</h2>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <b>{t.summary_q1_b}</b>
+                <p><Fragment set:html={t.summary_q1_p} /></p>
+              </div>
+              <div class="summary-item">
+                <b>{t.summary_q2_b}</b>
+                <p><Fragment set:html={t.summary_q2_p} /></p>
+              </div>
+              <div class="summary-item">
+                <b>{t.summary_q3_b}</b>
+                <p><Fragment set:html={t.summary_q3_p} /></p>
+              </div>
+              <div class="summary-item">
+                <b>{t.summary_q4_b}</b>
+                <p><Fragment set:html={t.summary_q4_p} /></p>
+              </div>
+              <div class="summary-item">
+                <b>{t.summary_q5_b}</b>
+                <p><Fragment set:html={t.summary_q5_p} /></p>
+              </div>
+              <div class="summary-item">
+                <b>{t.summary_q6_b}</b>
+                <p>{t.summary_q6_p}</p>
+              </div>
+            </div>
+            <p><Fragment set:html={t.summary_p} /></p>
+          </section>
+        </article>
+      </main>
+
+      <aside class="rail right-rail">
+        <div class="reading-card">
+          <h2>{t.aside_reading_h2}</h2>
+          <div class="aside-stat">
+            <strong>2</strong>
+            <span>{t.aside_stat1_s}</span>
+          </div>
+          <div class="aside-stat">
+            <strong>5</strong>
+            <span>{t.aside_stat2_s}</span>
+          </div>
+          <div class="aside-stat">
+            <strong>4</strong>
+            <span>{t.aside_stat3_s}</span>
+          </div>
+        </div>
+        <div class="reading-card">
+          <h2>{t.aside_lens_h2}</h2>
+          <p><Fragment set:html={t.aside_lens1} /></p>
+          <p><Fragment set:html={t.aside_lens2} /></p>
+          <p><Fragment set:html={t.aside_lens3} /></p>
+          <p><Fragment set:html={t.aside_lens4} /></p>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="footer">
+      {t.footer}
+    </footer>
+  </div>
+
+  <Analytics measurementId={import.meta.env.INSIDE_CLAUDEKIT_GA_ID || ''} />
+  <script>
+    var localePrefix = window.location.pathname.match(/^\/(en|zh|ja)\//);
+    var homeHref = localePrefix ? '/' + localePrefix[1] : '/';
+    document.querySelectorAll('.home-link').forEach(function (a) { a.href = homeHref; });
+
+    const root = document.documentElement;
+    const buttons = Array.from(document.querySelectorAll("[data-theme-choice]"));
+
+    function setTheme(theme) {
+      root.dataset.theme = theme;
+      buttons.forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
+      });
+      try {
+        localStorage.setItem("theme", theme);
+      } catch {
+      }
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => setTheme(button.dataset.themeChoice));
+    });
+
+    setTheme(root.dataset.theme === "dark" ? "dark" : "light");
+
+    function updateProgress() {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const value = max > 0 ? Math.min(100, Math.max(0, (scrollTop / max) * 100)) : 0;
+      root.style.setProperty("--progress", `${value}%`);
+    }
+
+    updateProgress();
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+  </script>
+</body>
+</html>

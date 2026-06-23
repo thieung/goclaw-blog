@@ -1,0 +1,12 @@
+New Inside ClaudeKit post: ClaudeKit has no single visualization command, it has a whole skill system, and calling the wrong one is the most common mistake.
+
+The cleanest way to pick: does the output serve thinking, or serve a product?
+
+• `/ck:preview` orchestrates thinking. It produces explanations, slides, diagrams, and diff dashboards for a team to read and reconcile. Consistent presets, mandatory theme toggle.
+• `/ck:frontend-design` executes UI. It builds polished product interfaces for end users, with anti-slop rules and Design Dials.
+• `/ck:tech-graph` and `/ck:mermaidjs-v11` handle diagrams; `/ck:show-off` packages a self-contained showcase.
+• `/ck:frontend-design` replicates from a source design; `/ck:stitch` extrapolates UI when there is none.
+
+The core of the post is a real run: visualizing an entire plan file end to end through four steps, with screenshots kept as evidence.
+
+Link below.

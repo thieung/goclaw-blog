@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500..800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    font-family: "Manrope", system-ui, sans-serif;
+    color: #20251f;
+    background:
+      linear-gradient(90deg, rgba(32,37,31,0.035) 0 1px, transparent 1px 100%),
+      linear-gradient(180deg, rgba(32,37,31,0.032) 0 1px, transparent 1px 100%),
+      #f1f1eb;
+    background-size: 48px 48px, 48px 48px, auto;
+    position: relative;
+    overflow: hidden;
+  }
+  .frame { position: absolute; inset: 26px; border: 1px solid #c6cebf; border-radius: 14px; }
+  .corner { position: absolute; top: 44px; right: 48px; width: 74px; height: 74px;
+    border-top: 3px solid #0e7068; border-right: 3px solid #a74622; opacity: 0.8; }
+  .pad { position: absolute; inset: 26px; padding: 56px 60px; display: flex; flex-direction: column; }
+  .kicker { font: 800 19px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #a74622; }
+  h1 { font-family: "Newsreader", Georgia, serif; font-weight: 680; font-size: 72px; line-height: 1.04;
+    letter-spacing: -0.01em; margin-top: 26px; max-width: 16ch; }
+  .hl { position: relative; color: #a74622; }
+  .hl::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0.08em; height: 0.30em;
+    background: linear-gradient(90deg, rgba(167,122,33,0.4), rgba(167,70,34,0.28), rgba(14,112,104,0.22));
+    border-radius: 5px; z-index: -1; }
+  .dek { margin-top: 26px; color: #62695f; font-size: 25px; line-height: 1.5; max-width: 32ch; font-weight: 500; }
+  .pills { margin-top: auto; display: flex; gap: 12px; }
+  .pill { font: 800 17px/1 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 11px 16px;
+    border: 1px solid #c6cebf; border-radius: 999px; background: rgba(255,254,250,0.7); }
+  .pill.t { color: #0e7068; border-color: rgba(14,112,104,0.4); }
+  .pill.r { color: #a74622; border-color: rgba(167,70,34,0.4); }
+  .pill.g { color: #a77a21; border-color: rgba(167,122,33,0.4); }
+  .brand { position: absolute; bottom: 56px; right: 60px; display: flex; align-items: center; gap: 12px;
+    font: 700 19px/1 "Manrope", sans-serif; color: #62695f; }
+  .brand img { height: 30px; }
+</style>
+</head>
+<body>
+  <div class="frame"></div>
+  <div class="corner"></div>
+  <div class="pad">
+    <div class="kicker">Inside ClaudeKit · Deep Dive</div>
+    <h1>ClaudeKit's <span class="hl">visualization</span> toolkit</h1>
+    <div class="dek">Orchestrate thinking or execute UI: pick the right skill, with a real run as evidence.</div>
+    <div class="pills">
+      <span class="pill t">preview</span>
+      <span class="pill r">frontend-design</span>
+      <span class="pill g">tech-graph · show-off</span>
+    </div>
+  </div>
+  <div class="brand"><img src="../../../public/logo-horizontal.png" alt="ClaudeKit"></div>
+</body>
+</html>

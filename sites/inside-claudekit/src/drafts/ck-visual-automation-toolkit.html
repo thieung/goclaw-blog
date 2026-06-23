@@ -1,0 +1,1864 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/favicon.ico">
+  <title>Bộ công cụ trực quan hóa của ClaudeKit: điều phối vs thực thi</title>
+  <meta name="description" content="Hệ skill trực quan hóa của ClaudeKit: preview điều phối tư duy, frontend-design thực thi UI, tech-graph và show-off lo xuất bản. Kèm case study chạy thật.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Bộ công cụ trực quan hóa của ClaudeKit: điều phối vs thực thi">
+  <meta property="og:description" content="Hệ skill trực quan hóa của ClaudeKit: preview điều phối tư duy, frontend-design thực thi UI, tech-graph và show-off lo xuất bản. Kèm case study chạy thật.">
+  <meta property="og:image" content="https://claudekit.thieunv.space/og/ck-visual-automation-toolkit.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://claudekit.thieunv.space/og/ck-visual-automation-toolkit.png">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        document.documentElement.dataset.theme = (stored === 'light' || stored === 'dark') ? stored : 'dark';
+      } catch (_) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    })();
+  </script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500..800&display=swap");
+
+    :root {
+      --paper: #f1f1eb;
+      --paper-strong: #fffdf5;
+      --ink: #20251f;
+      --muted: #62695f;
+      --faint: #dde0d6;
+      --line: #c6cebf;
+      --panel: #fffefa;
+      --panel-soft: #e9eee6;
+      --rust: #a74622;
+      --teal: #0e7068;
+      --gold: #a77a21;
+      --blue: #365b83;
+      --violet: #6b5678;
+      --code-bg: #171a17;
+      --code-ink: #f3eddc;
+      --black: #000000;
+      --chrome-bg: #111411;
+      --chrome-ink: #c5cbbb;
+      --gold-ink: #201a0c;
+      --media-bg: #111111;
+      --scroll-bg: #121511;
+      --dark-paper: #151915;
+      --dark-paper-strong: #1d211c;
+      --dark-ink: #f0eadf;
+      --dark-muted: #b7bcae;
+      --dark-faint: #343a33;
+      --dark-line: #4b544b;
+      --dark-panel: #20261f;
+      --dark-panel-soft: #1a211e;
+      --dark-rust: #df8a5f;
+      --dark-teal: #64c3b7;
+      --dark-gold: #dfbc61;
+      --dark-blue: #8fb3d8;
+      --dark-violet: #c2a7d0;
+      --dark-code-bg: #0d0f0d;
+      --dark-code-ink: #f6ead4;
+      --shadow: 0 18px 45px rgba(33, 37, 29, 0.11);
+      --radius: 8px;
+      --measure: 790px;
+      --progress: 0%;
+    }
+
+    [data-theme="dark"] {
+      --paper: var(--dark-paper);
+      --paper-strong: var(--dark-paper-strong);
+      --ink: var(--dark-ink);
+      --muted: var(--dark-muted);
+      --faint: var(--dark-faint);
+      --line: var(--dark-line);
+      --panel: var(--dark-panel);
+      --panel-soft: var(--dark-panel-soft);
+      --rust: var(--dark-rust);
+      --teal: var(--dark-teal);
+      --gold: var(--dark-gold);
+      --blue: var(--dark-blue);
+      --violet: var(--dark-violet);
+      --code-bg: var(--dark-code-bg);
+      --code-ink: var(--dark-code-ink);
+      --shadow: 0 20px 46px rgba(0, 0, 0, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 82%, transparent), transparent 560px),
+        linear-gradient(90deg, rgba(32, 37, 31, 0.035) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, rgba(32, 37, 31, 0.032) 0 1px, transparent 1px 100%),
+        var(--paper);
+      background-size: auto, 96px 96px, 96px 96px, auto;
+      font-family: "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    .home-link {
+      position: fixed;
+      z-index: 30;
+      top: 16px;
+      left: 16px;
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      font: 700 0.78rem/1 "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-decoration: none;
+    }
+
+    .home-link:hover {
+      border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+      color: var(--teal);
+    }
+
+    .theme-switch {
+      position: fixed;
+      z-index: 30;
+      top: 16px;
+      right: 16px;
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 3px;
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .theme-switch button {
+      min-width: 58px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 6px;
+      color: var(--muted);
+      background: transparent;
+      font: 700 0.76rem/1 "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      cursor: pointer;
+    }
+
+    .theme-switch button[aria-pressed="true"] {
+      color: var(--paper-strong);
+      background: var(--ink);
+    }
+
+    .progress {
+      position: fixed;
+      z-index: 25;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: transparent;
+    }
+
+    .progress::before {
+      content: "";
+      display: block;
+      width: var(--progress);
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--rust), var(--gold));
+    }
+
+    a {
+      color: var(--teal);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.18em;
+    }
+
+    code,
+    pre,
+    kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .page {
+      width: min(1320px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 52px 0 72px;
+    }
+
+    .article-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.75fr);
+      gap: 32px;
+      align-items: stretch;
+      min-height: min(880px, calc(100dvh - 72px));
+      padding: 62px 0 34px;
+    }
+
+    .kicker {
+      margin: 0 0 20px;
+      color: var(--rust);
+      font: 800 0.78rem/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: "Newsreader", Georgia, "Times New Roman", serif;
+      font-weight: 680;
+      line-height: 1.08;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    h1 {
+      max-width: 860px;
+      margin: 0;
+      font-size: clamp(3.4rem, 7vw, 6.6rem);
+    }
+
+    .visual-highlight {
+      position: relative;
+      display: inline-block;
+      isolation: isolate;
+      color: var(--rust);
+      padding: 0 0.04em 0.02em;
+    }
+
+    .visual-highlight::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      left: -0.03em;
+      right: -0.03em;
+      bottom: 0.08em;
+      height: 0.3em;
+      border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+      border-radius: 5px;
+      background:
+        linear-gradient(90deg,
+          color-mix(in srgb, var(--gold) 38%, transparent),
+          color-mix(in srgb, var(--rust) 25%, transparent),
+          color-mix(in srgb, var(--teal) 20%, transparent));
+      transform: rotate(-1deg);
+    }
+
+    .visual-highlight::after {
+      content: "";
+      position: absolute;
+      right: -0.04em;
+      bottom: 0.02em;
+      width: 0.22em;
+      height: 0.22em;
+      border-right: 0.04em solid var(--teal);
+      border-bottom: 0.04em solid var(--teal);
+    }
+
+    .dek {
+      max-width: 760px;
+      margin: 28px 0 0;
+      color: var(--muted);
+      font-size: 1.2rem;
+      line-height: 1.7;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .hero-meta span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--panel) 68%, transparent);
+      font-size: 0.83rem;
+      font-weight: 750;
+    }
+
+    .lead-stack {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hero-map {
+      position: relative;
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      overflow: hidden;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--ink) 4%, transparent) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, color-mix(in srgb, var(--ink) 3%, transparent) 0 1px, transparent 1px 100%),
+        linear-gradient(135deg, color-mix(in srgb, var(--panel) 96%, transparent), color-mix(in srgb, var(--panel-soft) 68%, transparent));
+      background-size: 42px 42px, 42px 42px, auto;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-map::before {
+      content: "";
+      position: absolute;
+      inset: 17px;
+      border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .hero-map::after {
+      content: "";
+      position: absolute;
+      top: 26px;
+      right: 26px;
+      width: 68px;
+      height: 68px;
+      border-top: 2px solid color-mix(in srgb, var(--teal) 72%, transparent);
+      border-right: 2px solid color-mix(in srgb, var(--rust) 65%, transparent);
+      opacity: 0.72;
+      pointer-events: none;
+    }
+
+    .map-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 4px 0 14px;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    }
+
+    .map-head span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid color-mix(in srgb, var(--teal) 42%, var(--line));
+      border-radius: 999px;
+      color: var(--teal);
+      background: color-mix(in srgb, var(--panel) 82%, transparent);
+      font: 800 0.74rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .map-head strong {
+      max-width: 220px;
+      color: var(--ink);
+      text-align: right;
+      font-family: "Newsreader", Georgia, "Times New Roman", serif;
+      font-size: 1.34rem;
+      line-height: 1.06;
+    }
+
+    .axis-board {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 14px;
+      min-height: 0;
+      padding: 44px 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg,
+          color-mix(in srgb, var(--teal) 7%, transparent) 0 50%,
+          color-mix(in srgb, var(--rust) 6%, transparent) 50% 100%),
+        linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 88%, transparent), color-mix(in srgb, var(--panel-soft) 62%, transparent));
+    }
+
+    .axis-board::before,
+    .axis-board::after {
+      content: "";
+      position: absolute;
+      background: color-mix(in srgb, var(--line) 76%, transparent);
+      pointer-events: none;
+    }
+
+    .axis-board::before {
+      top: 44px;
+      bottom: 16px;
+      left: 50%;
+      width: 1px;
+    }
+
+    .axis-board::after {
+      right: 16px;
+      left: 16px;
+      top: 50%;
+      height: 1px;
+    }
+
+    .axis-ribbon {
+      position: absolute;
+      top: 12px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      font: 800 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .axis-ribbon.thought {
+      left: 14px;
+      color: var(--teal);
+    }
+
+    .axis-ribbon.execution {
+      right: 14px;
+      color: var(--rust);
+    }
+
+    .axis-card {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      overflow: hidden;
+      min-height: 156px;
+      padding: 16px 16px 15px;
+      border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel) 84%, transparent);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--panel) 90%, transparent);
+    }
+
+    .axis-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--teal);
+    }
+
+    .axis-role {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border: 1px solid color-mix(in srgb, currentColor 42%, var(--line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 84%, transparent);
+      font: 800 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .axis-card strong {
+      display: block;
+      font-size: 1.02rem;
+      line-height: 1.18;
+    }
+
+    .axis-card small {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.48;
+    }
+
+    .axis-card.preview {
+      color: var(--teal);
+    }
+
+    .axis-card.frontend {
+      color: var(--rust);
+    }
+
+    .axis-card.satellite {
+      color: var(--gold);
+    }
+
+    .axis-card.publish {
+      color: var(--blue);
+    }
+
+    .axis-card.frontend::before {
+      background: var(--rust);
+    }
+
+    .axis-card.satellite::before {
+      background: var(--gold);
+    }
+
+    .axis-card.publish::before {
+      background: var(--blue);
+    }
+
+    .axis-card strong,
+    .axis-card small {
+      color: var(--ink);
+    }
+
+    .axis-card small {
+      color: var(--muted);
+    }
+
+    .axis-caption {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      padding: 14px 16px;
+      border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+      border-radius: 8px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--panel) 74%, transparent);
+      font-size: 0.92rem;
+      line-height: 1.62;
+    }
+
+    .axis-caption strong {
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .article-layout {
+      display: grid;
+      grid-template-columns: minmax(0, var(--measure)) minmax(240px, 292px);
+      gap: clamp(28px, 5vw, 62px);
+      justify-content: center;
+      align-items: start;
+    }
+
+    .rail {
+      position: sticky;
+      top: 82px;
+      align-self: start;
+    }
+
+    .left-rail {
+      grid-column: 1 / -1;
+      top: 12px;
+      z-index: 18;
+    }
+
+    main {
+      grid-column: 1;
+      min-width: 0;
+    }
+
+    .right-rail {
+      grid-column: 2;
+    }
+
+    .toc,
+    .reading-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      box-shadow: 0 12px 26px rgba(30, 33, 27, 0.06);
+      backdrop-filter: blur(12px);
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+    }
+
+    .toc h2,
+    .reading-card h2 {
+      margin: 0 0 12px;
+      font-family: "Manrope", "Avenir Next", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      color: var(--rust);
+    }
+
+    .toc h2 {
+      margin: 0 8px 0 4px;
+      white-space: nowrap;
+    }
+
+    .toc a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--faint);
+      border-radius: 7px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--paper-strong) 62%, transparent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.35;
+      text-decoration: none;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .toc a:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+      color: var(--teal);
+      background: var(--panel);
+    }
+
+    .reading-card {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .reading-card b {
+      color: var(--ink);
+    }
+
+    .reading-card code {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    article {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 34px;
+      min-width: 0;
+    }
+
+    section {
+      min-width: 0;
+      padding: 34px 0 10px;
+      border-top: 1px solid var(--line);
+      scroll-margin-top: 80px;
+    }
+
+    section:first-child {
+      border-top: 0;
+    }
+
+    .section-number {
+      margin: 0 0 10px;
+      color: var(--rust);
+      font: 800 0.78rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    h2 {
+      margin: 0 0 20px;
+      font-size: 2.45rem;
+    }
+
+    h3 {
+      margin: 34px 0 14px;
+      font-size: 1.58rem;
+    }
+
+    p {
+      margin: 0 0 18px;
+      font-size: 1.02rem;
+      text-wrap: pretty;
+    }
+
+    strong {
+      color: var(--ink);
+    }
+
+    .note {
+      margin: 24px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--rust);
+      border-radius: 0 8px 8px 0;
+      background: color-mix(in srgb, var(--panel-soft) 82%, transparent);
+    }
+
+    .note p:last-child {
+      margin-bottom: 0;
+    }
+
+    .callout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .callout {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .callout h3 {
+      margin: 0 0 10px;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 1rem;
+      line-height: 1.3;
+    }
+
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .code-block {
+      margin: 22px 0;
+      border: 1px solid color-mix(in srgb, var(--line) 58%, var(--black));
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--code-bg);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .code-label {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 12px;
+      color: var(--chrome-ink);
+      background: var(--chrome-bg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font: 800 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      font-size: 0.83rem;
+      line-height: 1.75;
+    }
+
+    .table-wrap {
+      margin: 24px 0;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--faint);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    th {
+      color: var(--ink);
+      background: color-mix(in srgb, var(--panel-soft) 70%, transparent);
+      font-size: 0.78rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .role-map {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .role {
+      min-height: 188px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .role b {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .role span {
+      display: inline-flex;
+      margin-bottom: 14px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: var(--paper-strong);
+      background: var(--teal);
+      font: 800 0.7rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .role:nth-child(2) span {
+      background: var(--blue);
+    }
+
+    .role:nth-child(3) span {
+      background: var(--gold);
+      color: var(--gold-ink);
+    }
+
+    .role p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.91rem;
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 12px;
+      margin: 24px 0;
+      counter-reset: step;
+    }
+
+    .pipe-step {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .pipe-step::before {
+      counter-increment: step;
+      content: "0" counter(step);
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--rust);
+      background: var(--paper-strong);
+      font: 800 0.9rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .pipe-step b {
+      display: block;
+      line-height: 1.25;
+    }
+
+    .pipe-step span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .pipe-step code {
+      display: inline-flex;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      background: var(--panel-soft);
+      font-size: 0.75rem;
+    }
+
+    figure {
+      margin: 28px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: var(--media-bg);
+    }
+
+    figcaption {
+      display: grid;
+      gap: 4px;
+      padding: 13px 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    figcaption b {
+      color: var(--ink);
+    }
+
+    .figure-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 28px 0;
+    }
+
+    .figure-pair figure {
+      margin: 0;
+    }
+
+    .scroll-shot {
+      max-height: 820px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--scroll-bg);
+    }
+
+    .scroll-shot img {
+      min-height: 1260px;
+      object-fit: contain;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 10px;
+      margin: 24px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      position: relative;
+      display: block;
+      min-height: 58px;
+      padding: 15px 16px 15px 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.65;
+    }
+
+    .checklist li::before {
+      content: "";
+      position: absolute;
+      top: 20px;
+      left: 18px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      background: var(--rust);
+      box-shadow: inset 0 0 0 4px var(--panel);
+      border: 1px solid var(--rust);
+    }
+
+    .checklist li strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .summary-item {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .summary-item b {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--rust);
+      font: 800 0.75rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .summary-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .aside-stat {
+      padding: 14px 0;
+      border-top: 1px solid var(--faint);
+    }
+
+    .aside-stat:first-of-type {
+      border-top: 0;
+    }
+
+    .aside-stat strong {
+      display: block;
+      color: var(--ink);
+      font: 800 1.65rem/1 "Newsreader", Georgia, "Times New Roman", serif;
+    }
+
+    .aside-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    .footer {
+      margin-top: 58px;
+      padding: 24px 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1240px) {
+      .article-hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      h1 {
+        font-size: 3.7rem;
+      }
+
+      .article-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .rail {
+        position: static;
+      }
+
+      .left-rail {
+        grid-column: 1;
+        order: -1;
+      }
+
+      main,
+      .right-rail {
+        grid-column: 1;
+      }
+
+      .right-rail {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .reading-card {
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 24px, 1220px);
+        padding-top: 72px;
+      }
+
+      .theme-switch {
+        top: 10px;
+        right: 10px;
+      }
+
+      .home-link {
+        top: 10px;
+        left: 10px;
+        min-height: 34px;
+        padding: 0 10px;
+        font-size: 0.72rem;
+      }
+
+      h1 {
+        font-size: 2.72rem;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      .dek {
+        font-size: 1.04rem;
+      }
+
+      .axis-board,
+      .callout-grid,
+      .role-map,
+      .figure-pair,
+      .summary-grid,
+      .right-rail {
+        grid-template-columns: 1fr;
+      }
+
+      .axis-board {
+        min-height: 0;
+      }
+
+      .map-head {
+        flex-direction: column;
+      }
+
+      .map-head strong {
+        max-width: none;
+        text-align: left;
+      }
+
+      .axis-board {
+        gap: 14px;
+        padding-top: 72px;
+      }
+
+      .axis-board::before,
+      .axis-board::after {
+        display: none;
+      }
+
+      .axis-ribbon.execution {
+        left: 14px;
+        right: auto;
+        top: 38px;
+      }
+
+      .pipe-step {
+        grid-template-columns: 48px minmax(0, 1fr);
+      }
+
+      .pipe-step code {
+        grid-column: 2;
+        width: fit-content;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="home-link" href="/" aria-label="Về trang chủ">← Trang chủ</a>
+  <div class="theme-switch" aria-label="Chọn giao diện">
+    <button type="button" data-theme-choice="light" aria-pressed="true">Light</button>
+    <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+  </div>
+  <div class="progress" aria-hidden="true"></div>
+
+  <div class="page">
+    <header class="article-hero">
+      <div class="lead-stack">
+        <p class="kicker">Inside ClaudeKit · Deep Dive</p>
+        <h1>Bộ công cụ <span class="visual-highlight">trực quan hoá</span> của ClaudeKit</h1>
+        <p class="dek">
+          Chất lượng visual không nằm ở câu "làm đẹp hơn". Nó nằm ở việc chọn đúng skill:
+          cái nào để điều phối tư duy, cái nào để thực thi giao diện, và lúc nào cần phối nhiều
+          skill để biến plan thành một bản giải thích bằng hình đủ rõ.
+        </p>
+        <div class="hero-meta" aria-label="Thông tin bài viết">
+          <span>Điều phối vs thực thi</span>
+          <span>Case study chạy thật</span>
+          <span>5 skill chính</span>
+        </div>
+      </div>
+
+      <aside class="hero-map" aria-label="Bản đồ định vị skill">
+        <div class="map-head">
+          <span>Bản đồ chọn skill</span>
+        </div>
+        <div class="axis-board">
+          <span class="axis-ribbon thought">Cần hiểu / giải thích</span>
+          <span class="axis-ribbon execution">Cần màn hình / trang chia sẻ</span>
+          <div class="axis-card preview">
+            <span class="axis-role">Hiểu luồng</span>
+            <strong>/ck:preview</strong>
+            <small>Dùng khi cần tự nắm plan, diff hoặc luồng việc, rồi giải thích nhanh cho người khác.</small>
+          </div>
+          <div class="axis-card frontend">
+            <span class="axis-role">Dựng màn hình</span>
+            <strong>/ck:frontend-design</strong>
+            <small>Dùng khi đầu ra là UI sản phẩm: có layout, trạng thái và thao tác rõ ràng.</small>
+          </div>
+          <div class="axis-card satellite">
+            <span class="axis-role">Vẽ sơ đồ</span>
+            <strong>tech-graph · mermaid</strong>
+            <small>Dùng khi bài cần sơ đồ rõ cấu trúc để người đọc nắm được hệ thống, không chỉ đọc chữ.</small>
+          </div>
+          <div class="axis-card publish">
+            <span class="axis-role">Đóng gói</span>
+            <strong>show-off · novel-viewer</strong>
+            <small>Dùng khi cần đóng gói thành showcase: HTML, screenshot và nội dung bàn giao.</small>
+          </div>
+        </div>
+        <p class="axis-caption">
+          <strong>Cách đọc đơn giản:</strong> cần hiểu luồng hoặc giải thích cho người khác thì dùng preview, tech-graph, mermaid. Cần UI để thao tác hoặc một trang có thể xuất bản, chia sẻ thì dùng frontend-design, show-off, novel-viewer.
+        </p>
+      </aside>
+    </header>
+
+    <div class="article-layout">
+      <aside class="rail left-rail">
+        <nav class="toc" aria-label="Mục lục">
+          <h2>Mục lục</h2>
+          <a href="#intro">Mở bài</a>
+          <a href="#preview-vs-frontend">01 · Preview vs Frontend</a>
+          <a href="#satellites">02 · Hệ kỹ năng vệ tinh</a>
+          <a href="#case-study">03 · Case study chạy thật</a>
+          <a href="#frontend-vs-stitch">04 · Frontend vs Stitch</a>
+          <a href="#pitfalls">05 · Chuẩn bị và pitfalls</a>
+          <a href="#summary">Tóm lại</a>
+        </nav>
+      </aside>
+
+      <main>
+        <article>
+          <section id="intro" data-od-id="intro">
+            <p class="section-number">Mở bài</p>
+            <h2>Không có một nút visual vạn năng</h2>
+            <p>
+              Khi yêu cầu Claude dựng một trang HTML, chất lượng thường không nằm ở câu
+              "làm đẹp hơn" mà nằm ở skill được gọi. ClaudeKit không gom trực quan hóa vào
+              một lệnh vạn năng. Nó tách thành nhiều skill nhỏ, mỗi skill xử lý một việc khá hẹp.
+              Lẫn lộn phổ biến nhất là xem tất cả như cùng một nhóm, rồi nhận về tài liệu kiến trúc
+              trông như landing page, hoặc UI sản phẩm lại giống tài liệu nội bộ.
+            </p>
+            <p>
+              Nội dung hôm nay dùng một <strong>bản đồ định vị</strong> quanh hai trục
+              <em>tư duy điều phối</em> và <em>thực thi giao diện</em>, rồi áp vào một bài toán thật:
+              visual hóa trọn một plan file. Ở phần 03, plan mẫu của app duyệt chi phí được chạy thật;
+              screenshot giữ nguyên làm bằng chứng, prompt có thể copy-paste để dùng lại.
+            </p>
+            <div class="note">
+              <p>
+                Một lưu ý để đọc đúng ví dụ: trong ClaudeKit, <code>preview</code>,
+                <code>frontend-design</code>, <code>stitch</code>, <code>tech-graph</code>,
+                <code>show-off</code> đều là <strong>skill gọi bằng ngôn ngữ tự nhiên</strong>
+                (prompt-driven), không phải lệnh CLI có flag để gõ tay.
+              </p>
+              <p>
+                Khi bài nhắc tới flag, đó là flag của script nội bộ mà skill tự chạy bên dưới,
+                không phải tham số gõ kèm slash command. Ngoại lệ duy nhất là các flag generation
+                của <code>preview</code> như <code>--explain</code>, <code>--diagram</code>,
+                <code>--slides</code>, <code>--html</code>, vì chúng là một phần cú pháp gọi skill này.
+              </p>
+            </div>
+          </section>
+
+          <section id="preview-vs-frontend" data-od-id="preview-vs-frontend">
+            <p class="section-number">01</p>
+            <h2>Bản đồ định vị: <code>/ck:preview</code> vs <code>/ck:frontend-design</code></h2>
+            <p>
+              Hai skill này hay bị lẫn vì đều có thể xuất ra HTML đẹp, đều quan tâm typography
+              và màu sắc, đều có rule chống rập khuôn. Điểm khác nhau là hợp đồng đầu ra:
+              <code>preview</code> tạo tài liệu để team hiểu, đối chiếu và ra quyết định;
+              <code>frontend-design</code> tạo UI để người dùng thao tác như sản phẩm.
+            </p>
+
+            <div class="callout-grid">
+              <div class="callout">
+                <h3><code>/ck:preview</code>: điều phối trực quan</h3>
+                <p>
+                  Dùng khi cần xem trước file/thư mục, hoặc dựng tài liệu giải thích ngay sau
+                  <code>/ck:plan</code> hay <code>/ck:debug</code>. Nó là trạm trung chuyển cho topic,
+                  bối cảnh git, explanation, slides, diagram, hoặc dashboard review.
+                </p>
+              </div>
+              <div class="callout">
+                <h3><code>/ck:frontend-design</code>: thực thi giao diện</h3>
+                <p>
+                  Dùng khi mục tiêu là tạo UI hoàn thiện cho end user. Nó làm tốt nhất khi có thiết kế nguồn:
+                  screenshot, video luồng mẫu, hoặc mô tả chi tiết.
+                </p>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-label"><span>Preview examples</span><span>tư duy / team</span></div>
+              <pre><code>/ck:preview --html --explain "i18n pipeline của blog: từ HTML source qua JSON tới 4 locale route"
+/ck:preview --html --slides "kiến trúc monorepo Astro + Turborepo"
+/ck:preview --diff HEAD~3</code></pre>
+            </div>
+
+            <p>
+              Triết lý style của <code>preview</code> là <em>nhất quán</em>. Nó chọn style từ một danh sách
+              preset cố định đã định nghĩa trước, rồi xoay vòng giữa các lần generate để tránh lặp font và palette. Trang HTML cuộn có
+              6 preset: Blueprint, Editorial, Paper-Ink, Terminal Mono, Swiss Clean, Warm Signal. Slide deck có
+              4 preset khác: Midnight Editorial, Warm Signal, Terminal Mono, Swiss Clean. Một rule cứng đi kèm:
+              mọi trang HTML nó sinh ra phải có theme toggle light/dark, là first child của <code>&lt;body&gt;</code>.
+              Thiếu toggle thì chưa xong.
+            </p>
+
+            <div class="code-block">
+              <div class="code-label"><span>Frontend examples</span><span>sản phẩm / end user</span></div>
+              <pre><code>/ck:frontend-design Replicate UI trong screenshot này bằng HTML/Tailwind  [+ đính kèm ảnh]
+/ck:frontend-design Dashboard quản lý đơn hàng, dải dữ liệu dày. DESIGN_VARIANCE=4, VISUAL_DENSITY=8</code></pre>
+            </div>
+
+            <p>
+              Triết lý style của <code>frontend-design</code> đi hướng ngược lại: <em>khác biệt</em>.
+              Mặc định <code>DESIGN_VARIANCE=8</code>, với mục tiêu không để hai design giống nhau.
+              Có ba <strong>Design Dials</strong> khai báo ngay trong prompt để điều khiển.
+            </p>
+
+            <div class="table-wrap" aria-label="Design Dials">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Dial</th>
+                    <th>Mặc định</th>
+                    <th>Thấp</th>
+                    <th>Cao</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>DESIGN_VARIANCE</code></td>
+                    <td>8</td>
+                    <td>Đối xứng, căn giữa</td>
+                    <td>Bất đối xứng, masonry, vùng trống có chủ đích</td>
+                  </tr>
+                  <tr>
+                    <td><code>MOTION_INTENSITY</code></td>
+                    <td>6</td>
+                    <td>Chỉ hover/active</td>
+                    <td>Hiệu ứng hiện khi cuộn, chuyển động spring</td>
+                  </tr>
+                  <tr>
+                    <td><code>VISUAL_DENSITY</code></td>
+                    <td>4</td>
+                    <td>Whitespace rộng, sạch</td>
+                    <td>Padding nhỏ, số liệu monospace, kiểu cockpit</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>Bảng routing nhanh</h3>
+            <div class="table-wrap" aria-label="Bảng routing nhanh">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Input</th>
+                    <th>Gọi</th>
+                    <th>Vì</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Một topic cần giải thích cho team</td>
+                    <td><code>preview --html --explain "&lt;topic&gt;"</code></td>
+                    <td>Output là tài liệu đọc, có Mermaid</td>
+                  </tr>
+                  <tr>
+                    <td>Một topic cần present</td>
+                    <td><code>preview --html --slides "&lt;topic&gt;"</code></td>
+                    <td>Slide engine viewport-fit</td>
+                  </tr>
+                  <tr>
+                    <td>Một range git / PR</td>
+                    <td><code>preview --diff &lt;ref&gt;</code></td>
+                    <td>Dashboard review, đọc dữ liệu git thật</td>
+                  </tr>
+                  <tr>
+                    <td>Một plan cần đối chiếu code</td>
+                    <td><code>preview --plan-review &lt;plan&gt;</code></td>
+                    <td>So plan với codebase thực tế</td>
+                  </tr>
+                  <tr>
+                    <td>Screenshot/video một UI</td>
+                    <td><code>frontend-design</code> + đính kèm</td>
+                    <td>Workflow replicate</td>
+                  </tr>
+                  <tr>
+                    <td>Mô tả một UI + Design Dials</td>
+                    <td><code>frontend-design</code></td>
+                    <td>Build production UI</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p>
+              Hai skill không loại trừ nhau. Chúng nằm ở hai giai đoạn khác nhau trong cùng một vòng phát triển:
+              <code>preview</code> kiểm tra phần tư duy, ví dụ plan có khớp codebase không, flow đã rõ chưa,
+              diff có blast radius thế nào. <code>frontend-design</code> build và kiểm tra phần aesthetic của sản phẩm.
+            </p>
+          </section>
+
+          <section id="satellites" data-od-id="satellites">
+            <p class="section-number">02</p>
+            <h2>Hệ kỹ năng vệ tinh</h2>
+            <p>
+              Hai trục chính ở Phần 01 không đứng riêng lẻ. Quanh chúng là một nhóm skill bổ trợ,
+              chia theo ba nhóm năng lực. Nắm được nhóm này giúp gọi đúng skill hơn, và cũng dễ debug
+              khi có thứ không chạy.
+            </p>
+
+            <div class="role-map" aria-label="Ba nhóm skill vệ tinh">
+              <div class="role">
+                <span>Nhóm 1</span>
+                <b>Trí tuệ thiết kế</b>
+                <p>
+                  <code>/ck:ui-ux-pro-max</code> định hình layout, typography, spacing, palette và UX guideline.
+                  Đây là nền tảng bắt buộc của <code>frontend-design</code>.
+                </p>
+              </div>
+              <div class="role">
+                <span>Nhóm 2</span>
+                <b>Sơ đồ hóa kiến trúc</b>
+                <p>
+                  <code>/ck:tech-graph</code> xuất SVG/PNG publish-grade; <code>/ck:mermaidjs-v11</code>
+                  giữ sơ đồ markdown đúng syntax.
+                </p>
+              </div>
+              <div class="role">
+                <span style="background: var(--rust); color: var(--panel);">Nhóm 3</span>
+                <b>Trình chiếu và trải nghiệm</b>
+                <p>
+                  <code>/ck:markdown-novel-viewer</code> lo trải nghiệm đọc; <code>/ck:show-off</code>
+                  đóng gói brief, content, HTML, screenshot và showcase.
+                </p>
+              </div>
+            </div>
+
+            <h3>Nhóm 1: Trí tuệ thiết kế</h3>
+            <p>
+              <strong><code>/ck:ui-ux-pro-max</code></strong> là design intelligence engine. Đây là nền tảng
+              bắt buộc của <code>frontend-design</code>, vì mọi workflow đều kích hoạt nó trước, và cũng được
+              khuyến nghị cho <code>preview --slides</code>. Bên dưới là search engine BM25 trên bộ CSV lớn:
+              nhiều style, hàng trăm color palette, font pairing, product type, UX guideline, chart type.
+              Nó định hình hệ token thiết kế như layout, typography, spacing trước khi sinh code.
+            </p>
+            <p>
+              Rule ưu tiên cần nhớ: khi khuyến nghị của <code>ui-ux-pro-max</code> va với anti-slop rules,
+              ví dụ gợi ý Inter font hoặc palette tím, <strong>anti-slop rules thắng</strong>, trừ khi user yêu cầu rõ.
+            </p>
+
+            <h3>Nhóm 2: Sơ đồ hóa kiến trúc</h3>
+            <p>
+              <strong><code>/ck:tech-graph</code></strong> dùng để xuất bản diagram chất lượng publish.
+              Skill này tạo SVG và PNG sắc nét để chèn vào bài viết, slide, hoặc hồ sơ bàn giao. Nó hỗ trợ
+              8 phong cách: Flat Icon, Dark Terminal, Blueprint, Notion Clean, Glassmorphism, Claude Official,
+              OpenAI Official, Dark Luxury. Cách gọi là mô tả hệ thống và style mong muốn bằng ngôn ngữ tự nhiên.
+              Skill tự chạy script <code>generate-diagram.sh</code> bên dưới để validate SVG và export PNG.
+            </p>
+            <p>
+              <strong><code>/ck:mermaidjs-v11</code></strong> là validator syntax cho sơ đồ dạng văn bản.
+              Nó phù hợp để dựng nhanh flowchart, sequence, state diagram nhúng thẳng vào markdown nội bộ,
+              đồng thời bảo đảm đúng syntax Mermaid v11. <code>preview</code> gọi skill này mỗi khi sinh Mermaid.
+              Đây là skill thuần reference, nên cũng có thể dùng độc lập.
+            </p>
+            <div class="note">
+              <p>
+                Ranh giới ba skill diagram khá rõ: diagram là <strong>file ảnh độc lập</strong> đem đi nơi khác
+                thì dùng <code>tech-graph</code>; diagram <strong>nhúng trong markdown</strong> thì dùng
+                <code>mermaidjs-v11</code>; diagram sống <strong>bên trong một trang giải thích HTML</strong>
+                thì dùng <code>preview --diagram</code>.
+              </p>
+            </div>
+
+            <h3>Nhóm 3: Trình chiếu và trải nghiệm</h3>
+            <p>
+              <strong><code>/ck:markdown-novel-viewer</code></strong> là server đứng sau <code>preview</code>
+              view mode. Nó render markdown thành một trang đọc chuyên dụng: serif, nền ấm, bề ngang giới hạn,
+              hợp với tài liệu dài. Điểm dễ bị bỏ qua là nó <strong>render được Mermaid</strong> ngay trong trang đọc,
+              gồm flowchart, sequence, gantt, mindmap, có theme-aware và toggle full-width.
+            </p>
+            <p>
+              <strong><code>/ck:show-off</code></strong> là pipeline end-to-end từ brief đến social asset.
+              Điểm hay bị hiểu sai: <code>show-off</code> <strong>không</strong> tự quét asset có sẵn trong repo rồi
+              gom thành gallery. Nó chạy một mission self-contained: research/fact-check, viết content song ngữ,
+              kích hoạt <code>frontend-design</code> dựng HTML, chạy Puppeteer chụp screenshot nhiều tỷ lệ,
+              rồi xuất showcase. <code>frontend-design</code> chỉ là một bước trong đó.
+            </p>
+          </section>
+
+          <section id="case-study" data-od-id="case-study">
+            <p class="section-number">03</p>
+            <h2>Case study: visual hóa trọn một plan file</h2>
+            <p>
+              <strong>Bài toán:</strong> Có một plan file. Mục tiêu là visual hóa toàn bộ: kiến trúc hệ thống,
+              giao diện minh họa, và luồng vận hành. Không skill đơn nào xử lý trọn vẹn, vì bài toán bắc qua hai nhóm
+              năng lực tách biệt: <em>giải thích & sơ đồ</em> và <em>UI mockup thật</em>.
+            </p>
+            <p>
+              Plan dùng cho case study là app duyệt chi phí nội bộ: 6 entity
+              (Employee, ExpenseClaim, LineItem, Approval, Payment, AuditLog), một state machine 5 trạng thái,
+              5 UI surface. Plan đủ rõ entity + action để các skill suy ra workflow, kiến trúc và UI.
+            </p>
+            <div class="note">
+              <p>
+                Cần đính chính một điểm để dùng đúng: <code>preview --explain</code> và
+                <code>preview --diagram</code> nhận một <strong>topic string</strong>, không tự parse plan file.
+                Cú pháp đúng là flag đứng <strong>trước</strong> topic:
+                <code>/ck:preview --diagram "&lt;mô tả&gt;"</code>, không phải
+                <code>/ck:preview &lt;path&gt; --diagram</code>.
+              </p>
+            </div>
+
+            <h3>Phương án 1: Fast-track (2 lệnh)</h3>
+            <p><em>Dành cho lúc cần nghiệm thu nhanh ý tưởng, chấp nhận bản phác thảo.</em></p>
+            <div class="code-block">
+              <div class="code-label"><span>Fast-track</span><span>2 lệnh</span></div>
+              <pre><code>/ck:preview --html --explain "expense approval app: 5 layer từ SPA xuống PostgreSQL,
+  state machine draft→submitted→under_review→approved→paid, 5 surface"
+
+/ck:stitch "tự suy diễn UI screens cho expense approval app từ workflow trong plan;
+  liệt kê screen list cho tôi duyệt trước khi gen"</code></pre>
+            </div>
+            <ul class="checklist">
+              <li><strong>Lệnh 1</strong> tạo một file HTML tự chứa: overview, ASCII quick view, Mermaid architecture flow, key concepts. Tất cả nằm trong một trang, có theme toggle.</li>
+              <li><strong>Lệnh 2</strong> để <code>stitch</code> tự suy diễn cấu trúc màn hình từ logic chức năng trong plan. Cụm "liệt kê screen list trước khi gen" là điểm chặn quan trọng nhất.</li>
+            </ul>
+
+            <h3>Phương án 2: Comprehensive flow (4 bước)</h3>
+            <p>
+              <em>Quy trình đầy đủ để tạo bộ hồ sơ thiết kế cho khách hàng hoặc tài liệu dự án.
+              Dưới đây là kết quả chạy thật từng bước.</em>
+            </p>
+
+            <div class="pipeline" aria-label="Comprehensive flow 4 bước">
+              <div class="pipe-step">
+                <div>
+                  <b>tech-graph</b>
+                  <span>Sơ đồ kiến trúc SVG/PNG</span>
+                </div>
+                <code>architecture</code>
+              </div>
+              <div class="pipe-step">
+                <div>
+                  <b>frontend-design</b>
+                  <span>UI screen chi tiết</span>
+                </div>
+                <code>approval queue</code>
+              </div>
+              <div class="pipe-step">
+                <div>
+                  <b>preview --html --slides</b>
+                  <span>Workflow walkthrough</span>
+                </div>
+                <code>state machine</code>
+              </div>
+              <div class="pipe-step">
+                <div>
+                  <b>show-off</b>
+                  <span>Tổng hợp và trình diễn</span>
+                </div>
+                <code>showcase</code>
+              </div>
+            </div>
+
+            <h3>Bước 1: Sơ đồ kiến trúc với <code>tech-graph</code></h3>
+            <div class="code-block">
+              <div class="code-label"><span>Prompt</span><span>Blueprint diagram</span></div>
+              <pre><code>/ck:tech-graph Sơ đồ kiến trúc expense approval app: 5 layer Frontend (5 screen) →
+  API (role-based) → Service (ClaimService owns state machine, Approval, Payment, Audit)
+  → Data (PostgreSQL) + Storage (receipts). Style Blueprint.</code></pre>
+            </div>
+            <p>
+              Skill viết SVG theo preset Blueprint: nền dot-grid, mono, accent cyan. Sau đó nó validate và export
+              PNG publish-grade. Kết quả có 5 layer rõ, arrow routing không cắt qua box, state machine callout ở chân,
+              ClaimService được highlight xanh lá vì giữ state machine, AuditService màu cam.
+            </p>
+            <figure>
+              <img src="/posts/ck-visual-automation-toolkit/tech-graph-architecture.png" alt="Sơ đồ kiến trúc 5 layer của expense app, style Blueprint" loading="lazy">
+              <figcaption>
+                <b>Asset 01 · tech-graph</b>
+                Sơ đồ kiến trúc 5 layer, có state machine và service ownership rõ ràng.
+              </figcaption>
+            </figure>
+
+            <h3>Bước 2: Giao diện chi tiết với <code>frontend-design</code></h3>
+            <div class="code-block">
+              <div class="code-label"><span>Prompt</span><span>High-density product UI</span></div>
+              <pre><code>/ck:frontend-design Màn hình Approval Queue cho expense approval app (desktop, dev-tool style).
+  Sidebar nav + master-detail: danh sách claim chờ duyệt bên trái, chi tiết line item + nút
+  approve/reject bên phải. Badge màu theo trạng thái. DESIGN_VARIANCE=4, VISUAL_DENSITY=8</code></pre>
+            </div>
+            <p>
+              Kết quả giữ các anti-slop rule quan trọng: tránh Inter/Roboto, dùng off-black tinted thay vì đen thuần,
+              chỉ một accent gold, layout master-detail thay vì ba card đều nhau, copy có vẻ thật hơn với tên đa dạng
+              và số lẻ tự nhiên như <code>$1,247.30</code> thay vì số tròn. Badge <code>under_review</code> /
+              <code>submitted</code> được mã màu theo state machine.
+            </p>
+            <figure>
+              <img src="/posts/ck-visual-automation-toolkit/frontend-design-approval-queue.png" alt="Màn hình Approval Queue dựng từ frontend-design, density cao" loading="lazy">
+              <figcaption>
+                <b>Asset 02 · frontend-design</b>
+                UI master-detail dùng density cao, copy giả ít mùi, và trạng thái bám state machine.
+              </figcaption>
+            </figure>
+
+            <h3>Bước 3: Workflow walkthrough với <code>preview --html --slides</code></h3>
+            <div class="code-block">
+              <div class="code-label"><span>Prompt</span><span>Slides walkthrough</span></div>
+              <pre><code>/ck:preview --html --slides "vòng đời một expense claim: employee tạo & nộp → manager
+  duyệt → accountant thanh toán, kèm state machine và 3 guardrail"</code></pre>
+            </div>
+            <p>
+              Deck viewport-fit dùng preset Midnight Editorial: serif, accent gold, dark navy. Style này khác hẳn
+              Blueprint của Bước 1, đúng rule vary aesthetic giữa các output. Deck có progress bar, số trang và theme toggle.
+              Dưới đây là slide title ở dark theme và slide state machine ở light theme, để thấy toggle hoạt động.
+            </p>
+            <div class="figure-pair">
+              <figure>
+                <img src="/posts/ck-visual-automation-toolkit/preview-slides-title.png" alt="Slide title của deck workflow, preset Editorial dark" loading="lazy">
+                <figcaption><b>Asset 03A · preview slides</b> Title slide dark theme.</figcaption>
+              </figure>
+              <figure>
+                <img src="/posts/ck-visual-automation-toolkit/preview-slides-statemachine.png" alt="Slide state machine cùng deck ở light theme" loading="lazy">
+                <figcaption><b>Asset 03B · preview slides</b> State machine light theme.</figcaption>
+              </figure>
+            </div>
+
+            <h3>Bước 4: Tổng hợp và trình diễn với <code>show-off</code></h3>
+            <div class="code-block">
+              <div class="code-label"><span>Prompt</span><span>Self-contained showcase</span></div>
+              <pre><code>/ck:show-off Trang showcase "Expense Approval — bộ hồ sơ trực quan", gộp sơ đồ kiến trúc
+  (bước 1), màn hình Approval Queue (bước 2), và slide workflow (bước 3) thành các section
+  có nav anchor, mở thẳng browser không cần server.</code></pre>
+            </div>
+            <p>
+              <code>show-off</code> là bước tổng hợp cuối. Nó gom diagram và UI screen thành một trang HTML self-contained.
+              Trong case study này, ảnh được nhúng base64 để chỉ cần mở một file là chạy. Trang có nav anchor, footer
+              điểm danh skill đã dùng và theme toggle. Mở thẳng browser, không cần server.
+            </p>
+            <figure>
+              <div class="scroll-shot">
+                <img src="/posts/ck-visual-automation-toolkit/show-off-showcase-full.png" alt="Trang showcase gộp cả 3 asset thành một deliverable self-contained" loading="lazy">
+              </div>
+              <figcaption>
+                <b>Asset 04 · show-off</b>
+                Screenshot dài của trang showcase. Khung này cuộn riêng để giữ nhịp đọc của bài.
+              </figcaption>
+            </figure>
+
+            <div class="note">
+              <p>
+                <strong>Chi phí token.</strong> Chuỗi 4 bước tốn token đáng kể, vì mỗi
+                <code>tech-graph</code>/<code>frontend-design</code>/<code>preview</code>/<code>show-off</code>
+                là một pass sinh output riêng. Nếu chỉ cần bản đủ dùng để duyệt hướng, quay về Phương án 1.
+              </p>
+            </div>
+          </section>
+
+          <section id="frontend-vs-stitch" data-od-id="frontend-vs-stitch">
+            <p class="section-number">04</p>
+            <h2>Phân biệt kỹ thuật: <code>/ck:frontend-design</code> vs <code>/ck:stitch</code></h2>
+            <p>
+              Ở bước dựng UI, tức Bước 2 hoặc lệnh 2 phía trên, điểm quyết định là đã có thiết kế nguồn chưa,
+              hay cần Claude tự suy diễn.
+            </p>
+
+            <div class="callout-grid">
+              <div class="callout">
+                <h3><code>/ck:frontend-design</code> là tái hiện</h3>
+                <p>
+                  Dùng khi đã có tài sản thiết kế nguồn: bản vẽ Figma, ảnh chụp màn hình mẫu, hoặc một luồng tương tác
+                  cụ thể. Skill bám sát nguồn làm chân lý và dựng lại bằng HTML/Tailwind thật.
+                </p>
+              </div>
+              <div class="callout">
+                <h3><code>/ck:stitch</code> là suy diễn</h3>
+                <p>
+                  Dùng khi không có thiết kế mẫu. Skill tự lấp khoảng trống UI bằng cách suy ra bố cục từ logic chức năng,
+                  dựa trên danh từ + động từ của workflow.
+                </p>
+              </div>
+            </div>
+
+            <div class="table-wrap" aria-label="Frontend design và stitch">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tình huống</th>
+                    <th>Skill</th>
+                    <th>Bản chất</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Có screenshot/Figma/mockup để bám</td>
+                    <td><code>frontend-design</code></td>
+                    <td>Tái hiện chuẩn xác</td>
+                  </tr>
+                  <tr>
+                    <td>Chỉ có mô tả workflow, tự suy diễn UI</td>
+                    <td><code>stitch</code></td>
+                    <td>Suy diễn và lắp ghép</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>3 lưu ý quan trọng khi để AI tự suy diễn giao diện</h3>
+            <ul class="checklist">
+              <li>
+                <strong>Chốt danh sách màn hình trước khi gen.</strong>
+                Nếu bỏ qua, AI dễ tự sinh thêm màn hình phụ ngoài phạm vi, vừa tốn token vừa làm loãng luồng chính.
+              </li>
+              <li>
+                <strong>Khai báo Design Dials ngay từ đầu.</strong>
+                Đặt rõ <code>DESIGN_VARIANCE</code>, <code>VISUAL_DENSITY</code>,
+                <code>MOTION_INTENSITY</code> trong lệnh gọi đầu tiên để các màn hình không lệch thẩm mỹ.
+              </li>
+              <li>
+                <strong>Giữ anti-slop guard.</strong>
+                Chặn font Roboto/Inter mặc định, gradient tím-xanh khuôn mẫu, ba card đều tăm tắp, neon glow,
+                "John Doe" và placeholder Latin.
+              </li>
+            </ul>
+
+            <p>
+              Một lưu ý chung cho cả hai: chúng chặn được copy giả như "John Doe", số tròn, cliché,
+              nhưng <strong>copy thật vẫn cần người viết hoặc duyệt</strong>. Skill không tự bịa nội dung domain cho đúng.
+            </p>
+          </section>
+
+          <section id="pitfalls" data-od-id="pitfalls">
+            <p class="section-number">05</p>
+            <h2>Chuẩn bị và pitfalls</h2>
+            <p>
+              Trước khi nối các skill thành một chuỗi, nên kiểm tra dependency trước. Các skill đều nằm trong ClaudeKit,
+              nhưng môi trường chạy vẫn có phần riêng: <code>tech-graph</code> cần binary export SVG/PNG
+              (<code>rsvg-convert</code>), <code>stitch</code> cần API key/quota của dịch vụ tương ứng,
+              <code>show-off</code> cần môi trường chạy Puppeteer để chụp. Thiếu một mảnh là dễ gặp lỗi khó đoán:
+              export không ra ảnh, job đứng giữa chừng, hoặc log chỉ báo rất chung. Kiểm tra trước sẽ đỡ mất thời gian mò ngược.
+            </p>
+
+            <ul class="checklist">
+              <li>Gõ flag cho <code>show-off</code>/<code>tech-graph</code>/<code>stitch</code> như lệnh CLI. Chúng prompt-driven, flag là của script nội bộ.</li>
+              <li>Tưởng <code>show-off</code> tự quét asset có sẵn. Cần đưa asset vào mission, skill không tự tìm.</li>
+              <li>Gọi <code>preview --diagram &lt;path-to-plan&gt;</code>. Nó nhận topic string, không đọc file; flag đứng trước topic.</li>
+              <li>Để <code>stitch</code> tự gen mà chưa chốt screen list. Kết quả dễ thừa màn hình và tốn token.</li>
+              <li>Quên rằng preset slide (4) khác preset trang HTML (6). Blueprint/Paper-Ink không có cho slide.</li>
+              <li>Dùng <code>frontend-design</code> để vẽ tài liệu giải thích. Output thường quá nặng aesthetic cho mục đích đọc.</li>
+            </ul>
+          </section>
+
+          <section id="summary" data-od-id="summary">
+            <p class="section-number">Tóm lại</p>
+            <h2>Chọn theo vai trò, không chọn theo độ đẹp</h2>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <b>Output phục vụ tư duy hay sản phẩm?</b>
+                <p>Tư duy → <code>preview</code>. Sản phẩm → <code>frontend-design</code>.</p>
+              </div>
+              <div class="summary-item">
+                <b>Diagram để chèn đi nơi khác hay sống trong trang?</b>
+                <p>File độc lập → <code>tech-graph</code>. Nhúng markdown → <code>mermaidjs-v11</code>. Trong trang HTML → <code>preview --diagram</code>.</p>
+              </div>
+              <div class="summary-item">
+                <b>Dựng UI: có thiết kế nguồn chưa?</b>
+                <p>Có → <code>frontend-design</code>. Chưa → <code>stitch</code>.</p>
+              </div>
+              <div class="summary-item">
+                <b>Cần đóng gói showcase song ngữ + screenshot?</b>
+                <p><code>show-off</code> là pipeline self-contained.</p>
+              </div>
+              <div class="summary-item">
+                <b>Visual hóa trọn plan?</b>
+                <p>Combine: <code>tech-graph</code> + <code>frontend-design</code>/<code>stitch</code> + <code>preview --slides</code> + <code>show-off</code>.</p>
+              </div>
+              <div class="summary-item">
+                <b>Câu hỏi chốt</b>
+                <p>Ai xem output, và xem để làm gì?</p>
+              </div>
+            </div>
+            <p>
+              Mảng trực quan hóa của ClaudeKit không có nút bấm vạn năng, nhưng cũng không rối nếu nhìn theo vai trò.
+              Nó xoay quanh hai trục <em>điều phối</em> và <em>thực thi</em>. Trước hết xác định ai sẽ xem output
+              và xem để làm gì. Sau đó chọn skill vệ tinh theo dạng output cần. Khi bài toán bắc qua nhiều nhóm năng lực,
+              combine theo đúng thứ tự như case study Phần 03 đã chạy thật, thay vì ép một skill làm việc của skill khác.
+            </p>
+          </section>
+        </article>
+      </main>
+
+      <aside class="rail right-rail">
+        <div class="reading-card">
+          <h2>Nắm nhanh nội dung</h2>
+          <div class="aside-stat">
+            <strong>2</strong>
+            <span>Trục chính: điều phối tư duy và thực thi giao diện.</span>
+          </div>
+          <div class="aside-stat">
+            <strong>5</strong>
+            <span>Skill xuất hiện nhiều nhất: preview, frontend-design, stitch, tech-graph, show-off.</span>
+          </div>
+          <div class="aside-stat">
+            <strong>4</strong>
+            <span>Bước comprehensive flow để visual hóa trọn plan.</span>
+          </div>
+        </div>
+        <div class="reading-card">
+          <h2>Decision lens</h2>
+          <p><b>Muốn hiểu?</b> Dùng <code>preview</code>.</p>
+          <p><b>Muốn người dùng thao tác?</b> Dùng <code>frontend-design</code>.</p>
+          <p><b>Muốn publish diagram?</b> Dùng <code>tech-graph</code>.</p>
+          <p><b>Muốn asset chia sẻ?</b> Dùng <code>show-off</code>.</p>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="footer">
+      Inside ClaudeKit · visual automation toolkit.
+    </footer>
+  </div>
+
+  <script>
+    var localePrefix = window.location.pathname.match(/^\/(en|zh|ja)\//);
+    var homeHref = localePrefix ? '/' + localePrefix[1] : '/';
+    document.querySelectorAll('.home-link').forEach(function (a) { a.href = homeHref; });
+
+    const root = document.documentElement;
+    const buttons = Array.from(document.querySelectorAll("[data-theme-choice]"));
+
+    function setTheme(theme) {
+      root.dataset.theme = theme;
+      buttons.forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
+      });
+      try {
+        localStorage.setItem("theme", theme);
+      } catch {
+      }
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => setTheme(button.dataset.themeChoice));
+    });
+
+    setTheme(root.dataset.theme === "dark" ? "dark" : "light");
+
+    function updateProgress() {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const value = max > 0 ? Math.min(100, Math.max(0, (scrollTop / max) * 100)) : 0;
+      root.style.setProperty("--progress", `${value}%`);
+    }
+
+    updateProgress();
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+  </script>
+</body>
+</html>
