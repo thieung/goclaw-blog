@@ -1255,9 +1255,14 @@
               </p>
               <p>
                 Khi bài nhắc tới flag, đó là flag của script nội bộ mà skill tự chạy bên dưới,
-                không phải tham số gõ kèm slash command. Ngoại lệ duy nhất là các flag generation
+                không phải tham số gõ kèm slash command. Ngoại lệ là các flag generation
                 của <code>preview</code> như <code>--explain</code>, <code>--diagram</code>,
                 <code>--slides</code>, <code>--html</code>, vì chúng là một phần cú pháp gọi skill này.
+              </p>
+              <p>
+                Một điểm nữa sẽ bàn kỹ ở Phần 02: từ bản stable <code>engineer@v2.20.0</code>,
+                <code>--html</code> không còn riêng của <code>preview</code> mà cả
+                <code>/ck:brainstorm</code> và <code>/ck:plan</code> đều nhận.
               </p>
             </div>
           </section>
@@ -1412,7 +1417,7 @@
               khi có thứ không chạy.
             </p>
 
-            <div class="role-map" aria-label="Ba nhóm skill vệ tinh">
+            <div class="role-map" aria-label="Bốn nhóm skill vệ tinh">
               <div class="role">
                 <span>Nhóm 1</span>
                 <b>Trí tuệ thiết kế</b>
@@ -1435,6 +1440,14 @@
                 <p>
                   <code>/ck:markdown-novel-viewer</code> lo trải nghiệm đọc; <code>/ck:show-off</code>
                   đóng gói brief, content, HTML, screenshot và showcase.
+                </p>
+              </div>
+              <div class="role">
+                <span style="background: var(--rust); color: var(--panel);">Nhóm 4</span>
+                <b>Brainstorm và plan ra HTML</b>
+                <p>
+                  <code>/ck:brainstorm</code> và <code>/ck:plan</code> giờ nhận <code>--html</code>,
+                  xuất kèm một trang HTML mở thẳng trên trình duyệt thay vì chỉ file markdown.
                 </p>
               </div>
             </div>
@@ -1489,6 +1502,44 @@
               kích hoạt <code>frontend-design</code> dựng HTML, chạy Puppeteer chụp screenshot nhiều tỷ lệ,
               rồi xuất showcase. <code>frontend-design</code> chỉ là một bước trong đó.
             </p>
+
+            <h3>Nhóm 4: Brainstorm và plan xuất ra HTML</h3>
+            <p>
+              Cho tới gần đây, <code>--html</code> gần như chỉ gắn với <code>preview</code>. Từ bản stable
+              <code>engineer@v2.20.0</code> (đi cùng ClaudeKit CLI 4.5.0), <code>brainstorm</code> (skill bàn ý tưởng,
+              cân nhắc phương án) và <code>plan</code> (skill lập kế hoạch triển khai) cũng nhận cùng flag đó. Trước đây
+              hai skill này chỉ trả về văn bản markdown; giờ chúng có thể xuất kèm một trang HTML để đọc và chia sẻ ngay
+              trên trình duyệt.
+            </p>
+            <p>
+              <strong><code>/ck:brainstorm --html</code></strong> viết xong bản markdown rồi tạo thêm một trang HTML
+              kiểu <strong>tạp chí</strong>: cùng các quyết định và bằng chứng, nhưng trình bày rõ hơn các đánh đổi quan
+              trọng nhất, giả định, và khuyến nghị cuối cùng. File HTML là một trang độc lập, mở trực tiếp được, tiện
+              gửi cho người không tham gia buổi thảo luận.
+            </p>
+            <p>
+              <strong><code>/ck:plan --html</code></strong> đi xa hơn một bước: kết quả chính là <code>plan.html</code>,
+              một trang plan tương tác có thể bấm xem từng phase, mở chi tiết từng bước trong cửa sổ popup, kèm hình
+              minh họa kỹ thuật tùy chọn. Điểm đáng chú ý cho bài này: trước khi dựng HTML, nó
+              <strong>gọi <code>/ck:frontend-design</code></strong> nên cũng đi qua đúng quy trình design intelligence
+              của <code>ui-ux-pro-max</code>. Trang HTML chỉ được tạo sau khi plan đã qua bước phản biện (red-team) và
+              kiểm tra (validation), nên nó phản ánh đúng bản plan cuối cùng.
+            </p>
+            <div class="code-block">
+              <div class="code-label"><span>Brainstorm &amp; plan → HTML</span><span>engineer@v2.20.0</span></div>
+              <pre><code>/ck:brainstorm --html "chọn cơ chế đồng bộ i18n cho blog: build-time inject
+  vs runtime fetch vs content collection"
+
+/ck:plan --html "thêm locale thứ 5 (ko) cho toàn bộ blog, từ i18n JSON tới 4 route hiện có"</code></pre>
+            </div>
+            <div class="note">
+              <p>
+                Hệ quả thực tế: <code>brainstorm</code> và <code>plan</code> không cạnh tranh với <code>preview</code>.
+                <code>preview</code> vẫn là cách nhanh để dựng tài liệu giải thích từ một topic hay từ git context; còn
+                <code>--html</code> trên <code>brainstorm</code> và <code>plan</code> gắn trang HTML vào <em>chính bản
+                brainstorm hoặc bản plan</em> mà phiên làm việc đó tạo ra, chứ không phải một tài liệu giải thích riêng.
+              </p>
+            </div>
           </section>
 
           <section id="case-study" data-od-id="case-study">
