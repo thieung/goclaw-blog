@@ -3,7 +3,7 @@ name: thieung:blog
 description: Unified blog workflow — topic research, markdown drafts, visual HTML, i18n, and social content generation for GoClaw and ClaudeKit projects.
 user_invocable: true
 command: /thieung:blog
-arguments: "--topic TOPIC --project PROJECT | --review SLUG | --reword SLUG | --preview SLUG | --visual SLUG | --i18n SLUG | --social SLUG | --status | --version VERSION | --scan | --publish SLUG"
+arguments: "--topic TOPIC --project PROJECT | --review SLUG | --reword SLUG | --visual SLUG | --i18n SLUG | --social SLUG | --status | --version VERSION | --scan | --publish SLUG"
 allowed-tools:
   - Read
   - Glob
@@ -59,10 +59,9 @@ CK_PUBLIC=$CK_SITE/public/
 /thieung:blog --topic "description" --project goclaw|claudekit   # Step 1-2: Scout + Draft .md
 /thieung:blog --review <slug>                                     # Step 2.5: Run parallel reviews only
 /thieung:blog --reword <slug>                                     # Step 2.6: Reword/polish markdown via /codex:rescue
-/thieung:blog --preview <slug>                                    # Step 2.75: Preview gallery + standalone mockups (direction selection)
 /thieung:blog --visual <slug>                                     # Step 3: .md → visual .astro
-/thieung:blog --i18n <slug>                                       # Step 4: Translations + social
-/thieung:blog --social <slug>                                     # Regenerate social only
+/thieung:blog --i18n <slug>                                       # Step 5: Incremental translations only
+/thieung:blog --social <slug>                                     # Step 6: Social content + thumbnails/OG
 /thieung:blog --status                                            # Pipeline state
 
 # Legacy support (GoClaw releases)
@@ -103,22 +102,24 @@ CK_PUBLIC=$CK_SITE/public/
    - **Use cases thực tế** (author pref: abstract explanation without concrete scenarios is NOT acceptable)
    - Best practices + pitfalls (author pref: new-user guidance is required)
    - Technical summary
-3. Save to `$RAW/<slug>.md` with frontmatter:
+3. Sinh `description` (meta, 150-160 ký tự) theo `references/marketing/og-meta-templates.md`. **Guard:** lọc qua writing-style — factual, đúng tông series, KHÔNG "Action verb + CTA" marketing, KHÔNG superlative. Dùng cho `<meta>`/OG/Twitter ở Step 3.
+4. Save to `$RAW/<slug>.md` with frontmatter:
    ```yaml
    ---
    title: "Post Title"
+   description: "Meta factual 150-160 ký tự (xem og-meta-templates.md)"
    project: goclaw|claudekit
    version: vX.Y.Z (optional)
    status: draft|approved
    created: YYYY-MM-DD
    ---
    ```
-4. Print: "Draft saved. Running parallel review..."
-5. Proceed to Step 2.5 automatically
+5. Print: "Draft saved. Running parallel review..."
+6. Proceed to Step 2.5 automatically
 
 ### Step 2.5: Draft Review (auto after Step 2)
 
-Spawn 2 sub-agents in parallel to review the draft:
+Spawn 3 sub-agents in parallel to review the draft (đúng/sai · tone · completeness):
 
 #### Sub-agent 1: Fact Checker
 
@@ -161,7 +162,17 @@ Spawn 2 sub-agents in parallel to review the draft:
 4. Output report with same format as Fact Checker
 5. Save to `plans/reports/adversarial-{date}-{slug}.md`
 
-#### After Both Reviews Complete
+#### Sub-agent 3: Completeness & Meta Checklist
+
+**Purpose:** Kiểm tra bài đủ thành phần bắt buộc + sẵn sàng meta cho Step 3. Khác Sub-agent 1 (đúng/sai kỹ thuật) và Sub-agent 2 (tone/AI-slop).
+
+**Process:**
+1. Read draft from `$RAW/<slug>.md`
+2. Chạy `references/marketing/content-audit-checklist.md`: structure, use-case cụ thể (§10.2), best practices + pitfalls (§10.3), `description` frontmatter (150-160 ký tự), OG image path readiness.
+3. **Guard:** phân loại sang writing-style rules (no AI-slop, no overclaim §10.4). **KHÔNG** dùng 4U/AIDA/CTA-first-person/score 0-10 của MK. Chỉ phân loại **Sẵn sàng / Cần bổ sung** + liệt kê thiếu sót.
+4. Save to `plans/reports/checklist-{date}-{slug}.md`
+
+#### After All Three Reviews Complete
 
 1. Main agent consolidates findings
 2. Display summary to user:
@@ -170,10 +181,12 @@ Spawn 2 sub-agents in parallel to review the draft:
    ─────────────────────
    Fact Check: 8 verified, 2 mismatches, 1 unverified
    Adversarial: 3 concerns raised
+   Checklist: Cần bổ sung (thiếu Pitfalls, description trống)
 
    See reports:
    - plans/reports/factcheck-260412-{slug}.md
    - plans/reports/adversarial-260412-{slug}.md
+   - plans/reports/checklist-260412-{slug}.md
    ```
 3. User reviews reports and either:
    - **Approve:** Update frontmatter `status: approved`, proceed to Step 2.6
@@ -183,7 +196,7 @@ Spawn 2 sub-agents in parallel to review the draft:
 
 **Purpose:** Polish wording của markdown draft bằng `/codex:rescue` — khai thác model khác (GPT-5.4 qua Codex) để rewording vì nó cho góc nhìn ngôn ngữ khác Claude, ít AI-slop hơn ở tiếng Việt long-form.
 
-**When to run:** Sau khi draft đã `status: approved` qua Step 2.5, TRƯỚC khi `--preview` hoặc `--visual`. Nếu user thấy wording đã ổn (đặc biệt với draft ngắn / release note), có thể skip thẳng sang Step 2.75.
+**When to run:** Sau khi draft đã `status: approved` qua Step 2.5, TRƯỚC khi `--visual`. Nếu user thấy wording đã ổn (đặc biệt với draft ngắn / release note), có thể skip thẳng sang Step 3.
 
 **Process:**
 
@@ -198,7 +211,7 @@ Spawn 2 sub-agents in parallel to review the draft:
 5. Save reworded version trực tiếp vào `$RAW/<slug>.md` (overwrite — git tracking đủ rồi)
 6. Print diff summary: số câu được đổi, ví dụ 2-3 thay đổi tiêu biểu
 7. User review diff (`git diff $RAW/<slug>.md`):
-   - **Accept full:** Proceed to Step 2.75 (`--preview`). Done.
+   - **Accept full:** Proceed to Step 3 (`--visual`). Done.
    - **Reject full:** `git checkout -- $RAW/<slug>.md` revert hoàn toàn, rồi chạy lại `--reword` với feedback bổ sung cho Codex (qua `/codex:rescue`).
    - **Accept một phần:** User chỉ thẳng câu/đoạn muốn sửa lại → main agent (Claude) làm Edit nhỏ tại chỗ. KHÔNG phải Claude reword toàn bài lại.
 
@@ -237,111 +250,6 @@ Output:
 
 **Note:** Bước này IDEMPOTENT — chạy lại `--reword` lần 2 sẽ cho output gần như cũ vì draft đã được polish. Chạy đi chạy lại nhiều lần KHÔNG khuyến khích (drift risk).
 
-### Step 2.75: HTML Preview (`--preview <slug>`) — OPTIONAL but RECOMMENDED
-
-Before committing to a full visual `.astro` build, generate multiple standalone HTML preview variants so the user can choose an editorial direction.
-
-**When to run:** After draft is approved (Step 2.5 passed), BEFORE `--visual`. This is selection/prototyping only. Do not run `--visual` / Astro conversion until the user chooses a direction.
-
-**Core rule:**
-
-- `--preview` = multi-variant HTML mockups for choosing style.
-- `--visual` = convert the chosen direction into production Astro.
-- Never convert to Astro until the user explicitly chooses a preview direction or asks to proceed.
-
-**Template reference:** Read `references/editorial-preview-templates.md` before building a multi-preview batch. It defines the reusable templates `05` → `10`, output contract, topic recommendation rules, and verification checklist.
-
-**Output pattern:**
-
-- Gallery: `sites/inside-{project}/assets/previews/<slug>-editorial-gallery.html`
-- Mockups: `sites/inside-{project}/assets/previews/mockups/<slug>-preview-05-kami-parchment.html`, etc.
-- Each mockup is standalone HTML, linked from the gallery, and safe to discard after visual direction is chosen.
-- Keep gallery cards concise: template number/name, one-line style note, one-line content fit.
-
-**Reusable editorial templates — generate all six:**
-
-| Template | Use for | Notes |
-|----------|---------|-------|
-| 05 Kami Parchment | long-doc, beginner-friendly guide, calm docs-like essay | Warm parchment, single serif voice, ink-blue accent |
-| 06 Guizang E-Ink | internals/deep dive, architecture, "Inside" series | E-ink editorial issue, act dividers, oversized serif rhythm |
-| 07 Swiss Grid | methodology, release facts, comparison/checklist-heavy posts | 16-column rational grid, IKB accent, fact-first hierarchy |
-| 08 Sunday Poster | editorial magazine, opinionated explainer, public-facing essay | Newsprint poster, large serif headline, numbered cells |
-| 09 NYT Chart Ledger | data-led article, metrics, tradeoffs, timelines, evidence | Newsroom chart-led story, red annotations, source-heavy footnotes |
-| 10 Safety Dossier | guard rails, security, privacy, incident, risk, compliance | Hazard stripes, tier cards, incident dossier tone |
-
-**Template recommendation guidance:**
-
-- `guard` / `safety` / `privacy` / `secret` / `risk` / `incident` / `security` → recommend `10 Safety Dossier`, backup `06 Guizang E-Ink`
-- `inside` / `internals` / `hook` / `agent` / `workflow` / `architecture` / `harness` → recommend `06 Guizang E-Ink`, backup `07 Swiss Grid`
-- `data` / `metric` / `benchmark` / `timeline` / `trend` / `evidence` / `before-after` → recommend `09 NYT Chart Ledger`, backup `07 Swiss Grid`
-- `guide` / `beginner` / `how-to` / `explainer` / `docs` / `overview` → recommend `05 Kami Parchment`, backup `08 Sunday Poster`
-- `opinion` / `editorial` / `magazine` / `manifesto` / `essay` → recommend `08 Sunday Poster`, backup `06 Guizang E-Ink`
-- `release` / `version` / `changelog` / `feature` / `roadmap` / `methodology` → recommend `07 Swiss Grid`, backup `08 Sunday Poster`
-
-Still generate the full requested batch unless the user explicitly asks for fewer variants. In the preview report, label the recommended template and backup with a short reason.
-
-**Process:**
-
-1. Read approved `$RAW/<slug>.md`; verify frontmatter `status: approved`.
-2. Extract title, description, sections, tables, code blocks, callouts, diagrams; preserve article order, hierarchy, facts, inline code, paths, versions, and metrics.
-3. Generate the six standalone template mockups under `assets/previews/mockups/`.
-4. Generate/update gallery under `assets/previews/` linking to all mockups. If prior variants exist, keep them unless the user asks to clean up.
-5. Print gallery path, local URL/open instruction, all variant paths, recommended template, backup, and reason.
-6. Wait for user selection before proceeding to `--visual`.
-
-**Preview quality requirements:**
-
-- HTML only, no Astro syntax, no i18n JSON, no route files.
-- Responsive at 390px mobile and 1440px desktop.
-- No horizontal page overflow; code/table overflow must stay inside styled scroll containers.
-- Logo renders correctly from the preview path.
-- Article structure preserved: headings, section order, tables, code blocks, callouts, diagrams.
-- No fake controls. If a preview has a theme toggle, both themes must be complete. If the preview is a fixed art-direction mockup, omit the toggle.
-- Do not expose local machine paths in public visible copy.
-
-**Scrollbar styling cho `<pre>` + `.table-wrap` (MANDATORY):**
-
-Mặc định scrollbar OS-default (trắng/xám) phá tone dark mode. Style theo template sau:
-
-```css
-pre, .table-wrap {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
-}
-pre::-webkit-scrollbar, .table-wrap::-webkit-scrollbar { height: 10px; width: 10px; }
-pre::-webkit-scrollbar-track, .table-wrap::-webkit-scrollbar-track { background: transparent; }
-pre::-webkit-scrollbar-thumb, .table-wrap::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 5px;
-}
-pre:hover::-webkit-scrollbar-thumb, .table-wrap:hover::-webkit-scrollbar-thumb {
-  background: var(--accent);
-}
-pre::-webkit-scrollbar-corner, .table-wrap::-webkit-scrollbar-corner { background: transparent; }
-```
-
-Quan trọng:
-- Thumb dùng `--border-strong`, KHÔNG phải `--border` — vì `--border` thường gần bằng `--bg-code` ở dark mode (vd `#1f2530` vs `#1c2330`) → thumb tàng hình. `--border-strong` đậm hơn ~1 stop, nổi rõ trên cả 2 theme.
-- Tránh trick `border: 2px solid transparent + background-clip: padding-box` — làm thumb mỏng đi 4px, càng dễ mất hút.
-- Verify scroll thực tế trước khi báo done — không assume "set var xong là OK".
-
-**Verification before reporting done:**
-
-1. Open gallery via static server or direct file path:
-   ```bash
-   python3 -m http.server 4325 --bind 127.0.0.1 --directory $SITE
-   ```
-2. Check every generated HTML returns/opens successfully.
-3. Use browser/headless Chrome to check desktop + mobile:
-   - no horizontal overflow
-   - logo natural size is non-zero
-   - section/table/code counts match rendered article structure
-4. Inspect at least the recommended template screenshot by eye.
-
-**Note:** Preview artifacts are disposable selection artifacts. The chosen direction can inform `--visual`, but `--visual` still creates the production `.astro` draft after explicit user approval.
-
----
-
 ### Step 3: Create Visual HTML (`--visual <slug>`)
 
 1. Read approved `.md` from `$RAW/<slug>.md`
@@ -365,13 +273,81 @@ Quan trọng:
 2. User can request inline edits in Claude Code session
 3. Iterate until visual is approved
 
-### Step 5: i18n + Social (`--i18n <slug>`)
+### Step 5: Incremental i18n (`--i18n <slug>`)
 
-1. Generate full translations in `$I18N/<slug>.json`:
+**Core rule:** `--i18n` is translation-only. Do NOT generate social posts, thumbnails, OG images, or route metadata in this step. Run `--social <slug>` after translations pass validation.
+
+**Cost guard:** default to changed-only translation. Do NOT send the full article, full Astro file, or full 4-locale JSON to an LLM unless this is the first translation for the slug or the user explicitly requests a full rebuild.
+
+**Deterministic helper:** use `scripts/i18n-deterministic-tools.js` through the `pnpm i18n:*` commands below. The LLM only translates chunk payloads; it never merges, rewrites, sorts, or validates the full i18n JSON.
+
+1. Read the source route/draft and existing `$I18N/<slug>.json`.
+2. Treat `vi` as the source of truth. Ensure the JSON shape stays:
    ```json
    { "vi": {...}, "en": {...}, "zh": {...}, "ja": {...} }
    ```
-2. Generate social content in `$SOCIAL/<slug>/`:
+3. Build a dirty-key queue for each target locale (`en`, `zh`, `ja`):
+   - key missing in target locale
+   - target value is empty, truncated, malformed, or has broken HTML tags/placeholders
+   - `vi` source text changed since the last accepted translation
+   - Use the deterministic helper, not an LLM, to produce this queue:
+     ```bash
+     pnpm i18n:plan -- $I18N/<slug>.json --write
+     ```
+4. Track source hashes outside the runtime translation JSON, for example:
+   - `$I18N/.cache/<slug>.source-hashes.json`
+   - Do NOT add `_meta` or hash data inside `$I18N/<slug>.json`; Astro imports this JSON at runtime.
+5. Reuse translation memory before calling an LLM:
+   - exact same `vi` text already translated in the current slug
+   - common UI labels (`Trang chủ`, `Mục lục`, `Tóm lại`, `Light`, `Dark`, etc.)
+   - unchanged existing target values when the source hash is unchanged
+6. Chunk dirty keys by section prefix instead of translating the whole file:
+   - `meta_*`, `hero_*`, `toc_*`, `s1_*`, `s2_*`, ...
+   - keep each chunk around 40-80 keys, smaller for long paragraphs/tables
+   - prompt should contain only: locale, short glossary, the dirty key/value pairs, and strict output schema
+7. Translation prompt constraints:
+   - return one JSON object for the requested locale/chunk only
+   - preserve exact keys
+   - preserve inline code, technical identifiers, URLs, HTML tags, placeholders, and product names
+   - do not translate code blocks, command names, file paths, or entity IDs
+   - keep tone natural and non-marketing
+8. Merge deterministically:
+   - LLM output goes into the `translations` object of the chunk JSON generated by `pnpm i18n:plan -- ... --write`
+   - merge translated chunks with:
+     ```bash
+     pnpm i18n:merge -- $I18N/<slug>.json <locale> $I18N/.cache/<slug>.dirty/<locale>/<chunk>.json
+     ```
+   - never ask an LLM to rewrite or hand-merge the full i18n file
+   - preserve existing key order when practical; append new keys near their section
+9. Validate before reporting done:
+   - exact key-set parity for `vi`, `en`, `zh`, `ja`
+   - no empty values
+   - no truncation patterns (`or`, `and`, `và`, `hoặc`, `と`, `或`, dangling comma, unclosed tags)
+   - HTML tag parity for `<code>`, `<strong>`, `<em>`, `<a>`
+   - placeholder/URL/code-token parity
+   - run both checks when available:
+     ```bash
+     pnpm i18n:check -- $I18N/<slug>.json
+     pnpm validate:i18n -- $I18N/<slug>.json
+     ```
+10. Only after validation passes, update `$I18N/.cache/<slug>.source-hashes.json`:
+    ```bash
+    pnpm i18n:accept -- $I18N/<slug>.json
+    ```
+11. Print a concise summary:
+   - keys translated per locale
+   - chunks regenerated
+   - reused keys from existing translations/translation memory
+   - validation result
+
+**Parallelism rule:** parallelize by locale/chunk only after dirty keys are extracted. Each parallel worker receives only its chunk, never the whole article or full translation JSON.
+
+### Step 6: Social Assets (`--social <slug>`)
+
+**Core rule:** `--social` owns all social content, thumbnails, OG images, and route social metadata. It should read the validated i18n JSON, but it should not regenerate article translations.
+
+1. Verify `$I18N/<slug>.json` exists and passes key parity/truncation checks.
+2. Generate/update social content in `$SOCIAL/<slug>/`:
    - `content.json` — unified social posts
    - `thumbnail.html` — interactive thumbnail with controls
    - `thumbnail-og.html` — static Open Graph thumbnail source, 1200×630
@@ -390,7 +366,7 @@ Quan trọng:
    - `<meta name="twitter:image">` must match the locale-aware `og:image`
    - `<meta property="og:url">` and `<link rel="canonical">` must use the locale-aware public URL.
 5. Verify the built HTML contains the OG/Twitter image tags and the built images exist at `dist/og/<slug>.png` and `dist/og/<slug>-en.png`.
-6. Print summary with file paths
+6. Print summary with file paths.
 
 ### Social Content Format
 
@@ -421,7 +397,7 @@ Quan trọng:
 
 **thumbnail-og.html / OG image:**
 - Fixed canvas: 1200×630.
-- Purpose: social link preview/unfurl (`og:image`, `twitter:image`), not an admin-only export.
+- Purpose: social link preview/unfurl (`og:image`, `twitter:image`), not an internal-only export.
 - Must be exported to both:
   - `$SOCIAL/<slug>/thumbnail-og.png` for source review.
   - `$SITE/public/og/<slug>.png` for production serving.
@@ -430,11 +406,19 @@ Quan trọng:
   - `$SOCIAL/<slug>/thumbnail-og-en.png`
   - `$SITE/public/og/<slug>-en.png`
 - Route rule: VI uses `<slug>.png`; EN/ZH/JA use `<slug>-en.png` unless dedicated locale images exist.
-- Use absolute production URLs in route meta tags. Social crawlers cannot read local `assets/social/...` files and will not execute the admin thumbnail controls.
+- Use absolute production URLs in route meta tags. Social crawlers cannot read local `assets/social/...` files and will not execute thumbnail controls.
 - Keep title readable when cropped in small social cards; central 80% safe zone; no tiny body copy.
 - Verify with `sips -g pixelWidth -g pixelHeight` or equivalent that the final PNG is exactly 1200×630.
 
 **[CRITICAL] Logo in thumbnails:**
+- Applies to both Codex and Claude runs. Every generated static thumbnail/OG source (`thumbnail-{vi,en}.html`, `thumbnail-og*.html`) MUST include:
+  - A visible project logo/brand mark near the header/top safe zone.
+  - A bottom-right site footnote inside the 1200×630 safe zone (`goclaw.thieunv.space` or `claudekit.thieunv.space`).
+- Footnote style: small but readable (roughly 14–18px), medium/high contrast, never overlapping title, subtitle, CTA, badges, or border decoration.
+- Light/dark background rule:
+  - On dark backgrounds, render the logo in native brand colors; a subtle dark/transparent chip is OK when it improves contrast.
+  - On light backgrounds, do NOT place a light/white wordmark directly on the page. Use a contrast chip/backplate, or render icon + dark text manually.
+  - If the thumbnail has theme controls, verify logo and footnote readability in BOTH light and dark modes before exporting.
 - Thumbnails live at `sites/inside-goclaw/assets/social/<slug>/thumbnail-{vi,en}.html`
 - Logo lives at `sites/inside-goclaw/public/goclaw-icon.svg` (orange/red brand colors `#F08223`, `#DA4525`, `#F4972E`)
 - ✅ Correct relative path (3 levels up): `src="../../../public/goclaw-icon.svg"`
@@ -442,8 +426,11 @@ Quan trọng:
 - Applies to BOTH `<img class="logo">` and `<img class="bg-logo">` (background watermark)
 - ❌ NEVER apply `filter: invert(1)` to the logo — flips orange brand color to teal/cyan, breaks identity
 - ✅ Render logo natively in its orange brand colors on dark backgrounds; for watermark use `opacity: 0.10–0.15` instead of inverting
-- When previewed via `pnpm dev` admin iframe, dev server serves `public/` at root — but the file:// preview and html2canvas export require correct relative paths to render the logo
+- When previewed via `pnpm dev`, the dev server serves `public/` at root — but file/static preview and html2canvas export require correct relative paths to render the logo
 - For ClaudeKit thumbnails, use `sites/inside-claudekit/public/logo.png` or `logo-horizontal.png` with the same 3-level relative path rule from `$CK_SOCIAL/<slug>/`.
+  - `logo-horizontal.png` contains a light wordmark, so keep it on a dark chip/backplate.
+  - On light thumbnail backgrounds, prefer `logo.png` plus manually rendered dark `ClaudeKit` text, or keep `logo-horizontal.png` inside a dark readable chip.
+- After export, visually inspect the PNG by eye and verify all logo/footnote assets loaded with HTTP 200 or non-zero natural dimensions.
 
 ### Publish (`--publish <slug>`)
 
@@ -480,6 +467,8 @@ Published (src/pages/posts/):
 
 ## Social Content Guidelines
 
+**Char limit + OG image size:** `references/marketing/platform-specs.md` (FB 63K/1200×630, X 280/1600×900, Threads 500/1080×1350, LinkedIn 3000/1200×627). **Guard:** đây chỉ là trần kỹ thuật + kích thước ảnh. Giọng văn, hashtag, độ dài thực tế theo guideline bên dưới — KHÔNG áp hook clickbait hay "best posting time" của MK.
+
 ### Facebook (Vietnamese)
 
 **Tone:** Chia sẻ tự nhiên, như nói chuyện với bạn trong group tech. KHÔNG dùng giọng AI.
@@ -489,7 +478,7 @@ Published (src/pages/posts/):
 - Mở đầu giới thiệu ngắn gọn (version mới, tính năng, credit contributor nếu có)
 - Dùng slang thoải mái: "ae", "xịn đét", "đỉnh của chóp"
 - Max 3-4 emoji, đúng chỗ
-- KHÔNG đặt URL trong bài (dùng URL selector trong Admin UI)
+- KHÔNG đặt URL trong bài nếu platform workflow quản URL riêng; nếu cần link, để ở comment/link field riêng
 - Kết bài CTA nhẹ nhàng
 - Max 2-3 hashtag cuối bài
 
@@ -548,18 +537,3 @@ When `--project claudekit` and `sites/inside-claudekit/` doesn't exist:
    ```
 3. Add to pnpm-workspace.yaml
 4. Add to turbo.json
-
-## Admin UI
-
-View social content and export thumbnails at `/admin`:
-
-**Left Panel - Social Content:**
-- Post selector dropdown
-- Platform tabs: Facebook, Threads, X, LinkedIn
-- Content box with copy button
-- URL selector (VI/EN/ZH/JA) with copy button
-
-**Right Panel - Thumbnail:**
-- Iframe loads thumbnail.html
-- Lang/Theme/Platform controls inside iframe
-- Export PNG button downloads directly

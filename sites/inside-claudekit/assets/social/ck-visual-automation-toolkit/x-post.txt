@@ -7,6 +7,8 @@ The cleanest way to pick: does the output serve thinking, or serve a product?
 • `/ck:tech-graph` and `/ck:mermaidjs-v11` handle diagrams; `/ck:show-off` packages a self-contained showcase.
 • `/ck:frontend-design` replicates from a source design; `/ck:stitch` extrapolates UI when there is none.
 
+New in stable `engineer@v2.20.0`: `--html` is no longer exclusive to preview. `/ck:brainstorm` and `/ck:plan` now accept it too, so a brainstorm or a plan can come out as an HTML page you open straight in the browser. `plan --html` even calls frontend-design under the hood.
+
 The core of the post is a real run: visualizing an entire plan file end to end through four steps, with screenshots kept as evidence.
 
 Link below.
