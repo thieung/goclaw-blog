@@ -5,7 +5,11 @@
     "dev": "turbo dev --filter=inside-goclaw",
     "build": "turbo build",
     "check": "turbo check",
-    "validate:i18n": "node scripts/validate-i18n-completeness.js"
+    "validate:i18n": "node scripts/validate-i18n-completeness.js",
+    "i18n:plan": "node scripts/i18n-deterministic-tools.js plan",
+    "i18n:merge": "node scripts/i18n-deterministic-tools.js merge",
+    "i18n:check": "node scripts/i18n-deterministic-tools.js check",
+    "i18n:accept": "node scripts/i18n-deterministic-tools.js accept"
   },
   "packageManager": "pnpm@10.26.2",
   "devDependencies": {

@@ -14,3 +14,4 @@ plans/**/*
 .env
 .env.*
 !.env.production
+.handoff/

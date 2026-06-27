@@ -18,7 +18,7 @@ Astro monorepo blog platform for GoClaw. Deployed on Vercel.
 │       ├── drafts/          — draft .astro posts
 │       ├── i18n/            — translation JSON per post slug
 │       ├── layouts/         — base layouts
-│       └── pages/           — routes (posts/, admin/, en/, zh/, ja/)
+│       └── pages/           — routes (posts/, en/, zh/, ja/)
 ├── posts/                   — published static HTML (legacy)
 ├── social/                  — social media content per post
 ├── plans/                   — implementation plans
