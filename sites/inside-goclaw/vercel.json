@@ -15,7 +15,6 @@
     { "source": "/posts/:slug", "has": [{"type": "query", "key": "lang", "value": "vi"}], "destination": "/posts/:slug", "statusCode": 301 },
     { "source": "/", "has": [{"type": "query", "key": "lang", "value": "en"}], "destination": "/en", "statusCode": 301 },
     { "source": "/", "has": [{"type": "query", "key": "lang", "value": "zh"}], "destination": "/zh", "statusCode": 301 },
-    { "source": "/", "has": [{"type": "query", "key": "lang", "value": "ja"}], "destination": "/ja", "statusCode": 301 },
-    { "source": "/drafts/review", "destination": "/admin/review", "statusCode": 301 }
+    { "source": "/", "has": [{"type": "query", "key": "lang", "value": "ja"}], "destination": "/ja", "statusCode": 301 }
   ]
 }
