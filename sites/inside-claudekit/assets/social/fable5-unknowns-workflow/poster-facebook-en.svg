@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1500" viewBox="0 0 1200 1500">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff9ef"/>
+      <stop offset="0.58" stop-color="#f7ead9"/>
+      <stop offset="1" stop-color="#ead7bf"/>
+    </linearGradient>
+    <radialGradient id="warm" cx="18%" cy="12%" r="78%">
+      <stop offset="0" stop-color="#df8658" stop-opacity="0.24"/>
+      <stop offset="0.48" stop-color="#df8658" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#df8658" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cool" cx="88%" cy="70%" r="58%">
+      <stop offset="0" stop-color="#76b7aa" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#76b7aa" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" fill="none" stroke="#6f5b45" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+    <filter id="soft-title-shadow" x="-6%" y="-8%" width="112%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#8a4a2d" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow-teal" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#28786e" opacity="0.58"/>
+    </marker>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+      .mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
+      .ink { fill: #2a2119; }
+      .muted { fill: #776754; }
+      .soft { fill: #5f5142; }
+      .accent { fill: #b85632; }
+      .teal { fill: #28786e; }
+      .line { stroke: rgba(184,86,50,0.32); stroke-width: 2; }
+      .thin { stroke: rgba(42,33,25,0.12); stroke-width: 1; }
+      .panel { fill: rgba(255,255,255,0.58); stroke: rgba(184,86,50,0.28); stroke-width: 1.6; }
+      .chip { fill: rgba(184,86,50,0.09); stroke: rgba(184,86,50,0.28); stroke-width: 1.2; }
+      .stage { fill: rgba(255,255,255,0.62); stroke: rgba(42,33,25,0.12); stroke-width: 1.2; }
+      .map-card { fill: rgba(255,255,255,0.54); stroke: rgba(40,120,110,0.26); stroke-width: 1.4; }
+      .map-node { fill: rgba(255,248,237,0.82); stroke: rgba(42,33,25,0.12); stroke-width: 1.1; }
+      .map-node-strong { fill: rgba(184,86,50,0.12); stroke: rgba(184,86,50,0.28); stroke-width: 1.2; }
+      .map-line { stroke: rgba(40,120,110,0.38); stroke-width: 2; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="1500" fill="url(#paper)"/>
+  <rect width="1200" height="1500" fill="url(#grid)"/>
+  <rect width="1200" height="1500" fill="url(#warm)"/>
+  <rect width="1200" height="1500" fill="url(#cool)"/>
+  <path d="M82 132 H1118 M82 1318 H1118" class="line"/>
+  <path d="M82 792 H1118" class="thin"/>
+
+  <g transform="translate(82 58)">
+    <rect x="0" y="0" width="54" height="54" rx="13" fill="#b85632"/>
+    <text x="27" y="35" text-anchor="middle" class="mono" font-size="17" font-weight="900" fill="#fff7ea">CK</text>
+    <text x="72" y="22" class="mono accent" font-size="18" font-weight="900" letter-spacing="3">INSIDE CLAUDEKIT</text>
+    <text x="72" y="49" class="mono muted" font-size="13" font-weight="750" letter-spacing="1.4">FIELD NOTES · FABLE 5</text>
+  </g>
+
+  <g transform="translate(82 188)">
+    <rect width="448" height="54" rx="15" class="chip"/>
+    <text x="24" y="35" class="mono accent" font-size="17" font-weight="900">quota until 7/7</text>
+    <text x="242" y="35" class="mono muted" font-size="15">where should Fable work?</text>
+  </g>
+
+  <g transform="translate(82 270)">
+    <text x="28" y="56" class="sans ink" font-size="80" font-weight="900" letter-spacing="-1.1">Fable 5:</text>
+    <text x="28" y="154" class="sans ink" font-size="84" font-weight="900" letter-spacing="-1.2">find</text>
+    <text x="188" y="154" class="sans accent" font-size="84" font-weight="900" letter-spacing="-1.2">unknowns</text>
+    <text x="28" y="262" class="sans ink" font-size="80" font-weight="900" letter-spacing="-1.1">before coding</text>
+    <path d="M186 82 H174 V178 H186" fill="none" stroke="#28786e" stroke-width="4" stroke-linecap="round" opacity="0.72"/>
+    <path d="M588 82 H600 V178 H588" fill="none" stroke="#28786e" stroke-width="4" stroke-linecap="round" opacity="0.72"/>
+    <path d="M602 130 C648 121 680 118 714 116" fill="none" stroke="#28786e" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="7 9" opacity="0.46"/>
+    <text x="438" y="188" class="mono muted" font-size="14" font-weight="850" letter-spacing="1.5">SCOUT FIRST</text>
+  </g>
+
+  <g transform="translate(742 288)">
+    <rect width="376" height="252" rx="24" class="map-card" filter="url(#soft-title-shadow)"/>
+    <text x="26" y="40" class="mono teal" font-size="17" font-weight="900" letter-spacing="1.2">UNKNOWN MAP</text>
+    <text x="26" y="71" class="sans muted" font-size="19">know risks before planning</text>
+
+    <rect x="28" y="96" width="128" height="44" rx="14" class="map-node"/>
+    <text x="92" y="124" text-anchor="middle" class="mono muted" font-size="14" font-weight="850">codebase</text>
+    <rect x="28" y="154" width="128" height="44" rx="14" class="map-node"/>
+    <text x="92" y="182" text-anchor="middle" class="mono muted" font-size="14" font-weight="850">git history</text>
+    <rect x="220" y="96" width="128" height="44" rx="14" class="map-node"/>
+    <text x="284" y="124" text-anchor="middle" class="mono muted" font-size="14" font-weight="850">docs</text>
+
+    <path d="M156 118 C178 118 183 133 196 145" class="map-line"/>
+    <path d="M156 176 C178 176 184 163 196 155" class="map-line"/>
+    <path d="M220 118 C204 123 200 137 196 146" class="map-line"/>
+    <circle cx="205" cy="151" r="34" fill="#28786e" opacity="0.95"/>
+    <text x="205" y="146" text-anchor="middle" class="mono" font-size="12" font-weight="900" fill="#fff7ea">blind</text>
+    <text x="205" y="162" text-anchor="middle" class="mono" font-size="12" font-weight="900" fill="#fff7ea">spot</text>
+
+    <path d="M205 185 V206" class="map-line" marker-end="url(#arrow-teal)"/>
+    <rect x="102" y="212" width="206" height="34" rx="13" class="map-node-strong"/>
+    <text x="205" y="235" text-anchor="middle" class="mono accent" font-size="13" font-weight="900">better prompt</text>
+  </g>
+
+  <text x="86" y="640" class="sans soft" font-size="31" font-weight="650">
+    <tspan x="86" dy="0">From two strong X posts by Thariq + Alex Finn,</tspan>
+    <tspan x="86" dy="45">mapped into a complete ClaudeKit workflow:</tspan>
+  </text>
+
+  <g transform="translate(82 730)">
+    <rect width="1036" height="178" rx="22" class="panel"/>
+    <text x="38" y="58" class="mono accent" font-size="19" font-weight="900" letter-spacing="1.4">6-STAGE PIPELINE</text>
+    <text x="38" y="112" class="sans ink" font-size="28" font-weight="850">blindspot → plan → cook(+impl-notes) → review → quiz-gate → ship</text>
+    <text x="40" y="152" class="sans muted" font-size="23">Fable handles judgment; Opus/Sonnet/Haiku handle the rest.</text>
+  </g>
+
+  <g transform="translate(82 980)">
+    <rect x="0" y="0" width="318" height="176" rx="20" class="stage"/>
+    <text x="26" y="48" class="mono teal" font-size="19" font-weight="900">01 · blindspot</text>
+    <text x="26" y="92" class="sans ink" font-size="29" font-weight="850">Scout blind spots</text>
+    <text x="26" y="132" class="sans muted" font-size="20">Find unknown unknowns,</text>
+    <text x="26" y="158" class="sans muted" font-size="20">evidence, better prompt.</text>
+
+    <rect x="359" y="0" width="318" height="176" rx="20" class="stage"/>
+    <text x="385" y="48" class="mono teal" font-size="19" font-weight="900">02 · impl-notes</text>
+    <text x="385" y="92" class="sans ink" font-size="29" font-weight="850">Inside cook</text>
+    <text x="385" y="132" class="sans muted" font-size="20">Log plan deviations,</text>
+    <text x="385" y="158" class="sans muted" font-size="20">capture direction changes.</text>
+
+    <rect x="718" y="0" width="318" height="176" rx="20" class="stage"/>
+    <text x="744" y="48" class="mono teal" font-size="19" font-weight="900">03 · quiz-gate</text>
+    <text x="744" y="92" class="sans ink" font-size="29" font-weight="850">Human is the gate</text>
+    <text x="744" y="132" class="sans muted" font-size="20">Pass 100% before ship,</text>
+    <text x="744" y="158" class="sans muted" font-size="20">no understanding, no merge.</text>
+  </g>
+
+  <g transform="translate(82 1224)">
+    <rect width="1036" height="82" rx="20" fill="rgba(40,120,110,0.10)" stroke="rgba(40,120,110,0.28)" stroke-width="1.4"/>
+    <text x="32" y="51" class="sans ink" font-size="25" font-weight="850">Goal:</text>
+    <text x="110" y="51" class="sans muted" font-size="23">spend Fable quota on judgment, not on work cheaper models already handle well.</text>
+  </g>
+
+  <g transform="translate(82 1372)">
+    <text x="0" y="0" class="mono muted" font-size="17" font-weight="750" letter-spacing="1.2">claudekit.thieunv.space/posts/fable5-unknowns-workflow</text>
+    <text x="1036" y="0" text-anchor="end" class="mono accent" font-size="17" font-weight="900" letter-spacing="1.2">fb.com/shinantori</text>
+  </g>
+</svg>

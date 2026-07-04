@@ -1,55 +1,103 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#15110d"/>
-      <stop offset="0.55" stop-color="#241913"/>
-      <stop offset="1" stop-color="#2d2016"/>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff9ef"/>
+      <stop offset="0.58" stop-color="#f7ead9"/>
+      <stop offset="1" stop-color="#ead7bf"/>
     </linearGradient>
-    <radialGradient id="glow" cx="20%" cy="15%" r="75%">
-      <stop offset="0" stop-color="#e08a5f" stop-opacity="0.24"/>
-      <stop offset="0.5" stop-color="#e08a5f" stop-opacity="0.08"/>
-      <stop offset="1" stop-color="#e08a5f" stop-opacity="0"/>
+    <radialGradient id="warm" cx="18%" cy="16%" r="78%">
+      <stop offset="0" stop-color="#df8658" stop-opacity="0.24"/>
+      <stop offset="0.48" stop-color="#df8658" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#df8658" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="cool" cx="88%" cy="66%" r="56%">
+      <stop offset="0" stop-color="#76b7aa" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#76b7aa" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M34 0H0V34" fill="none" stroke="#6f5b45" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+    <filter id="soft-shadow" x="-6%" y="-8%" width="112%" height="120%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#8a4a2d" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow-teal" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#28786e" opacity="0.62"/>
+    </marker>
     <style>
       .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
       .mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
-      .muted { fill: #a49a8c; }
-      .text { fill: #f4eadb; }
-      .accent { fill: #e08a5f; }
-      .line { stroke: rgba(224,138,95,0.32); stroke-width: 1; }
-      .chip { fill: rgba(255,255,255,0.055); stroke: rgba(224,138,95,0.28); stroke-width: 1; }
+      .ink { fill: #2a2119; }
+      .muted { fill: #776754; }
+      .accent { fill: #b85632; }
+      .teal { fill: #28786e; }
+      .line { stroke: rgba(184,86,50,0.32); stroke-width: 1.6; }
+      .panel { fill: rgba(255,255,255,0.60); stroke: rgba(184,86,50,0.26); stroke-width: 1.4; }
+      .map-card { fill: rgba(255,255,255,0.58); stroke: rgba(40,120,110,0.28); stroke-width: 1.4; }
+      .map-node { fill: rgba(255,248,237,0.84); stroke: rgba(42,33,25,0.12); stroke-width: 1.1; }
+      .map-node-strong { fill: rgba(184,86,50,0.12); stroke: rgba(184,86,50,0.30); stroke-width: 1.2; }
+      .map-line { stroke: rgba(40,120,110,0.42); stroke-width: 2; stroke-linecap: round; }
     </style>
   </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#glow)"/>
-  <path d="M70 118 H1130 M70 512 H1130" class="line"/>
-  <g transform="translate(76 54)">
-    <rect x="0" y="0" width="44" height="44" rx="10" fill="#e08a5f"/>
-    <text x="22" y="29" text-anchor="middle" class="mono" font-size="15" font-weight="800" fill="#15110d">CK</text>
-    <text x="58" y="18" class="mono accent" font-size="14" font-weight="800" letter-spacing="1.8">INSIDE CLAUDEKIT</text>
-    <text x="58" y="40" class="mono muted" font-size="12" letter-spacing="1.4">FIELD NOTES · FABLE 5</text>
+
+  <rect width="1200" height="630" fill="url(#paper)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#warm)"/>
+  <rect width="1200" height="630" fill="url(#cool)"/>
+  <path d="M70 112 H1130 M70 546 H1130" class="line"/>
+
+  <g transform="translate(76 48)">
+    <rect x="0" y="0" width="46" height="46" rx="11" fill="#b85632"/>
+    <text x="23" y="30" text-anchor="middle" class="mono" font-size="15" font-weight="900" fill="#fff7ea">CK</text>
+    <text x="60" y="19" class="mono accent" font-size="15" font-weight="900" letter-spacing="2.2">INSIDE CLAUDEKIT</text>
+    <text x="60" y="41" class="mono muted" font-size="12" font-weight="750" letter-spacing="1.3">FIELD NOTES · FABLE 5</text>
   </g>
-  <g transform="translate(76 156)">
-    <text class="sans text" font-size="68" font-weight="850" letter-spacing="-1">
-      <tspan x="0" y="0">Working with Fable 5:</tspan>
-      <tspan x="0" y="78">fix the map before</tspan>
-      <tspan x="0" y="156">entering the territory</tspan>
-    </text>
-    <text x="0" y="230" class="sans muted" font-size="25" font-weight="500">
-      6-stage pipeline · 3 custom skills · explicit model cost
-    </text>
+
+  <g transform="translate(76 130)">
+    <rect x="0" y="0" width="398" height="40" rx="13" fill="rgba(184,86,50,0.08)" stroke="rgba(184,86,50,0.26)" stroke-width="1.1"/>
+    <text x="20" y="26" class="mono accent" font-size="15" font-weight="900">quota until 7/7</text>
+    <text x="200" y="26" class="mono muted" font-size="13">where should Fable work?</text>
   </g>
-  <g transform="translate(76 442)">
-    <rect x="0" y="0" width="270" height="48" rx="10" class="chip"/>
-    <text x="22" y="30" class="mono accent" font-size="15" font-weight="800">blindspot</text>
-    <text x="126" y="30" class="mono muted" font-size="14">unknowns before code</text>
-    <rect x="290" y="0" width="236" height="48" rx="10" class="chip"/>
-    <text x="312" y="30" class="mono accent" font-size="15" font-weight="800">impl-notes</text>
-    <text x="416" y="30" class="mono muted" font-size="14">log deviations</text>
-    <rect x="546" y="0" width="222" height="48" rx="10" class="chip"/>
-    <text x="568" y="30" class="mono accent" font-size="15" font-weight="800">quiz-gate</text>
-    <text x="662" y="30" class="mono muted" font-size="14">human as gate</text>
+
+  <g transform="translate(76 238)">
+    <text x="0" y="0" class="sans ink" font-size="70" font-weight="900" letter-spacing="-1">Fable 5:</text>
+    <text x="0" y="82" class="sans ink" font-size="74" font-weight="900" letter-spacing="-1.1">find</text>
+    <text x="146" y="82" class="sans accent" font-size="74" font-weight="900" letter-spacing="-1.1">unknowns</text>
+    <text x="0" y="166" class="sans ink" font-size="70" font-weight="900" letter-spacing="-1">before coding</text>
+    <path d="M136 18 H125 V103 H136" fill="none" stroke="#28786e" stroke-width="3.5" stroke-linecap="round" opacity="0.74"/>
+    <path d="M502 18 H513 V103 H502" fill="none" stroke="#28786e" stroke-width="3.5" stroke-linecap="round" opacity="0.74"/>
+    <path d="M515 65 C568 52 611 50 654 54" fill="none" stroke="#28786e" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 9" opacity="0.44"/>
+    <text x="396" y="120" class="mono muted" font-size="13" font-weight="850" letter-spacing="1.4">SCOUT FIRST</text>
   </g>
-  <text x="76" y="556" class="mono muted" font-size="14">Inspired by Thariq + Alex Finn on X</text>
-  <text x="1124" y="556" text-anchor="end" class="mono muted" font-size="15">claudekit.thieunv.space</text>
+
+  <g transform="translate(742 152)">
+    <rect width="386" height="260" rx="24" class="map-card" filter="url(#soft-shadow)"/>
+    <text x="28" y="43" class="mono teal" font-size="17" font-weight="900" letter-spacing="1.2">UNKNOWN MAP</text>
+    <text x="28" y="75" class="sans muted" font-size="19">know risks before planning</text>
+
+    <rect x="30" y="100" width="132" height="44" rx="14" class="map-node"/>
+    <text x="96" y="128" text-anchor="middle" class="mono muted" font-size="14" font-weight="850">codebase</text>
+    <rect x="30" y="158" width="132" height="44" rx="14" class="map-node"/>
+    <text x="96" y="186" text-anchor="middle" class="mono muted" font-size="14" font-weight="850">git history</text>
+    <rect x="226" y="100" width="132" height="44" rx="14" class="map-node"/>
+    <text x="292" y="128" text-anchor="middle" class="mono muted" font-size="14" font-weight="850">docs</text>
+
+    <path d="M162 122 C184 122 190 136 202 149" class="map-line"/>
+    <path d="M162 180 C184 180 190 166 202 158" class="map-line"/>
+    <path d="M226 122 C210 127 205 140 202 149" class="map-line"/>
+    <circle cx="211" cy="154" r="35" fill="#28786e" opacity="0.95"/>
+    <text x="211" y="149" text-anchor="middle" class="mono" font-size="12" font-weight="900" fill="#fff7ea">blind</text>
+    <text x="211" y="165" text-anchor="middle" class="mono" font-size="12" font-weight="900" fill="#fff7ea">spot</text>
+    <path d="M211 189 V213" class="map-line" marker-end="url(#arrow-teal)"/>
+    <rect x="104" y="220" width="214" height="34" rx="13" class="map-node-strong"/>
+    <text x="211" y="243" text-anchor="middle" class="mono accent" font-size="13" font-weight="900">better prompt</text>
+  </g>
+
+  <g transform="translate(76 458)">
+    <rect width="1052" height="70" rx="18" class="panel"/>
+    <text x="28" y="29" class="mono accent" font-size="15" font-weight="900" letter-spacing="1.2">6-STAGE PIPELINE</text>
+    <text x="28" y="53" class="sans ink" font-size="25" font-weight="850">blindspot → plan → cook(+impl-notes) → review → quiz-gate → ship</text>
+  </g>
+
+  <text x="76" y="582" class="mono muted" font-size="14" font-weight="700">From Thariq + Alex Finn insights, mapped into ClaudeKit workflow</text>
+  <text x="1124" y="582" text-anchor="end" class="mono accent" font-size="15" font-weight="850">claudekit.thieunv.space</text>
 </svg>
