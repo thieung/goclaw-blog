@@ -1,0 +1,1890 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Working with Fable 5: Fix the map before entering the territory</title>
+<meta name="description" content="Map vs Territory: the distance between prompt and codebase is unknowns. Pipeline 6 stages, 3 gate fixed around ck:cook, and model cost tradeoffs for each stage." />
+<link rel="canonical" href="https://claudekit.thieunv.space/en/posts/fable5-unknowns-workflow" />
+<meta property="og:title" content="Working with Fable 5: Fix the map before entering the territory" />
+<meta property="og:description" content="Map vs Territory: the distance between prompt and codebase is unknowns. Pipeline 6 stages, 3 gate fixed around ck:cook, and model cost tradeoffs for each stage." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://claudekit.thieunv.space/en/posts/fable5-unknowns-workflow" />
+<meta property="og:site_name" content="Inside ClaudeKit" />
+<meta property="og:image" content="https://claudekit.thieunv.space/og/fable5-unknowns-workflow-en.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Working with Fable 5: Fix the map before entering the territory" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Working with Fable 5: Fix the map before entering the territory" />
+<meta name="twitter:description" content="Map vs Territory: the distance between prompt and codebase is unknowns. Pipeline 6 stages, 3 gate fixed around ck:cook, and model cost tradeoffs for each stage." />
+<meta name="twitter:image" content="https://claudekit.thieunv.space/og/fable5-unknowns-workflow-en.png" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="/favicon.ico" />
+<script is:inline>
+  (function () {
+    try {
+      var stored = localStorage.getItem('theme');
+      if (stored === 'light' || stored === 'dark') {
+        document.documentElement.dataset.theme = stored;
+        return;
+      }
+    } catch (_) {}
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
+  })();
+</script>
+<style is:inline>
+  :root {
+    color-scheme: light;
+    --accent: #b5502e;
+    --accent-soft: #f2e2da;
+    --bg: #faf7f2;
+    --bg-card: #ffffff;
+    --text: #211c18;
+    --text-muted: #6b6259;
+    --border: #e6ddd2;
+    --mono-bg: #f1ece3;
+    --shadow: 0 1px 3px rgba(30, 20, 10, 0.06);
+    /* Full = topbar/visual ceiling. Content = khổ đọc chính, cùng mốc với intro và tổng kết. */
+    --full: 1200px;
+    --content: 920px;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --accent: #e08a5f;
+    --accent-soft: #3a2c22;
+    --bg: #17140f;
+    --bg-card: #1f1b15;
+    --text: #ece5da;
+    --text-muted: #a49a8c;
+    --border: #332c22;
+    --mono-bg: #251f18;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--bg);
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Main article follows the same reading width as intro and takeaways. */
+  .wrap {
+    max-width: var(--content);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- TOPBAR NAV ---------- */
+  .topbar {
+    max-width: var(--full);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 60px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .series {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .topbar .series .product {
+    color: var(--text-muted);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .topbar .series .product::before {
+    content: "";
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    margin-right: 12px;
+    vertical-align: middle;
+    background: color-mix(in srgb, var(--accent) 60%, var(--border));
+  }
+  .nav-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .home-link,
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text);
+    font: 700 11px/1 "SF Mono", "Menlo", "Consolas", monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+  }
+  .home-link svg { width: 14px; height: 14px; }
+  .home-link:hover,
+  .theme-toggle:hover,
+  .home-link:focus-visible,
+  .theme-toggle:focus-visible {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    outline: none;
+  }
+
+  /* ---------- HERO ---------- */
+  header.hero {
+    padding: 80px 24px 60px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kicker {
+    display: inline-block;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  h1.title {
+    font-size: clamp(32px, 5.5vw, 52px);
+    line-height: 1.15;
+    margin: 0 0 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .subtitle {
+    max-width: 640px;
+    margin: 0 auto;
+    color: var(--text-muted);
+    font-size: 17px;
+    line-height: 1.7;
+  }
+
+  .subtitle .name {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ---------- SECTIONS ---------- */
+  main {
+    padding: 8px 0 40px;
+  }
+
+  /* Khối đọc (text dài) giữ khổ hẹp cho dễ đọc, căn trái trong wrap rộng */
+  .reader {
+    max-width: var(--content);
+  }
+
+  section {
+    padding: 64px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section:last-of-type { border-bottom: none; }
+
+  .sec-label {
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: clamp(24px, 4vw, 32px);
+    line-height: 1.25;
+    margin: 0 0 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0 0 10px;
+  }
+
+  p { margin: 0 0 16px; }
+
+  .lede {
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+
+  code, .code {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 0.9em;
+    background: var(--mono-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  strong { font-weight: 700; }
+
+  a { color: var(--accent); }
+
+  /* ---------- RUMSFELD MATRIX ---------- */
+  .matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 28px 0;
+    max-width: var(--full);
+  }
+
+  .matrix-cell {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .matrix-cell.target {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    position: relative;
+  }
+
+  .matrix-cell.target::after {
+    content: "PRIMARY TARGET";
+    position: absolute;
+    top: -10px;
+    right: 14px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .matrix-cell .cell-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .matrix-cell .cell-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .matrix-axis-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .golden-rule {
+    margin: 28px 0 30px;
+    padding: 22px 26px 24px;
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+    border-left: 6px solid var(--accent);
+    border-radius: 8px;
+    font-size: 17px;
+    line-height: 1.72;
+    max-width: var(--content);
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent) 3%, transparent) 44%, transparent),
+      var(--bg-card);
+    box-shadow: 0 18px 46px color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  .golden-rule > strong:first-child {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--accent);
+    font: 800 12px/1.25 "SF Mono", "Menlo", "Consolas", monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- SKILL SUMMARY GRID (như screenshot) ---------- */
+  .skill-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 28px 0 8px;
+  }
+
+  .summary-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 22px 24px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .summary-card .sc-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .summary-card .sc-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .summary-card .sc-icon svg { width: 22px; height: 22px; }
+
+  .summary-card .sc-name {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .summary-card .sc-custom {
+    align-self: center;
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  .summary-card .sc-desc {
+    font-size: 15.5px;
+    line-height: 1.55;
+    margin: 0 0 16px;
+  }
+
+  .summary-card .sc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  .summary-card .sc-tag {
+    font-size: 13px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 12px;
+    background: color-mix(in srgb, var(--mono-bg) 60%, transparent);
+  }
+
+  /* ---------- SUBSCRIBER BANNER ---------- */
+  .sub-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 22px 0 4px;
+    padding: 22px 24px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+    border-radius: 16px;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 55%, transparent), transparent 60%),
+      var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .sub-banner .sb-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .sub-banner .sb-icon svg { width: 26px; height: 26px; }
+
+  .sub-banner .sb-body { flex: 1 1 auto; min-width: 0; }
+
+  .sub-banner .sb-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0 0 4px;
+  }
+
+  .sub-banner .sb-desc {
+    font-size: 14.5px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .sub-banner .sb-cta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: filter 0.18s ease, transform 0.18s ease;
+  }
+  .sub-banner .sb-cta svg { width: 16px; height: 16px; }
+  .sub-banner .sb-cta:hover,
+  .sub-banner .sb-cta:focus-visible {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  /* ---------- SKILL CARDS (list chi tiết) ---------- */
+  .skill-detail-label {
+    margin: 40px 0 4px;
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .skill-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-top: 16px;
+    max-width: var(--full);
+  }
+
+  .skill-card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .skill-card .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .skill-card .tag .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .skill-card h3 code {
+    font-size: 1em;
+  }
+
+  .skill-card ul {
+    margin: 12px 0 0;
+    padding-left: 20px;
+  }
+
+  .skill-card li {
+    margin-bottom: 6px;
+    font-size: 15px;
+  }
+
+  .skill-card .deliverable {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: var(--mono-bg);
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+  }
+
+  /* ---------- PIPELINE FLOW ---------- */
+  .pipeline {
+    margin-top: 28px;
+    position: relative;
+    padding-left: 28px;
+    max-width: var(--full);
+  }
+
+  .pipeline::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: linear-gradient(var(--accent), var(--border));
+    opacity: 0.5;
+  }
+
+  .stage {
+    position: relative;
+    padding-bottom: 28px;
+  }
+
+  .stage:last-child { padding-bottom: 0; }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--accent);
+  }
+
+  .stage-box {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .stage-num {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stage-cmd {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .stage-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .stage-opt {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ---------- GATE VISUAL ---------- */
+  .gate-visual {
+    margin: 32px 0 4px;
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .scroll-hint {
+    display: none;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0 0 24px;
+  }
+
+  .gate-node, .cook-node {
+    flex: 1 1 0;
+    min-width: 148px;
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .gate-node {
+    border: 2px solid var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .gate-node .g-label {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .gate-node .g-cmd {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .gate-node .g-kills {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .cook-node {
+    background: var(--mono-bg);
+    border: 1px dashed var(--border);
+    justify-content: center;
+  }
+
+  .cook-node .c-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .cook-node .c-cmd {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .arrow-sep {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 18px;
+    padding: 0 2px;
+  }
+
+  .gate-explain {
+    display: grid;
+    gap: 14px;
+    margin-top: 8px;
+    max-width: var(--full);
+  }
+
+  .gate-explain .g-item {
+    border-left: 3px solid var(--accent);
+    padding: 4px 0 4px 16px;
+  }
+
+  .gate-explain .g-item h4 {
+    margin: 0 0 4px;
+    font-size: 15px;
+  }
+
+  .gate-explain .g-item p {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--text-muted);
+  }
+
+  /* Gate chéo model tuỳ chọn (Codex — khác model) */
+  .gate-node.optional {
+    border-style: dashed;
+    background: var(--bg-card);
+  }
+
+  .gate-node.optional .g-label { color: var(--text-muted); }
+
+  .sub-badge {
+    display: inline-block;
+    align-self: center;
+    margin-top: 8px;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+
+  .arrow-sep.optional { opacity: 0.45; }
+
+  .gate-explain .g-item.optional {
+    border-left-style: dashed;
+  }
+
+  /* ---------- CODEX ---------- */
+  .callout {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 14.5px;
+    margin: 20px 0 28px;
+    max-width: var(--content);
+  }
+
+  .callout .callout-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--accent);
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .cmd-block {
+    margin: 16px 0 24px;
+    padding: 14px 16px;
+    background: var(--mono-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: var(--content);
+  }
+
+  .loop-flow {
+    margin: 20px 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: loopstep;
+    max-width: var(--content);
+  }
+
+  .loop-flow li {
+    position: relative;
+    padding: 0 0 18px 44px;
+    counter-increment: loopstep;
+    font-size: 14.5px;
+  }
+
+  .loop-flow li::before {
+    content: counter(loopstep);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loop-flow li::after {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 30px;
+    bottom: 2px;
+    width: 1.5px;
+    background: var(--border);
+  }
+
+  .loop-flow li:last-child { padding-bottom: 0; }
+  .loop-flow li:last-child::after { display: none; }
+
+  .loop-flow li.human-step::before {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ---------- TABLES ---------- */
+  .table-scroll {
+    overflow-x: auto;
+    margin: 20px 0;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    max-width: var(--full);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+    font-size: 14px;
+    background: var(--bg-card);
+  }
+
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--mono-bg);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  td .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* ---------- BAI 2 ---------- */
+  .quote-block {
+    position: relative;
+    margin: 36px 0;
+    padding: 30px 34px 28px 72px;
+    border-top: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-card) 72%, var(--bg));
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.78;
+    font-style: normal;
+  }
+
+  .quote-block::before,
+  .quote-block::after {
+    position: absolute;
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1;
+    color: var(--accent);
+    pointer-events: none;
+  }
+
+  .quote-block::before {
+    content: "“";
+    top: 8px;
+    left: 18px;
+    font-size: 76px;
+    opacity: 0.34;
+  }
+
+  .quote-block::after {
+    content: "”";
+    right: 22px;
+    bottom: -10px;
+    font-size: 58px;
+    opacity: 0.16;
+  }
+
+  .quote-block .label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--accent);
+    font: 800 12px/1.25 "SF Mono", "Menlo", "Consolas", monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .quote-block p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+  }
+
+  .review-gate-block {
+    margin-top: 40px;
+  }
+
+  .flaw-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 20px;
+    max-width: var(--full);
+  }
+
+  .flaw-item {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .flaw-item .flaw-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--accent);
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  /* ---------- PROMPT MẪU ---------- */
+  .prompt-box {
+    margin-top: 14px;
+    background: var(--mono-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .prompt-box .p-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 8px 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prompt-box .p-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .prompt-box .p-copy {
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 4px 12px;
+    min-height: 28px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .prompt-box .p-copy:hover,
+  .prompt-box .p-copy:focus-visible {
+    background: var(--accent);
+    color: #fff;
+    outline: none;
+  }
+
+  .prompt-box pre {
+    margin: 0;
+    padding: 14px 16px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    padding: 56px 24px 80px;
+    text-align: center;
+  }
+
+  .takeaways {
+    max-width: var(--content);
+    margin: 0 auto 40px;
+    text-align: left;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .takeaways h3 {
+    margin: 0;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--mono-bg);
+    color: var(--text);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .takeaways ul {
+    counter-reset: takeaway;
+    margin: 0;
+    padding: 22px 24px 24px;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+  }
+
+  .takeaways li {
+    counter-increment: takeaway;
+    position: relative;
+    margin: 0;
+    padding: 14px 16px 14px 54px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--mono-bg) 38%, transparent);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .takeaways li::before {
+    content: counter(takeaway, decimal-leading-zero);
+    position: absolute;
+    left: 16px;
+    top: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--accent);
+    font: 800 11px/1 "SF Mono", "Menlo", "Consolas", monospace;
+  }
+
+  .post-footer-nav {
+    display: flex;
+    justify-content: center;
+    margin: 0 0 40px;
+  }
+  .post-footer-nav .home-link {
+    min-height: 44px;
+    padding: 0 22px;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+  .post-footer-nav .home-link svg { width: 16px; height: 16px; }
+
+  .credits {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 720px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  .credits a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (min-width: 921px) and (max-width: 1200px) {
+    .scroll-hint { display: block; }
+  }
+
+  @media (max-width: 920px) {
+    .skill-summary { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 720px) {
+    .topbar { padding: 12px 20px; flex-wrap: wrap; }
+    .topbar .series { font-size: 11px; letter-spacing: 0.1em; }
+    .sub-banner { flex-direction: column; align-items: flex-start; }
+    .sub-banner .sb-cta { align-self: stretch; justify-content: center; }
+  }
+
+  @media (max-width: 640px) {
+    header.hero { padding: 56px 20px 44px; }
+    section { padding: 48px 0; }
+    .matrix { grid-template-columns: 1fr; }
+    /* Mobile: stack node dọc — không node nào bị cắt */
+    .gate-visual {
+      flex-direction: column;
+      overflow-x: visible;
+      margin-bottom: 24px;
+    }
+    .arrow-sep { transform: rotate(90deg); justify-content: center; padding: 4px 0; }
+    .gate-node, .cook-node { min-width: unset; }
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topbar" aria-label="Article navigation">
+  <span class="series">
+    Inside ClaudeKit
+    <span class="product">ClaudeKit Engineer</span>
+  </span>
+  <span class="nav-actions">
+    <a class="home-link" href="/en" aria-label="Back to home page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      <span>Home</span>
+    </a>
+    <button class="theme-toggle" type="button" aria-label="Toggle light/dark theme" aria-pressed="false">Dark</button>
+  </span>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kicker">Field notes · ClaudeKit</span>
+    <h1 class="title">Working with Fable&nbsp;5: Fix the map before entering the territory</h1>
+    <p class="subtitle">
+      Fable 5 is only included in subscription quota through July 7, so how do you work with it efficiently? Last night I happened to read two strong posts on X — <span class="name">"A Field Guide to Fable: Finding Your Unknowns"</span> (Thariq, @trq212) and
+      <span class="name">"The Most Valuable Thing You Can Do With Fable 5"</span> (Alex Finn). Mapping those insights into my ClaudeKit system led to a 6-stage pipeline with 3 custom skills layered on top of ClaudeKit skills, a close fit with Thariq's point about finding unknowns before coding.
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 2. BÀI 1 — MAP VS TERRITORY -->
+  <section id="map-vs-territory">
+    <div class="reader">
+      <span class="sec-label">01 · Field Guide to Fable</span>
+      <h2>Map vs Territory: that distance is unknowns</h2>
+      <p class="lede">
+        The prompt/context you gave Claude is <strong>map</strong>. The actual codebase and binding are <strong>territory</strong>.
+        The distance between these two is called <strong>unknowns</strong>.
+      </p>
+      <p>
+        With Fable&nbsp;5, the quality of output is limited by the ability of unknowns to clarify <strong>user</strong> — not because of model's abilities.
+        The stronger the model, the greater the cost of a bad map, because it will confidently execute in the wrong direction instead of stopping to ask.
+      </p>
+
+      <div class="matrix-axis-label">Matrix Rumsfeld — 4 types of unknowns when you write a prompt</div>
+    </div>
+    <div class="matrix">
+      <div class="matrix-cell">
+        <div class="cell-title">🟢 Known knowns</div>
+        <p class="cell-desc">What you have clearly written in prompt. Claude just read and follow — no guessing required.</p>
+      </div>
+      <div class="matrix-cell">
+        <div class="cell-title">🟡 Known unknowns</div>
+        <p class="cell-desc">What you know yourself <em>undecided</em> — trade-off, variable name, strategy migration left open.</p>
+      </div>
+      <div class="matrix-cell">
+        <div class="cell-title">🟠 Unknown knowns</div>
+        <p class="cell-desc">The standard is "know it when you see it" but you can't put it into words — it only shows up when output is wrong.</p>
+      </div>
+      <div class="matrix-cell target">
+        <div class="cell-title">🔴 Unknown unknowns</div>
+        <p class="cell-desc">Questions you didn't know you needed to ask. This is the most dangerous gap — and the main target to eliminate.</p>
+      </div>
+    </div>
+
+    <div class="golden-rule">
+      <strong>Golden rule:</strong> The sooner you find unknowns, the cheaper the repair cost — find it later <code>merge</code> The repair cost is many times more expensive, because at that time the territory was misshaped by the map.
+    </div>
+  </section>
+
+  <!-- 3. 3 SKILL -->
+  <section id="three-skills">
+    <div class="reader">
+      <span class="sec-label">02 · Three gaps of ClaudeKit</span>
+      <h2>Three custom skills I wrote to cover the right three gaps</h2>
+      <p class="lede">Not part of ClaudeKit core — 3 small skills built to fill the exact gap this method needs: finding unknown unknowns before coding, logging deviation at the moment it happens, and gate understanding people after coding.</p>
+    </div>
+
+    <div class="skill-summary">
+      <div class="summary-card">
+        <div class="sc-head">
+          <span class="sc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <span class="sc-name">blindspot</span>
+          <span class="sc-custom">Custom</span>
+        </div>
+        <p class="sc-desc">Turn 'I don't know what I don't know' into a sharp, stick-and-go prompt.</p>
+        <div class="sc-tags">
+          <span class="sc-tag">strange area</span>
+          <span class="sc-tag">new domain</span>
+          <span class="sc-tag">before coding</span>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="sc-head">
+          <span class="sc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          <span class="sc-name">impl-notes</span>
+          <span class="sc-custom">Custom</span>
+        </div>
+        <p class="sc-desc">Catch each deviation the moment it happens — before it becomes a mystery.</p>
+        <div class="sc-tags">
+          <span class="sc-tag">while coding</span>
+          <span class="sc-tag">edge case</span>
+          <span class="sc-tag">handover notes</span>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="sc-head">
+          <span class="sc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg></span>
+          <span class="sc-name">quiz-gate</span>
+          <span class="sc-custom">Custom</span>
+        </div>
+        <p class="sc-desc">If you don't absolutely pass the quiz, you won't merge. It's that simple.</p>
+        <div class="sc-tags">
+          <span class="sc-tag">before merging</span>
+          <span class="sc-tag">knowledge</span>
+          <span class="sc-tag">review PR</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-banner">
+      <span class="sb-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <div class="sb-body">
+        <p class="sb-title">Prioritizing sharing for Facebook Subscribers first</p>
+        <p class="sb-desc">All 3 skill are currently only shared with Subscribers while still being refined. When stable, we will publish it to the public repo — subscribe to receive it soon.</p>
+      </div>
+      <a class="sb-cta" href="https://www.facebook.com/shinantori/subscribenow" target="_blank" rel="noopener">
+        Subscribe to receive early
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <p class="skill-detail-label">Details of each skill</p>
+    <div class="skill-grid">
+      <div class="skill-card">
+        <div class="tag"><span class="dot"></span>Before coding</div>
+        <h3><code>/blindspot</code> — blind scan before entering territory</h3>
+        <ul>
+          <li>Scout codebase + peach <code>git log</code> to find <strong>unknown unknowns</strong> of users, not solving tasks for them.</li>
+          <li>Any finding must cite evidence: specific file, commit hash, or doc — general speculation is not accepted.</li>
+          <li>Most valuable trick: find commit who used to do a similar task (<code>git log --grep</code>) Already <code>git show --stat &lt;hash&gt;</code> — Its footprint file is the available checklist touchpoint, usually the highest signal artifact.</li>
+        </ul>
+        <div class="deliverable">Key Deliverables: <strong>"a better prompt"</strong> — ready to paste straight in <code>/ck:brainstorm</code> or <code>/ck:plan</code> in the next step.</div>
+      </div>
+
+      <div class="skill-card">
+        <div class="tag"><span class="dot"></span>While coding</div>
+        <h3><code>/impl-notes</code> — log deviation at the moment it occurs</h3>
+        <ul>
+          <li>File <code>implementation-notes.md</code> ghi <strong>Decisions / Deviations / Surprises</strong> at the time they happen — not end-of-session retrospectives like <code>/ck:journal</code>.</li>
+          <li>Standing rule is right there <strong>HEADER of the file</strong> — don't rely on conversation memory, because context compaction will break the rule as the conversation gets longer. Any agent that re-reads the file automatically "re-adopt" the rule.</li>
+          <li>Encounter edge case deviate from plan → choose option <strong>conservative</strong> (reversible smallest), log 4 lines, move forward — don't stop waiting for user with reversible decision.</li>
+        </ul>
+        <div class="deliverable">Feed directly to <code>quiz-gate</code> (best deviations = quiz material) and <code>/ck:journal</code>.</div>
+      </div>
+
+      <div class="skill-card">
+        <div class="tag"><span class="dot"></span>After coding</div>
+        <h3><code>/quiz-gate</code> — people checking people</h3>
+        <ul>
+          <li>Generate HTML explainer about changes (TL;DR, context, intuition, blast radius) with a behavioral quiz — not a variable renaming trivia.</li>
+          <li>Gate only passes when answering <strong>100% correct</strong>. Which sentence is wrong → explain the misunderstood concept with the correct relevant code, then re-quiz the new sentence targeting the right place, repeating until it passes.</li>
+          <li>Important fix applied: report initially <strong>Contains questions only</strong>, answer key is written to HTML only <strong>after gate resolves</strong> (pass or abort) — if written first, the user reads the answer, then gate is meaningless.</li>
+        </ul>
+        <div class="deliverable">Verdict of gate is the condition to run <code>/ck:git</code> or <code>/ck:ship</code>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. PIPELINE 6 GIAI ĐOẠN -->
+  <section id="pipeline">
+    <div class="reader">
+      <span class="sec-label">03 · End-to-end workflow</span>
+      <h2>6-stage pipeline combining custom skill with ClaudeKit</h2>
+      <p class="lede">Each period is an upfront cost of finding unknowns.</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">Phase 0 · Locate unknowns</div>
+          <div class="stage-cmd"><code>/blindspot</code></div>
+          <p class="stage-desc">Scan codebase + git history → report unknown unknowns, potholes, and a sharper prompt to carry to stage 1.</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">Phase 1 · Explore & design</div>
+          <div class="stage-cmd"><code>/ck:brainstorm --html</code></div>
+          <p class="stage-desc">Get prompt from blindspot → scout + interview built-in → 2-3 approach + design doc.</p>
+          <p class="stage-opt">High risk: more <code>/ck:predict</code> (5 persona debate) or <code>/ck:scenario</code> (edge case 12-way).</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">Phase 2 · Plan</div>
+          <div class="stage-cmd"><code>/ck:plan</code> (or <code>--tdd</code>)</div>
+          <p class="stage-desc">Xexport <code>plans/&lt;ts&gt;-&lt;slug&gt;/plan.md</code> + phase files.</p>
+          <p class="stage-opt">High risk: <code>+ red-team</code> (hostile reviewers tore up the plan) already <code>+ validate</code> (verify claims vs real codebase).</p>
+          <p class="stage-opt">Case critical (needs OpenAI sub): <code>/codex:adversarial-review</code> on plan — gate crossed model, run <strong>Final</strong> after red-team + validate: attack the refined plan, find a place where both Claude are blind.</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">Phase 3 · Implementation</div>
+          <div class="stage-cmd"><code>/impl-notes init</code> → <code>/ck:cook</code> → <code>/impl-notes review</code></div>
+          <p class="stage-desc"><code>/impl-notes init</code> create <code>implementation-notes.md</code> in plan dir <strong>before</strong> when cook. <code>/ck:cook &lt;plan&gt;</code> implement — when deviating from the plan: choose a conservative option, <code>/impl-notes log</code>, go ahead. End of session: <code>/impl-notes review</code> distill learnings for the next session.</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">Stage 4 · Gate understanding</div>
+          <div class="stage-cmd"><code>/ck:code-review</code> + <code>/quiz-gate</code></div>
+          <p class="stage-desc">Code-review checks code quality (code checker); quiz-gate tests human knowledge (people check people) — two different axes.</p>
+          <p class="stage-opt">High risk (needs OpenAI sub): <code>/codex:adversarial-review</code> on code diff — gate crosses model, runs between <code>/ck:code-review</code> and <code>/quiz-gate</code>, focus text taken from the Deviations section of impl-notes.</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">Phase 5 · Ship</div>
+          <div class="stage-cmd"><code>/ck:git</code> or <code>/ck:ship</code> + <code>/ck:journal</code></div>
+          <p class="stage-desc">Commit/push or PR pipeline, run only after gate is in stage 4 <strong>PASSED</strong>. Journal reads impl-notes as feed to reflect.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 3 GATE QUANH COOK -->
+  <section id="three-gates">
+    <div class="reader">
+      <span class="sec-label">04 · Insight is the most expensive</span>
+      <h2>3 fixed gates + 2 optional cross-model gates around <code>ck:cook</code></h2>
+      <p class="lede">The checks are not duplicates — each gate targets a separate unknown axis, located at either end of the execution step. <code>/quiz-gate</code> always gate last pin: who is the stopping condition.</p>
+    </div>
+
+    <div class="gate-visual">
+      <div class="gate-node">
+        <div class="g-label">Gate 1 · Before cook</div>
+        <div class="g-cmd">/ck:plan red-team</div>
+        <div class="g-kills">Eliminate unknown unknowns <strong>of plan</strong></div>
+      </div>
+      <div class="arrow-sep">→</div>
+      <div class="gate-node">
+        <div class="g-label">Gate 2 · Before cook</div>
+        <div class="g-cmd">/ck:plan validate</div>
+        <div class="g-kills">Eliminate known unknowns <strong>of decision</strong></div>
+      </div>
+      <div class="arrow-sep optional">⇢</div>
+      <div class="gate-node optional">
+        <div class="g-label">Optional Gate · Before cook</div>
+        <div class="g-cmd">/codex:adversarial-review<br>on the plan</div>
+        <div class="g-kills">Cross gate model — case critical</div>
+        <span class="sub-badge">Need OpenAI sub</span>
+      </div>
+      <div class="arrow-sep">→</div>
+      <div class="cook-node">
+        <div class="c-label">Execution</div>
+        <div class="c-cmd">/ck:cook</div>
+      </div>
+      <div class="arrow-sep optional">⇢</div>
+      <div class="gate-node optional">
+        <div class="g-label">Optional Gate · After cook</div>
+        <div class="g-cmd">/codex:adversarial-review<br>on code diff</div>
+        <div class="g-kills">Eliminate unknown unknowns <strong>by model itself</strong></div>
+        <span class="sub-badge">Need OpenAI sub</span>
+      </div>
+      <div class="arrow-sep">→</div>
+      <div class="gate-node">
+        <div class="g-label">Gate 3 · After cook · Latch</div>
+        <div class="g-cmd">/quiz-gate</div>
+        <div class="g-kills">Eliminate unknowns <strong>your</strong> about what just shipped</div>
+      </div>
+    </div>
+    <p class="scroll-hint">Scroll horizontally to see all 6 nodes →</p>
+
+    <div class="gate-explain">
+      <div class="g-item">
+        <h4>Gate 1 · <code>/ck:plan red-team</code> — agent checks agent</h4>
+        <p>2-4 reviewer subagent hostile persona tore up the plan to find a failure mode that no one thought of. Which finding doesn't have evidence? <code>file:line</code> specifically auto-rejected — avoid vague complaints.</p>
+      </div>
+      <div class="g-item">
+        <h4>Gate 2 · <code>/ck:plan validate</code> — runs after red-team, before cook</h4>
+        <p>Verification pass check "map vs territory" literally: grep codebase to see if the plan's claims (file, symbol, endpoint) really exist. Then interview 3-8 questions <strong>Friend</strong> Close the remaining open assumptions. The order red-team → validate is intended: for agent to tear up and edit the plan before finalizing it with others, to avoid finalizing on a draft that is about to be revised.</p>
+      </div>
+      <div class="g-item optional">
+        <h4>Optional gate · <code>/codex:adversarial-review</code> on plan — before cook, after validate (needs OpenAI sub)</h4>
+        <p>Only for critical cases (migration, security, public contract). Run <strong>Final</strong> At the planning stage, after the plan has been refined by red-team + validate — attack the complete plan, looking for a place where the whole Claude family is blind.</p>
+      </div>
+      <div class="g-item optional">
+        <h4>Optional gate · <code>/codex:adversarial-review</code> on code diff — after cook, before quiz-gate (needs OpenAI sub)</h4>
+        <p>The fixed gates are all Claudes that check Claude — same model family, same blind spots, reviewer will not catch errors that it makes itself. Cross gate model to agent <strong>other than model</strong> (GPT-5.5) in — properly eliminate the remaining unknown type: unknown unknowns <strong>by model itself</strong>. Focus text taken from the Deviations section of impl-notes. Details in section 07.</p>
+      </div>
+      <div class="g-item">
+        <h4>Gate 3 · <code>/quiz-gate</code> — human checker, gate last pin</h4>
+        <p>Last gate before shipping, deactivate your own unknowns of what has just been shipped — the machine review code (or other model) has passed does not mean you fully understand the new behavior. Person is the stopping condition.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. SCENARIO COMBOS -->
+  <section id="scenario-combos">
+    <div class="reader">
+      <span class="sec-label">05 · pipeline is not always full</span>
+      <h2>Scenario combos — pay an insurance premium commensurate with the risk</h2>
+      <p class="lede">Full pipeline (stage 0→5) only for strange areas + blurred scope + high risk. More common situations require thinner combos.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Scenario</th><th>Combo used</th><th>Skip</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>There was a plan from the previous session, now continue</td>
+            <td><code>/ck:watzup</code> read status → read "Learnings for next session" in old impl-notes → <code>/impl-notes init</code> → <code>/ck:cook</code> next phase → <code>/quiz-gate</code>. Don't have the old impl-notes yet (just added 3 custom skills to a project that used ClaudeKit before)? Skip reading Learnings — <code>/impl-notes init</code> Create a new file in the active plan dir, learnings accumulate from this session.</td>
+            <td>Phase 0-2 — unknowns paid the fee in the previous session</td>
+          </tr>
+          <tr>
+            <td>Small bug fix, familiar area</td>
+            <td><code>/ck:fix</code> → commit. Loi deviation then <code>/impl-notes log</code></td>
+            <td>The entire gate — quiz-gate for fixing 10 lines is an overdose</td>
+          </tr>
+          <tr>
+            <td>Strange area but scope is clear</td>
+            <td><code>/blindspot &lt;area&gt;</code> → Paste better-prompt straight in <code>/ck:plan</code></td>
+            <td><code>ck:brainstorm</code> — there's nothing to discuss when scope is locked</td>
+          </tr>
+          <tr>
+            <td>Completely new domain (not code)</td>
+            <td><code>/blindspot --domain</code> (teach-first, learn vocabulary) → <code>/ck:brainstorm --html</code></td>
+            <td>Scout codebase — the gap is in knowledge, not repo</td>
+          </tr>
+          <tr>
+            <td>High risk (public contract, security, migration)</td>
+            <td>Full pipeline + <code>/ck:predict</code>/<code>/ck:scenario</code> at stage 1+ <code>red-team</code> → <code>validate</code> at stage 2+ <code>/codex:adversarial-review</code> in stage 4 (if there is OpenAI sub); quiz-gate <strong>obligatory</strong></td>
+            <td>Don't give up anything</td>
+          </tr>
+          <tr>
+            <td>Claude stuck — debug loop, fixed again and again but failed</td>
+            <td><code>/codex:rescue</code> (needs OpenAI sub) — assign task to GPT-5.5 looking from another blind spot; <code>--resume</code> continue old thread</td>
+            <td>Changing gate does not solve the problem — the problem is in the blind spot of model, another model is needed</td>
+          </tr>
+          <tr>
+            <td>Plan completed, moderate risk — not worth swarming red-team</td>
+            <td><code>/ck:plan validate</code> — verify claims + interview final assumption → <code>/ck:cook</code></td>
+            <td><code>red-team</code> (overdose for moderate risk), <code>/ck:predict</code>/<code>/ck:scenario</code></td>
+          </tr>
+          <tr>
+            <td>Review PR written by others</td>
+            <td><code>/quiz-gate --pr &lt;n&gt;</code> used alone — quiz is a way to read PR in depth</td>
+            <td><code>blindspot</code>, <code>impl-notes</code> — not the code I wrote</td>
+          </tr>
+          <tr>
+            <td>Pure refactor, behavior unchanged</td>
+            <td><code>/ck:code-review</code> + test suite</td>
+            <td><code>quiz-gate</code> optional — no new behavior to misinterpret</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="golden-rule">
+      <strong>Selection rules:</strong> each gate is <em>insurance premium</em>. Unknowns more, gate is thick, unknowns less, gate is thin. Running full pipeline for a familiar task is just as wasteful as skipping gate for a risky task.
+    </div>
+  </section>
+
+  <!-- 7. MODEL COST TRADEOFFS -->
+  <section id="model-economics">
+    <div class="reader">
+      <span class="sec-label">06 · Pipeline cost tradeoffs</span>
+      <h2>Where does Fable 5 fit?</h2>
+      <p class="lede">Principle: the upfront cost of finding unknowns is cheap. Inferred to put the most expensive model into the process <strong>detect & decide</strong>, use cheap model for the process <strong>execute as directed</strong> — The better the plan, the better the model implementation will be.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Stage</th><th>Model</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/blindspot</code></td>
+            <td><span class="badge">Fable 5</span></td>
+            <td>The value lies in the interpretation: reading git history into "pothole", realizing which commit is a pattern worth following. Weak model only lists files.</td>
+          </tr>
+          <tr>
+            <td><code>/ck:brainstorm</code>, <code>/ck:plan</code>, <code>/ck:predict</code></td>
+            <td><span class="badge">Fable 5</span></td>
+            <td>Architectural decision - if wrong here, all subsequent steps will be meaningless.</td>
+          </tr>
+          <tr>
+            <td><code>/quiz-gate</code> (generate question)</td>
+            <td><span class="badge">Fable 5 / Opus</span></td>
+            <td>A good Distractor requires a deeper understanding of behavior than the code writer. The person who answered is you, model pointed out the topic.</td>
+          </tr>
+          <tr>
+            <td><code>/ck:plan red-team</code></td>
+            <td><span class="badge">Fable controller + Opus/Sonnet</span></td>
+            <td>Reviewer subagent just needs to find the failure mode with evidence <code>file:line</code> (predetermined persona — Opus is more than capable). New adjudicate findings require intelligence, run in the main session. For example per-subagent is the most beautiful pipeline.</td>
+          </tr>
+          <tr>
+            <td><code>/ck:plan validate</code></td>
+            <td><span class="badge">Sonnet/Opus</span></td>
+            <td>Verification pass is mechanical grep according to tier checklist. Intelligence lies with the person answering — model just needs to ask the right question.</td>
+          </tr>
+          <tr>
+            <td><code>/ck:cook</code> according to detailed plan</td>
+            <td><span class="badge">Sonnet</span></td>
+            <td>A good plan has eliminated unknowns; implementation is follow-the-map. The biggest savings place.</td>
+          </tr>
+          <tr>
+            <td><code>/ck:code-review</code></td>
+            <td><span class="badge">Opus/Sonnet</span></td>
+            <td>Review by checklist + evidence; Fable is only worth changing to public contract.</td>
+          </tr>
+          <tr>
+            <td><code>/impl-notes</code> log, <code>/ck:git</code>, <code>/ck:ship</code>, <code>/ck:watzup</code></td>
+            <td><span class="badge">Haiku/Sonnet</span></td>
+            <td>Mechanics: append a few lines, commit, summarize status — no brainer.</td>
+          </tr>
+          <tr>
+            <td><code>/ck:scout</code> raw discovery</td>
+            <td><span class="badge">Haiku</span></td>
+            <td>Glob/Grep file discovery is not worth burning Fable usage. If you use Explore/subagents for a large scout pass, pin a cheaper model first; blindspot is the interpretation layer above that.</td>
+          </tr>
+          <tr>
+            <td><code>/codex:review</code>, <code>/codex:adversarial-review</code>, <code>/codex:rescue</code></td>
+            <td><span class="badge">GPT-5.5</span> (usage OpenAI, separate subscription)</td>
+            <td>Cross gate model — no Claude token burning, separate billing; The value is in the blind spot <strong>other</strong> not the more powerful model.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="golden-rule">
+      <strong>Usage trap to remember:</strong> Claude Code's built-in <code>Explore</code> can inherit the model from the main conversation starting in v2.1.198. If the main session is using Fable 5, Explore can burn Fable usage too. To scout cheaply without affecting other subagents, create a custom subagent <code>explore.md</code> with <code>name: Explore</code> and pin <code>model: haiku</code> or <code>model: sonnet</code>. See the <a href="https://code.claude.com/docs/en/sub-agents#built-in-subagents" target="_blank" rel="noopener">Claude Code docs on built-in subagents</a>.
+    </div>
+
+    <div class="reader">
+      <p><strong>Anti-patterns to avoid:</strong> Use Fable for cook but Sonnet for plan - that means paying expensive model to make it guess that unknowns should have been eliminated before, exactly the trap of "poor map, expensive territory" that the article warns about.</p>
+    </div>
+  </section>
+
+  <!-- 8. CODEX — GATE CHÉO MODEL -->
+  <section id="codex-cross-model">
+    <div class="reader">
+      <span class="sec-label">07 · model cross gate</span>
+      <h2>Codex — bring in a different model to review Claude</h2>
+
+      <div class="callout">
+        <span class="callout-tag">Condition</span><br>
+        Everything in this section needs an <strong>OpenAI subscription plan</strong> (ChatGPT Plus/Pro or API) and a logged-in Codex CLI. If not, skip it — the fixed 3-gate pipeline above is still enough.
+      </div>
+
+      <p class="lede">Plugin <code>codex-plugin-cc</code> insert Codex/GPT-5.5 into Claude Code. The core value is not "model is stronger" but <strong>model KHÁC</strong>: every internal gate is a Claude testing Claude — with the same training, with the same systematic bias, the reviewer will not catch errors that it also makes. Codex has other blind spots → can eliminate unknown unknowns from model.</p>
+
+      <h3>Setup</h3>
+      <pre class="cmd-block">/plugin marketplace add openai/codex-plugin-cc
+/plugin install codex@openai-codex
+/codex:setup</pre>
+
+      <h3>If you use Codex MCP instead of the plugin</h3>
+      <p>Codex CLI can also run as an MCP server for another agent to call, but the MCP path means Claude is no longer constrained by the plugin's commands and gates. It can ask Codex during brainstorm, plan, cook, review, and phase close. This can work, but it needs explicit guardrails:</p>
+      <ul>
+        <li><strong>When to ask:</strong> only ask at checkpoints with real risk — critical plans, material code diffs, security/migration/public contracts, or a debug loop after two failed directions.</li>
+        <li><strong>What to ask:</strong> every call needs a concrete artifact, concrete scope, concrete question, and a rule for rejecting findings without evidence.</li>
+        <li><strong>Maximum rounds:</strong> default to 1 round; round 2 only when round 1 caused a material change. Do not run an infinite ask → red-team → review → ask-again chain.</li>
+        <li><strong>Who decides:</strong> Codex should not approve the plan, close the phase, or clear the work for shipping by itself. Claude/human must adjudicate every finding: accept/reject with evidence, then apply fixes.</li>
+      </ul>
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 12px;">In a Claude Code workflow, if you use a keyword/feature like <code>ultracode</code> to call Codex and spawn a broader review session, treat it as review-only unless the user explicitly approves edits. Do not make it the default path: broad review sessions plus multiple rounds can cause heavy token bursts. See the <a href="https://developers.openai.com/codex/cli/features#model-context-protocol-mcp" target="_blank" rel="noopener">OpenAI docs on Codex MCP</a>.</p>
+
+      <h3>Where each command sits in the pipeline</h3>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Command</th><th>Time</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/codex:adversarial-review</code> above <strong>plan</strong></td>
+            <td>End of phase 2, AFTER red-team + validate</td>
+            <td>3rd model cross gate on the plan — only for critical cases (migration, security, public contract)</td>
+          </tr>
+          <tr>
+            <td><code>/codex:adversarial-review</code> above <strong>code diff</strong></td>
+            <td>Stage 4, later <code>/ck:code-review</code>, before <code>/quiz-gate</code></td>
+            <td>Genuine use case ("review before shipping") — challenge design choices, hidden assumptions, tradeoffs; focus text taken from the Deviations section of impl-notes</td>
+          </tr>
+          <tr>
+            <td><code>/codex:rescue</code></td>
+            <td>Anytime Claude gets stuck (debug loop)</td>
+            <td>Escape hatch — <code>--resume</code> keep thread Codex separate per session</td>
+          </tr>
+          <tr>
+            <td><code>/codex:review</code></td>
+            <td>Stage 4</td>
+            <td>Second opinion upon results <code>/ck:code-review</code> suspicious; Does not accept focus text so DO NOT use for plan</td>
+          </tr>
+          <tr>
+            <td>Review gate (<code>/codex:setup --enable-review-gate</code>)</td>
+            <td>Each turn has an edit code</td>
+            <td><strong>Default OFF</strong> — see why below</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="reader">
+      <h3>Sample prompt — adversarial review on plan</h3>
+      <p>Place Codex on the 3rd review layer, after the plan has been refined — make that clear so it doesn't find what the lower layer captured:</p>
+      <div class="prompt-box">
+        <div class="p-head">
+          <span class="p-label">Sample prompt — Copy & use</span>
+          <button type="button" class="p-copy">Copy</button>
+        </div>
+        <pre>/codex:adversarial-review --wait Đây là implementation plan tại plans/&lt;dir&gt;/, chưa phải code — đã qua red-team và validate nội bộ. Đừng verify chi tiết file/symbol. Thay vào đó: (1) challenge HƯỚNG ĐI — đây có phải cách tiếp cận đúng không, có alternative đơn giản hơn không; (2) hidden assumptions mà plan đứng lên trên nhưng không nói ra; (3) tradeoffs bị đánh giá một chiều; (4) pressure-test các phase liên quan [điền risk area thật: auth/data loss/rollback/race].</pre>
+      </div>
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 12px;">Plans without commit are considered working-tree change (untracked files reviewable); if the plan is commit then add it <code>--base &lt;ref&gt;</code>.</p>
+
+      <h3>Findings processing loop — human trigger, NOT auto</h3>
+      <p>Adversarial-review locked read-only, returned output verbatim. User-controlled loop:</p>
+      <ol class="loop-flow">
+        <li>Codex adversarial runs <strong>round 1</strong>, return findings verbatim.</li>
+        <li>Claude (Fable/Opus) <strong>adjudicate</strong>: Accept/Reject used to find together with evidence — If the finding is the same as the verified decision, reject with source.</li>
+        <li class="human-step"><strong>PERSON approves</strong> Accept list — gate people, cannot be removed.</li>
+        <li>Claude <strong>apply</strong> Approved fixes + consistency sweep.</li>
+        <li><strong>Round 2</strong> Only when the fix is ​​applied does the material change; focus text points to the correct corrected region. <strong>Maximum 2 rounds.</strong></li>
+      </ol>
+    </div>
+
+    <div class="golden-rule">
+      <strong>Why not auto-loop:</strong> prompt of Codex is <em>"break confidence in the change, not validate it"</em> — reviewer designed to ALWAYS find problems will never say "perfect". Auto-loop with reviewer is thus an endless loop by design. <strong>Person is the only valid stopping condition</strong> ("the rest is nitpick, move on"). Note: <code>--resume</code> only in <code>rescue</code>; adversarial-review stateless — round 2 must carry its own context in focus text.
+    </div>
+
+    <div class="reader review-gate-block">
+      <h3>Review gate — why is it OFF by default?</h3>
+      <p>The only auto version of the plugin is Stop hook which reviews every turn that has edit code. Three reasons to turn off:</p>
+      <ul>
+        <li><strong>Timeout up to 900s per turn</strong> — each edit must wait for review to complete before continuing.</li>
+        <li><strong>No hard loop guard seen in the code</strong> — OpenAI itself also warns the Claude-Codex loop.</li>
+        <li><strong>Per-turn gating paradox:</strong> Only worth it for unattended run, but OpenAI recommends only turning it on when you're sitting on the monitor — and the person watching is already gate.</li>
+      </ul>
+      <p>Replace: <code>/codex:adversarial-review</code> run <strong>once</strong> at stage 4 — same coverage, one payment, someone advertises.</p>
+    </div>
+  </section>
+
+  <!-- 9. BÀI 2 — ALEX FINN: ĐÚC RÚT ACTIONABLE -->
+  <section id="alex-finn">
+    <div class="reader">
+      <span class="sec-label">08 · Drawing from the second lesson</span>
+      <h2>Redesign your system — the right way</h2>
+      <p class="lede">Alex Finn's article makes the same argument as Thariq but at a higher level: instead of fixing each map, upgrade <strong>map plotter</strong> — your own coding operating system. Here are 4 principles to apply immediately.</p>
+    </div>
+
+    <div class="flaw-list">
+      <div class="flaw-item">
+        <span class="flaw-tag">Principle 1 · Put Fable into the system layer, not the task layer</span>
+        <p>A flaw in the system layer pays the above compounding price <strong>all</strong> task — so one Fable session for the redesign coding loop will amortize over hundreds of subsequent cook sessions. Fable is the best value for money when output is <strong>reusable structure</strong> (system, skill, plan), cheapest when output is just one execution.</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">Sample prompt — Copy & use</span>
+            <button type="button" class="p-copy">Copy</button>
+          </div>
+          <pre>Thay vì làm ngay task này, hãy thiết kế cho tôi một skill/workflow tái sử dụng để MỌI task cùng loại về sau chạy qua nó. Loại task: [mô tả]. Output cần: quy trình từng bước, file SKILL.md (nếu phù hợp), và tiêu chí đo để biết nó có đang hoạt động tốt không.</pre>
+        </div>
+      </div>
+      <div class="flaw-item">
+        <span class="flaw-tag">Principle 2 · Audit from real artifacts instead of brain dump</span>
+        <p>Let Fable read directly <code>rules/</code>, skills, and git history — real data about how you work is much more powerful than your own words. Artifacts reflect actual behavior; The narrative reflects an image of the behavior.</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">Sample prompt — Copy & use</span>
+            <button type="button" class="p-copy">Copy</button>
+          </div>
+          <pre>Đừng hỏi tôi làm việc thế nào — lời tự kể không đáng tin. Hãy đọc: thư mục rules/, danh sách skills đang cài, và `git log --oneline -50` của repo này, rồi tự dựng lại bức tranh workflow THỰC TẾ của tôi. Chỉ ra 3 chỗ friction lớn nhất, mỗi chỗ phải cite file hoặc commit làm bằng chứng — không nhận nhận định không có dẫn chứng.</pre>
+        </div>
+      </div>
+      <div class="flaw-item">
+        <span class="flaw-tag">Principle 3 · Verify by running</span>
+        <p>The new System must be tested on <strong>a real task</strong> then measure output — system only reveals weak points under real load, not during discussion. Prototype first, expansion later.</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">Sample prompt — Copy & use</span>
+            <button type="button" class="p-copy">Copy</button>
+          </div>
+          <pre>System/skill vừa thiết kế xong: chạy thử nó trên đúng MỘT task thật sau đây: [task]. So sánh với cách làm cũ theo 3 tiêu chí: thời gian, số lần phải sửa lại, chất lượng output. Nếu không hơn rõ rệt, liệt kê chỗ cần chỉnh — đừng khen.</pre>
+        </div>
+      </div>
+      <div class="flaw-item">
+        <span class="flaw-tag">Principle 4 · Trigger redesign with rule of three</span>
+        <p>The same type of friction appears <strong>≥3 times</strong> In impl-notes / journal / retro, it is worth redesigning system. Loop: work → build deviations → retro reveal pattern → redesign → test run → keep or discard.</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">Sample prompt — Copy & use</span>
+            <button type="button" class="p-copy">Copy</button>
+          </div>
+          <pre>Đọc implementation-notes.md và journal/retro gần nhất của tôi. Nhóm các deviation/friction theo loại. Loại nào xuất hiện từ 3 lần trở lên? Với MỖI loại đó, đề xuất một thay đổi system NHỎ NHẤT khử được nó. Loại nào dưới 3 lần: bỏ qua, đừng đề xuất gì.</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="golden-rule">
+      <strong>Redesign runs using cumulative evidence</strong> — Every system repair comes from real friction and is verified by a real run.
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="takeaways">
+    <h3>Summary</h3>
+    <ul>
+      <li>Start your project by finding unknowns, not by writing code right away.</li>
+      <li>The gate must be proportionate to the risk - thick for strange things, thin for familiar things.</li>
+      <li>Expensive model for detection & decision; Cheap model for directed execution.</li>
+      <li>System redesign should only be run on accumulated evidence, not on temporary excitement.</li>
+    </ul>
+  </div>
+  <div class="post-footer-nav">
+    <a class="home-link" href="/en" aria-label="Back to home page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      <span>Back to home page</span>
+    </a>
+  </div>
+  <p class="credits">
+    This article is inspired by and cross-checked against two X posts: <a href="https://x.com/trq212/status/2073100352921215386" target="_blank" rel="noopener">Thariq (@trq212) — "A Field Guide to Fable: Finding Your Unknowns"</a>, and <a href="https://x.com/AlexFinn/status/2072837836999627155" target="_blank" rel="noopener">Alex Finn (@AlexFinn) — "The Most Valuable Thing You Can Do With Fable 5"</a>. The demo workflow uses custom skills <code>blindspot</code> / <code>impl-notes</code> / <code>quiz-gate</code> together with ClaudeKit skills.
+  </p>
+</footer>
+
+<script is:inline>
+  (function () {
+    // Theme toggle — dùng chung localStorage key 'theme' với các post khác.
+    var themeToggle = document.querySelector('.theme-toggle');
+    var prefersDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+    function currentTheme() {
+      return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    }
+
+    function setTheme(theme, persist) {
+      document.documentElement.dataset.theme = theme;
+      if (themeToggle) {
+        var isDark = theme === 'dark';
+        themeToggle.textContent = isDark ? 'Light' : 'Dark';
+        themeToggle.setAttribute('aria-pressed', String(isDark));
+      }
+      if (persist) {
+        try { localStorage.setItem('theme', theme); } catch (_) {}
+      }
+    }
+
+    if (themeToggle) {
+      setTheme(currentTheme(), false);
+      themeToggle.addEventListener('click', function () {
+        setTheme(currentTheme() === 'dark' ? 'light' : 'dark', true);
+      });
+    }
+
+    if (prefersDark && typeof prefersDark.addEventListener === 'function') {
+      prefersDark.addEventListener('change', function (event) {
+        try { if (localStorage.getItem('theme')) return; } catch (_) {}
+        setTheme(event.matches ? 'dark' : 'light', false);
+      });
+    }
+
+    // Nút copy cho các khối "Prompt mẫu" — vanilla JS, không dependency.
+    document.querySelectorAll('.prompt-box .p-copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pre = btn.closest('.prompt-box').querySelector('pre');
+        var text = pre.textContent;
+
+        function done(ok) {
+          btn.textContent = ok ? 'Copied ✓' : 'Copy error';
+          setTimeout(function () { btn.textContent = 'Copy'; }, 2000);
+        }
+
+        function fallback(t) {
+          var ta = document.createElement('textarea');
+          ta.value = t;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          document.body.removeChild(ta);
+          return ok;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallback(text)); });
+        } else {
+          done(fallback(text));
+        }
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

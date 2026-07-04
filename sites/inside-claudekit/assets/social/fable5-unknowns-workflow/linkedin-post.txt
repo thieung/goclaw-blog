@@ -1,0 +1,17 @@
+Fable 5 is only included in subscription quota through July 7, which makes the real question less about raw model quality and more about workflow design: where does the expensive model actually matter?
+
+I wrote a new Inside ClaudeKit note after reading two strong X posts from Thariq and Alex Finn, then mapping their insights into a practical ClaudeKit workflow.
+
+The core idea is to find unknowns before coding, not after the implementation has already hardened around the wrong assumptions.
+
+The workflow has 6 stages and 3 custom skills layered on top of ClaudeKit:
+
+• `blindspot` runs before planning to turn vague uncertainty into concrete unknowns, risk areas, and sharper prompts.
+• `impl-notes` runs during implementation to record deviations from the plan while they happen.
+• `quiz-gate` runs after code review to check whether the human actually understands the behavior that just shipped.
+
+The post also covers model cost tradeoffs: where Fable 5 is worth using, where Sonnet/Haiku is enough, why Codex should be a cross-model gate rather than an automatic review loop, and how built-in Explore subagent behavior can accidentally burn premium usage.
+
+Link in comments.
+
+#ClaudeKit #ClaudeCode #Fable5 #DeveloperTools #SoftwareEngineering

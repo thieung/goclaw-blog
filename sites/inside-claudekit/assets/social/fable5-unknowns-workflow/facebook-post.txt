@@ -1,0 +1,14 @@
+Fable 5 chỉ còn được tính trong subscription quota đến hết 7/7. Vậy dùng thế nào cho đáng?
+
+Tối qua mình đọc 2 post rất hay trên X của Thariq và Alex Finn, rồi ghép insight vào workflow thực chiến với ClaudeKit.
+
+Kết quả là một pipeline 6 giai đoạn để tìm unknowns trước khi code, cook có kiểm soát, review sau khi ship, và không đốt Fable vào những việc Sonnet/Haiku làm tốt hơn.
+
+🔹 3 custom skill: blindspot, impl-notes, quiz-gate
+🔹 3 gate cố định quanh ck:cook
+🔹 Codex chỉ dùng làm cross-model gate khi thật sự cần
+🔹 Có note riêng về Explore subagent và usage trap
+
+Link ở comment 👇
+
+#ClaudeKit #ClaudeCode #Fable5

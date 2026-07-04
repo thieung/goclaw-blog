@@ -1,0 +1,27 @@
+{
+  "slug": "fable5-unknowns-workflow",
+  "urls": {
+    "vi": "https://claudekit.thieunv.space/posts/fable5-unknowns-workflow",
+    "en": "https://claudekit.thieunv.space/en/posts/fable5-unknowns-workflow",
+    "zh": "https://claudekit.thieunv.space/zh/posts/fable5-unknowns-workflow",
+    "ja": "https://claudekit.thieunv.space/ja/posts/fable5-unknowns-workflow"
+  },
+  "posts": {
+    "facebook": {
+      "lang": "vi",
+      "content": "Fable 5 chỉ còn được tính trong subscription quota đến hết 7/7. Vậy dùng thế nào cho đáng?\n\nTối qua mình đọc 2 post rất hay trên X của Thariq và Alex Finn, rồi ghép insight vào workflow thực chiến với ClaudeKit.\n\nKết quả là một pipeline 6 giai đoạn để tìm unknowns trước khi code, cook có kiểm soát, review sau khi ship, và không đốt Fable vào những việc Sonnet/Haiku làm tốt hơn.\n\n🔹 3 custom skill: blindspot, impl-notes, quiz-gate\n🔹 3 gate cố định quanh ck:cook\n🔹 Codex chỉ dùng làm cross-model gate khi thật sự cần\n🔹 Có note riêng về Explore subagent và usage trap\n\nLink ở comment 👇\n\n#ClaudeKit #ClaudeCode #Fable5"
+    },
+    "threads": {
+      "lang": "vi",
+      "content": "Fable 5 chỉ còn nằm trong subscription quota đến hết 7/7.\n\nMình đọc 2 post hay trên X, ghép với workflow ClaudeKit hiện tại, rồi đúc rút thành pipeline 6 giai đoạn + 3 custom skill.\n\nMục tiêu: tìm unknowns trước khi code, cook có kiểm soát, review có gate người, và không đốt Fable vào việc model rẻ hơn làm được.\n\nhttps://claudekit.thieunv.space/posts/fable5-unknowns-workflow"
+    },
+    "x": {
+      "lang": "en",
+      "content": "Fable 5 is only included in subscription quota through July 7.\n\nI read two strong X posts from Thariq and Alex Finn, then mapped the ideas into a practical ClaudeKit workflow.\n\nThe result: a 6-stage pipeline with 3 custom skills layered on top of ClaudeKit:\n\n• `blindspot` before planning: find unknown unknowns before code\n• `impl-notes` during cook: log deviations while they happen\n• `quiz-gate` after review: make the human prove they understand what shipped\n\nThe post also covers where Fable should *not* be used, how to avoid Explore subagent burning premium usage, and when Codex should be a cross-model gate instead of an auto-loop.\n\nLink below."
+    },
+    "linkedin": {
+      "lang": "en",
+      "content": "Fable 5 is only included in subscription quota through July 7, which makes the real question less about raw model quality and more about workflow design: where does the expensive model actually matter?\n\nI wrote a new Inside ClaudeKit note after reading two strong X posts from Thariq and Alex Finn, then mapping their insights into a practical ClaudeKit workflow.\n\nThe core idea is to find unknowns before coding, not after the implementation has already hardened around the wrong assumptions.\n\nThe workflow has 6 stages and 3 custom skills layered on top of ClaudeKit:\n\n• `blindspot` runs before planning to turn vague uncertainty into concrete unknowns, risk areas, and sharper prompts.\n• `impl-notes` runs during implementation to record deviations from the plan while they happen.\n• `quiz-gate` runs after code review to check whether the human actually understands the behavior that just shipped.\n\nThe post also covers model cost tradeoffs: where Fable 5 is worth using, where Sonnet/Haiku is enough, why Codex should be a cross-model gate rather than an automatic review loop, and how built-in Explore subagent behavior can accidentally burn premium usage.\n\nLink in comments.\n\n#ClaudeKit #ClaudeCode #Fable5 #DeveloperTools #SoftwareEngineering"
+    }
+  }
+}

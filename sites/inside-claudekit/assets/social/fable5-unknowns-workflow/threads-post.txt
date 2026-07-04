@@ -1,0 +1,7 @@
+Fable 5 chỉ còn nằm trong subscription quota đến hết 7/7.
+
+Mình đọc 2 post hay trên X, ghép với workflow ClaudeKit hiện tại, rồi đúc rút thành pipeline 6 giai đoạn + 3 custom skill.
+
+Mục tiêu: tìm unknowns trước khi code, cook có kiểm soát, review có gate người, và không đốt Fable vào việc model rẻ hơn làm được.
+
+https://claudekit.thieunv.space/posts/fable5-unknowns-workflow

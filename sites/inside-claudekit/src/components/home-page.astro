@@ -66,9 +66,29 @@ interface Post {
   status: 'draft' | 'published' | 'upcoming';
   title: Record<string, string>;
   excerpt: Record<string, string>;
+  // Post đã publish nhưng mới chỉ có route VI; card ở locale khác hiển thị nhưng chưa click được.
+  viOnly?: boolean;
 }
 
 const posts: Post[] = [
+  {
+    slug: 'fable5-unknowns-workflow',
+    date: 'Jul 4, 2026',
+    tags: ['fable-5', 'workflow', 'unknowns', 'custom-skills', 'codex'],
+    status: 'published',
+    title: {
+      vi: 'Làm việc với Fable 5: Sửa bản đồ trước khi đi vào lãnh thổ',
+      en: 'Working with Fable 5: Fix the map before entering the territory',
+      zh: '用 Fable 5 工作：进入领地前先修好地图',
+      ja: 'Fable 5 で働く：領地に入る前に地図を直す',
+    },
+    excerpt: {
+      vi: 'Map vs Territory: khoảng cách giữa prompt và codebase chính là unknowns. Pipeline 6 giai đoạn, 3 gate cố định quanh ck:cook, 3 custom skill, và bài toán chi phí khi chọn model.',
+      en: 'Map vs Territory: the gap between prompt and codebase is your unknowns. A 6-stage pipeline, 3 fixed gates around ck:cook, 3 custom skills, and model cost tradeoffs.',
+      zh: 'Map vs Territory：prompt 与 codebase 之间的差距就是 unknowns。6 阶段 pipeline、ck:cook 周围的 3 道固定 gate、3 个 custom skill，以及选择 model 时的成本取舍。',
+      ja: 'Map vs Territory：prompt と codebase の差が unknowns だ。6 段階の pipeline、ck:cook を囲む 3 つの固定 gate、3 つの custom skill、そして model 選択のコスト判断。',
+    },
+  },
   {
     slug: 'ck-visual-automation-toolkit',
     date: 'Jun 23, 2026',
@@ -148,6 +168,8 @@ function postUrl(slug: string): string | null {
   if (!post) return null;
   if (post.status === 'upcoming') return null;
   if (post.status === 'draft') return `/drafts/${slug}`;
+  // viOnly: chưa có route non-vi, card ở locale khác không click được (tránh 404).
+  if (post.viOnly && locale !== 'vi') return null;
   return locale === 'vi' ? `/posts/${slug}` : `/${locale}/posts/${slug}`;
 }
 

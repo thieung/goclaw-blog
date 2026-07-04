@@ -1,0 +1,1890 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fable 5 を使う：領域に入る前に地図を直す</title>
+<meta name="description" content="Map vs Territory: prompt と codebase の間の距離は unknowns です。パイプラインは 6 ステージ、ck:cook を中心に 3 つの gate が固定され、各ステージで model を選ぶときのコスト判断を扱います。" />
+<link rel="canonical" href="https://claudekit.thieunv.space/ja/posts/fable5-unknowns-workflow" />
+<meta property="og:title" content="Fable 5 を使う：領域に入る前に地図を直す" />
+<meta property="og:description" content="Map vs Territory: prompt と codebase の間の距離は unknowns です。パイプラインは 6 ステージ、ck:cook を中心に 3 つの gate が固定され、各ステージで model を選ぶときのコスト判断を扱います。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://claudekit.thieunv.space/ja/posts/fable5-unknowns-workflow" />
+<meta property="og:site_name" content="Inside ClaudeKit" />
+<meta property="og:image" content="https://claudekit.thieunv.space/og/fable5-unknowns-workflow-en.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Working with Fable 5: Fix the map before entering the territory" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Fable 5 を使う：領域に入る前に地図を直す" />
+<meta name="twitter:description" content="Map vs Territory: prompt と codebase の間の距離は unknowns です。パイプラインは 6 ステージ、ck:cook を中心に 3 つの gate が固定され、各ステージで model を選ぶときのコスト判断を扱います。" />
+<meta name="twitter:image" content="https://claudekit.thieunv.space/og/fable5-unknowns-workflow-en.png" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="/favicon.ico" />
+<script is:inline>
+  (function () {
+    try {
+      var stored = localStorage.getItem('theme');
+      if (stored === 'light' || stored === 'dark') {
+        document.documentElement.dataset.theme = stored;
+        return;
+      }
+    } catch (_) {}
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
+  })();
+</script>
+<style is:inline>
+  :root {
+    color-scheme: light;
+    --accent: #b5502e;
+    --accent-soft: #f2e2da;
+    --bg: #faf7f2;
+    --bg-card: #ffffff;
+    --text: #211c18;
+    --text-muted: #6b6259;
+    --border: #e6ddd2;
+    --mono-bg: #f1ece3;
+    --shadow: 0 1px 3px rgba(30, 20, 10, 0.06);
+    /* Full = topbar/visual ceiling. Content = khổ đọc chính, cùng mốc với intro và tổng kết. */
+    --full: 1200px;
+    --content: 920px;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --accent: #e08a5f;
+    --accent-soft: #3a2c22;
+    --bg: #17140f;
+    --bg-card: #1f1b15;
+    --text: #ece5da;
+    --text-muted: #a49a8c;
+    --border: #332c22;
+    --mono-bg: #251f18;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--bg);
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Main article follows the same reading width as intro and takeaways. */
+  .wrap {
+    max-width: var(--content);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- TOPBAR NAV ---------- */
+  .topbar {
+    max-width: var(--full);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 60px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .series {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .topbar .series .product {
+    color: var(--text-muted);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .topbar .series .product::before {
+    content: "";
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    margin-right: 12px;
+    vertical-align: middle;
+    background: color-mix(in srgb, var(--accent) 60%, var(--border));
+  }
+  .nav-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .home-link,
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text);
+    font: 700 11px/1 "SF Mono", "Menlo", "Consolas", monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+  }
+  .home-link svg { width: 14px; height: 14px; }
+  .home-link:hover,
+  .theme-toggle:hover,
+  .home-link:focus-visible,
+  .theme-toggle:focus-visible {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    outline: none;
+  }
+
+  /* ---------- HERO ---------- */
+  header.hero {
+    padding: 80px 24px 60px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kicker {
+    display: inline-block;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  h1.title {
+    font-size: clamp(32px, 5.5vw, 52px);
+    line-height: 1.15;
+    margin: 0 0 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .subtitle {
+    max-width: 640px;
+    margin: 0 auto;
+    color: var(--text-muted);
+    font-size: 17px;
+    line-height: 1.7;
+  }
+
+  .subtitle .name {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ---------- SECTIONS ---------- */
+  main {
+    padding: 8px 0 40px;
+  }
+
+  /* Khối đọc (text dài) giữ khổ hẹp cho dễ đọc, căn trái trong wrap rộng */
+  .reader {
+    max-width: var(--content);
+  }
+
+  section {
+    padding: 64px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section:last-of-type { border-bottom: none; }
+
+  .sec-label {
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: clamp(24px, 4vw, 32px);
+    line-height: 1.25;
+    margin: 0 0 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0 0 10px;
+  }
+
+  p { margin: 0 0 16px; }
+
+  .lede {
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+
+  code, .code {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 0.9em;
+    background: var(--mono-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  strong { font-weight: 700; }
+
+  a { color: var(--accent); }
+
+  /* ---------- RUMSFELD MATRIX ---------- */
+  .matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 28px 0;
+    max-width: var(--full);
+  }
+
+  .matrix-cell {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .matrix-cell.target {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    position: relative;
+  }
+
+  .matrix-cell.target::after {
+    content: "主要ターゲット";
+    position: absolute;
+    top: -10px;
+    right: 14px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .matrix-cell .cell-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .matrix-cell .cell-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .matrix-axis-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .golden-rule {
+    margin: 28px 0 30px;
+    padding: 22px 26px 24px;
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+    border-left: 6px solid var(--accent);
+    border-radius: 8px;
+    font-size: 17px;
+    line-height: 1.72;
+    max-width: var(--content);
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent) 3%, transparent) 44%, transparent),
+      var(--bg-card);
+    box-shadow: 0 18px 46px color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  .golden-rule > strong:first-child {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--accent);
+    font: 800 12px/1.25 "SF Mono", "Menlo", "Consolas", monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- SKILL SUMMARY GRID (như screenshot) ---------- */
+  .skill-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 28px 0 8px;
+  }
+
+  .summary-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 22px 24px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .summary-card .sc-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .summary-card .sc-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .summary-card .sc-icon svg { width: 22px; height: 22px; }
+
+  .summary-card .sc-name {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .summary-card .sc-custom {
+    align-self: center;
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  .summary-card .sc-desc {
+    font-size: 15.5px;
+    line-height: 1.55;
+    margin: 0 0 16px;
+  }
+
+  .summary-card .sc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  .summary-card .sc-tag {
+    font-size: 13px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 12px;
+    background: color-mix(in srgb, var(--mono-bg) 60%, transparent);
+  }
+
+  /* ---------- SUBSCRIBER BANNER ---------- */
+  .sub-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 22px 0 4px;
+    padding: 22px 24px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+    border-radius: 16px;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 55%, transparent), transparent 60%),
+      var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .sub-banner .sb-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .sub-banner .sb-icon svg { width: 26px; height: 26px; }
+
+  .sub-banner .sb-body { flex: 1 1 auto; min-width: 0; }
+
+  .sub-banner .sb-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0 0 4px;
+  }
+
+  .sub-banner .sb-desc {
+    font-size: 14.5px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .sub-banner .sb-cta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: filter 0.18s ease, transform 0.18s ease;
+  }
+  .sub-banner .sb-cta svg { width: 16px; height: 16px; }
+  .sub-banner .sb-cta:hover,
+  .sub-banner .sb-cta:focus-visible {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  /* ---------- SKILL CARDS (list chi tiết) ---------- */
+  .skill-detail-label {
+    margin: 40px 0 4px;
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .skill-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-top: 16px;
+    max-width: var(--full);
+  }
+
+  .skill-card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .skill-card .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .skill-card .tag .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .skill-card h3 code {
+    font-size: 1em;
+  }
+
+  .skill-card ul {
+    margin: 12px 0 0;
+    padding-left: 20px;
+  }
+
+  .skill-card li {
+    margin-bottom: 6px;
+    font-size: 15px;
+  }
+
+  .skill-card .deliverable {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: var(--mono-bg);
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+  }
+
+  /* ---------- PIPELINE FLOW ---------- */
+  .pipeline {
+    margin-top: 28px;
+    position: relative;
+    padding-left: 28px;
+    max-width: var(--full);
+  }
+
+  .pipeline::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: linear-gradient(var(--accent), var(--border));
+    opacity: 0.5;
+  }
+
+  .stage {
+    position: relative;
+    padding-bottom: 28px;
+  }
+
+  .stage:last-child { padding-bottom: 0; }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--accent);
+  }
+
+  .stage-box {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .stage-num {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stage-cmd {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .stage-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .stage-opt {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ---------- GATE VISUAL ---------- */
+  .gate-visual {
+    margin: 32px 0 4px;
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .scroll-hint {
+    display: none;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0 0 24px;
+  }
+
+  .gate-node, .cook-node {
+    flex: 1 1 0;
+    min-width: 148px;
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .gate-node {
+    border: 2px solid var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .gate-node .g-label {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .gate-node .g-cmd {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .gate-node .g-kills {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .cook-node {
+    background: var(--mono-bg);
+    border: 1px dashed var(--border);
+    justify-content: center;
+  }
+
+  .cook-node .c-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .cook-node .c-cmd {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .arrow-sep {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 18px;
+    padding: 0 2px;
+  }
+
+  .gate-explain {
+    display: grid;
+    gap: 14px;
+    margin-top: 8px;
+    max-width: var(--full);
+  }
+
+  .gate-explain .g-item {
+    border-left: 3px solid var(--accent);
+    padding: 4px 0 4px 16px;
+  }
+
+  .gate-explain .g-item h4 {
+    margin: 0 0 4px;
+    font-size: 15px;
+  }
+
+  .gate-explain .g-item p {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--text-muted);
+  }
+
+  /* Gate chéo model tuỳ chọn (Codex — khác model) */
+  .gate-node.optional {
+    border-style: dashed;
+    background: var(--bg-card);
+  }
+
+  .gate-node.optional .g-label { color: var(--text-muted); }
+
+  .sub-badge {
+    display: inline-block;
+    align-self: center;
+    margin-top: 8px;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+
+  .arrow-sep.optional { opacity: 0.45; }
+
+  .gate-explain .g-item.optional {
+    border-left-style: dashed;
+  }
+
+  /* ---------- CODEX ---------- */
+  .callout {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 14.5px;
+    margin: 20px 0 28px;
+    max-width: var(--content);
+  }
+
+  .callout .callout-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--accent);
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .cmd-block {
+    margin: 16px 0 24px;
+    padding: 14px 16px;
+    background: var(--mono-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: var(--content);
+  }
+
+  .loop-flow {
+    margin: 20px 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: loopstep;
+    max-width: var(--content);
+  }
+
+  .loop-flow li {
+    position: relative;
+    padding: 0 0 18px 44px;
+    counter-increment: loopstep;
+    font-size: 14.5px;
+  }
+
+  .loop-flow li::before {
+    content: counter(loopstep);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loop-flow li::after {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 30px;
+    bottom: 2px;
+    width: 1.5px;
+    background: var(--border);
+  }
+
+  .loop-flow li:last-child { padding-bottom: 0; }
+  .loop-flow li:last-child::after { display: none; }
+
+  .loop-flow li.human-step::before {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ---------- TABLES ---------- */
+  .table-scroll {
+    overflow-x: auto;
+    margin: 20px 0;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    max-width: var(--full);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+    font-size: 14px;
+    background: var(--bg-card);
+  }
+
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--mono-bg);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  td .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* ---------- BAI 2 ---------- */
+  .quote-block {
+    position: relative;
+    margin: 36px 0;
+    padding: 30px 34px 28px 72px;
+    border-top: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-card) 72%, var(--bg));
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.78;
+    font-style: normal;
+  }
+
+  .quote-block::before,
+  .quote-block::after {
+    position: absolute;
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1;
+    color: var(--accent);
+    pointer-events: none;
+  }
+
+  .quote-block::before {
+    content: "“";
+    top: 8px;
+    left: 18px;
+    font-size: 76px;
+    opacity: 0.34;
+  }
+
+  .quote-block::after {
+    content: "”";
+    right: 22px;
+    bottom: -10px;
+    font-size: 58px;
+    opacity: 0.16;
+  }
+
+  .quote-block .label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--accent);
+    font: 800 12px/1.25 "SF Mono", "Menlo", "Consolas", monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .quote-block p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+  }
+
+  .review-gate-block {
+    margin-top: 40px;
+  }
+
+  .flaw-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 20px;
+    max-width: var(--full);
+  }
+
+  .flaw-item {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+  }
+
+  .flaw-item .flaw-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--accent);
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  /* ---------- PROMPT MẪU ---------- */
+  .prompt-box {
+    margin-top: 14px;
+    background: var(--mono-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .prompt-box .p-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 8px 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prompt-box .p-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .prompt-box .p-copy {
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 4px 12px;
+    min-height: 28px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .prompt-box .p-copy:hover,
+  .prompt-box .p-copy:focus-visible {
+    background: var(--accent);
+    color: #fff;
+    outline: none;
+  }
+
+  .prompt-box pre {
+    margin: 0;
+    padding: 14px 16px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    padding: 56px 24px 80px;
+    text-align: center;
+  }
+
+  .takeaways {
+    max-width: var(--content);
+    margin: 0 auto 40px;
+    text-align: left;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .takeaways h3 {
+    margin: 0;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--mono-bg);
+    color: var(--text);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .takeaways ul {
+    counter-reset: takeaway;
+    margin: 0;
+    padding: 22px 24px 24px;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+  }
+
+  .takeaways li {
+    counter-increment: takeaway;
+    position: relative;
+    margin: 0;
+    padding: 14px 16px 14px 54px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--mono-bg) 38%, transparent);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .takeaways li::before {
+    content: counter(takeaway, decimal-leading-zero);
+    position: absolute;
+    left: 16px;
+    top: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--accent);
+    font: 800 11px/1 "SF Mono", "Menlo", "Consolas", monospace;
+  }
+
+  .post-footer-nav {
+    display: flex;
+    justify-content: center;
+    margin: 0 0 40px;
+  }
+  .post-footer-nav .home-link {
+    min-height: 44px;
+    padding: 0 22px;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+  .post-footer-nav .home-link svg { width: 16px; height: 16px; }
+
+  .credits {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 720px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  .credits a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (min-width: 921px) and (max-width: 1200px) {
+    .scroll-hint { display: block; }
+  }
+
+  @media (max-width: 920px) {
+    .skill-summary { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 720px) {
+    .topbar { padding: 12px 20px; flex-wrap: wrap; }
+    .topbar .series { font-size: 11px; letter-spacing: 0.1em; }
+    .sub-banner { flex-direction: column; align-items: flex-start; }
+    .sub-banner .sb-cta { align-self: stretch; justify-content: center; }
+  }
+
+  @media (max-width: 640px) {
+    header.hero { padding: 56px 20px 44px; }
+    section { padding: 48px 0; }
+    .matrix { grid-template-columns: 1fr; }
+    /* Mobile: stack node dọc — không node nào bị cắt */
+    .gate-visual {
+      flex-direction: column;
+      overflow-x: visible;
+      margin-bottom: 24px;
+    }
+    .arrow-sep { transform: rotate(90deg); justify-content: center; padding: 4px 0; }
+    .gate-node, .cook-node { min-width: unset; }
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topbar" aria-label="記事ナビゲーション">
+  <span class="series">
+    Inside ClaudeKit
+    <span class="product">ClaudeKit Engineer</span>
+  </span>
+  <span class="nav-actions">
+    <a class="home-link" href="/ja" aria-label="ホームページに戻る">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      <span>ホーム</span>
+    </a>
+    <button class="theme-toggle" type="button" aria-label="ライト/ダークテーマを切り替える" aria-pressed="false">ダーク</button>
+  </span>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kicker">実戦メモ・ClaudeKit</span>
+    <h1 class="title">Fable&nbsp;5 を使う：領域に入る前に地図を直す</h1>
+    <p class="subtitle">
+      Fable 5 が subscription quota に含まれるのは 7 月 7 日までです。では、どうすれば Fable を効率よく使えるのか。昨夜、X でたまたま質の高い 2 つの post を読みました — <span class="name">"A Field Guide to Fable: Finding Your Unknowns"</span>（Thariq, @trq212）と
+      <span class="name">"The Most Valuable Thing You Can Do With Fable 5"</span>（Alex Finn）。その insight を ClaudeKit system に重ねてみると、ClaudeKit skills に 3 つの custom skill を組み合わせた 6 段階 pipeline にまとまりました。Thariq の「code の前に unknowns を見つける」という insight とかなり噛み合う形です。
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 2. BÀI 1 — MAP VS TERRITORY -->
+  <section id="map-vs-territory">
+    <div class="reader">
+      <span class="sec-label">01 · Field Guide to Fable</span>
+      <h2>Map vs Territory：その距離こそが unknowns</h2>
+      <p class="lede">
+        Claude に指定したプロンプト/コンテキストは次のとおりです。 <strong>地図</strong>。実際のコードベースとバインディングは次のとおりです。 <strong>地域</strong>。
+        この二人の間の距離をこう呼ぶ <strong>unknowns</strong>.
+      </p>
+      <p>
+        Fable&nbsp;5 を使用すると、output の品質は unknowns の明確化能力によって制限されます。 <strong>ユーザー</strong> — model の能力のせいではありません。
+        モデルが強力であればあるほど、悪いマップの代償は大きくなります。これは、モデルは立ち止まって質問するのではなく、自信を持って間違った方向に実行するためです。
+      </p>
+
+      <div class="matrix-axis-label">マトリックス Rumsfeld — prompt を記述する場合の 4 種類の unknowns</div>
+    </div>
+    <div class="matrix">
+      <div class="matrix-cell">
+        <div class="cell-title">🟢 Known knowns</div>
+        <p class="cell-desc">promptに明確に書いてあること。 Claude は読んで従うだけです。推測する必要はありません。</p>
+      </div>
+      <div class="matrix-cell">
+        <div class="cell-title">🟡 Known unknowns</div>
+        <p class="cell-desc">自分自身が知っていること <em>未定</em> — トレードオフ、変数名、戦略 migration はオープンのままです。</p>
+      </div>
+      <div class="matrix-cell">
+        <div class="cell-title">🟠 Unknown knowns</div>
+        <p class="cell-desc">標準は「見ればわかる」ですが、それを言葉で表現することはできません。output が間違っている場合にのみ表示されます。</p>
+      </div>
+      <div class="matrix-cell target">
+        <div class="cell-title">🔴 Unknown unknowns</div>
+        <p class="cell-desc">知らなかった質問は尋ねる必要があります。これは最も危険なギャップであり、排除すべき主な目標です。</p>
+      </div>
+    </div>
+
+    <div class="golden-rule">
+      <strong>黄金律:</strong> unknowns が早く見つかるほど、修理費用が安くなります。後で見つけてください。 <code>merge</code> 当時の領土は地図上で間違った形状になっていたため、修復費用は何倍も高価でした。
+    </div>
+  </section>
+
+  <!-- 3. 3 SKILL -->
+  <section id="three-skills">
+    <div class="reader">
+      <span class="sec-label">02・ClaudeKitの3つの隙間</span>
+      <h2>3 つの重要なギャップを埋めるために書いた custom skill</h2>
+      <p class="lede">ClaudeKit core の一部ではありません — このメソッドが必要とする正確なギャップを埋めるために構築された 3 つの小さな skill: コーディング前に unknown unknowns を見つけ、それが発生した瞬間に deviation を記録し、コーディング後に人々を理解する gate。</p>
+    </div>
+
+    <div class="skill-summary">
+      <div class="summary-card">
+        <div class="sc-head">
+          <span class="sc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <span class="sc-name">blindspot</span>
+          <span class="sc-custom">カスタム</span>
+        </div>
+        <p class="sc-desc">「何がわからないのかわからない」を、鋭い、粘り強い prompt に変えます。</p>
+        <div class="sc-tags">
+          <span class="sc-tag">奇妙な領域</span>
+          <span class="sc-tag">新しいドメイン</span>
+          <span class="sc-tag">コーディングする前に</span>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="sc-head">
+          <span class="sc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          <span class="sc-name">impl-notes</span>
+          <span class="sc-custom">カスタム</span>
+        </div>
+        <p class="sc-desc">逸脱が起こった瞬間に、それが謎になる前に、逸脱をキャッチします。</p>
+        <div class="sc-tags">
+          <span class="sc-tag">コーディング中</span>
+          <span class="sc-tag">edge case</span>
+          <span class="sc-tag">引き継ぎメモ</span>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="sc-head">
+          <span class="sc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg></span>
+          <span class="sc-name">quiz-gate</span>
+          <span class="sc-custom">カスタム</span>
+        </div>
+        <p class="sc-desc">クイズに絶対に合格しないと合併しません。それはとても簡単です。</p>
+        <div class="sc-tags">
+          <span class="sc-tag">合併する前に</span>
+          <span class="sc-tag">知識</span>
+          <span class="sc-tag">review PR</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-banner">
+      <span class="sb-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <div class="sb-body">
+        <p class="sb-title">最初に Facebook Subscribers の共有を優先します</p>
+        <p class="sb-desc">3 つの skill はすべて、現在改良中であるため、Subscribers とのみ共有されています。安定したら、パブリック リポジトリに公開します。すぐに受信できるようにサブスクライブします。</p>
+      </div>
+      <a class="sb-cta" href="https://www.facebook.com/shinantori/subscribenow" target="_blank" rel="noopener">
+        早期受け取り用のSubscribe
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <p class="skill-detail-label">各skillの詳細</p>
+    <div class="skill-grid">
+      <div class="skill-card">
+        <div class="tag"><span class="dot"></span>コーディングの前に</div>
+        <h3><code>/blindspot</code> — 領域に入る前のブラインドスキャン</h3>
+        <ul>
+          <li>スカウトcodebase+ピーチ <code>git log</code> 見つける <strong>unknown unknowns</strong> ユーザーの代わりにタスクを解決するのではなく、</li>
+          <li>調査結果では、evidence: 特定のファイル、commit ハッシュ、またはドキュメントを引用する必要があります。一般的な推測は受け入れられません。</li>
+          <li>最も価値のあるトリック: 同様のタスクを実行した commit を見つけます (<code>git log --grep</code>） すでに <code>git show --stat &lt;hash&gt;</code> — その footprint ファイルは、利用可能な checklist touchpoint、通常は最高の信号 artifact です。</li>
+        </ul>
+        <div class="deliverable">主要な成果物: <strong>"a better prompt"</strong> — すぐに貼り付けることができます <code>/ck:brainstorm</code> または <code>/ck:plan</code> 次のステップで。</div>
+      </div>
+
+      <div class="skill-card">
+        <div class="tag"><span class="dot"></span>コーディング中</div>
+        <h3><code>/impl-notes</code> — 発生した瞬間に deviation をログに記録します</h3>
+        <ul>
+          <li>File <code>implementation-notes.md</code> ghi <strong>Decisions / Deviations / Surprises</strong> セッション終了時の振り返りではなく、それが起こった瞬間に <code>/ck:journal</code>.</li>
+          <li>スタンディングルールはすぐそこにあります <strong>ファイルのヘッダー</strong> — 会話が長くなると、context compaction がルールを破ってしまうため、会話の記憶に頼らないでください。ファイルを再読み取りする agent は、ルールを自動的に「再採用」します。</li>
+          <li>edge caseに遭遇 計画から逸脱 → 選択肢を選択 <strong>保守的</strong> (reversible 最小)、ログ 4 行、前進 - ユーザーが元に戻せる決定を待つのを停止しません。</li>
+        </ul>
+        <div class="deliverable">直接フィードする <code>quiz-gate</code> (deviations = 最高の quiz material) および <code>/ck:journal</code>.</div>
+      </div>
+
+      <div class="skill-card">
+        <div class="tag"><span class="dot"></span>コーディング後</div>
+        <h3><code>/quiz-gate</code> — 人が人をチェックする</h3>
+        <ul>
+          <li>変数の名前変更に関するトリビアではなく、行動クイズを使用して変更 (TL;DR、コンテキスト、直感、blast radius) に関する HTML explainer を生成します。</li>
+          <li>ゲートは応答する場合のみ通過します <strong>100%正しい</strong>。どの文が間違っているか → 誤解されている概念を正しい関連コードで説明し、正しい箇所を対象に新しい文を再クイズし、合格するまで繰り返します。</li>
+          <li>重要な修正が適用されました: 初期 report <strong>質問のみが含まれています</strong>、answer key は HTML のみに書き込まれます。 <strong>gate の解決後</strong> (パスまたは中止) - 最初に書かれた場合、ユーザーが回答を読み、gate は無意味です。</li>
+        </ul>
+        <div class="deliverable">gate の判定が実行条件です <code>/ck:git</code> または <code>/ck:ship</code>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. PIPELINE 6 GIAI ĐOẠN -->
+  <section id="pipeline">
+    <div class="reader">
+      <span class="sec-label">03 · エンドツーエンドのワークフロー</span>
+      <h2>custom skill と ClaudeKit を組み合わせた 6 段階 pipeline</h2>
+      <p class="lede">各期間は、unknowns を見つけるための前払い料金です。</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">フェーズ 0 · unknowns を見つける</div>
+          <div class="stage-cmd"><code>/blindspot</code></div>
+          <p class="stage-desc">codebase + git history をスキャン → unknown unknowns、ポットホール、およびよりシャープな prompt をレポートしてステージ 1 に進みます。</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">フェーズ 1 · 探索と設計</div>
+          <div class="stage-cmd"><code>/ck:brainstorm --html</code></div>
+          <p class="stage-desc">blindspot から prompt を取得 → スカウト + インタビュー組み込み → 2-3 アプローチ + 設計ドキュメント。</p>
+          <p class="stage-opt">高リスク: さらに多くの <code>/ck:predict</code> (5人の人物によるディベート) または <code>/ck:scenario</code> (edge case 12ウェイ)。</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">フェーズ2・計画</div>
+          <div class="stage-cmd"><code>/ck:plan</code> （または <code>--tdd</code>)</div>
+          <p class="stage-desc">輸出 <code>plans/&lt;ts&gt;-&lt;slug&gt;/plan.md</code> + phase files.</p>
+          <p class="stage-opt">高リスク: <code>+ red-team</code> (敵対的な reviewer が計画を台無しにしました)。 <code>+ validate</code> (主張と実際の codebase を確認してください)。</p>
+          <p class="stage-opt">大文字と小文字が区別される (OpenAI サブルーチンが必要): <code>/codex:adversarial-review</code> 計画通り — gate が model を超えました、実行します <strong>ファイナル</strong> red-team + validate の後: 洗練された計画を攻撃し、両方の Claude が盲目である場所を見つけます。</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">フェーズ 3 · 実装</div>
+          <div class="stage-cmd"><code>/impl-notes init</code> → <code>/ck:cook</code> → <code>/impl-notes review</code></div>
+          <p class="stage-desc"><code>/impl-notes init</code> 作成する <code>implementation-notes.md</code> プランディレクトリ内 <strong>前に</strong> cookの場合。 <code>/ck:cook &lt;plan&gt;</code> 実行 — 計画から逸脱する場合: 保守的なオプションを選択します。 <code>/impl-notes log</code>、 どうぞ。セッション終了: <code>/impl-notes review</code> 次のセッションのために学びを抽出します。</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">ステージ 4 · ゲートの理解</div>
+          <div class="stage-cmd"><code>/ck:code-review</code> + <code>/quiz-gate</code></div>
+          <p class="stage-desc">コードレビューはコードの品質をチェックします (コードチェッカー)。 quiz-gate は、2 つの異なる軸で人間の知識をテストします (人間が人間をチェックします)。</p>
+          <p class="stage-opt">高リスク (OpenAI サブシステムが必要): <code>/codex:adversarial-review</code> コードの差分 — gate は model と交差し、その間で実行されます。 <code>/ck:code-review</code> そして <code>/quiz-gate</code>、focus text は、impl-notes の偏差セクションから抜粋。</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-box">
+          <div class="stage-num">フェーズ 5 · 船</div>
+          <div class="stage-cmd"><code>/ck:git</code> または <code>/ck:ship</code> + <code>/ck:journal</code></div>
+          <p class="stage-desc">コミット/プッシュまたは PR pipeline、gate がステージ 4 になった後にのみ実行 <strong>PASSED</strong>。ジャーナルは impl-notes をフィードとして読み取り、反映します。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 3 GATE QUANH COOK -->
+  <section id="three-gates">
+    <div class="reader">
+      <span class="sec-label">04 · インサイトは最も高価です</span>
+      <h2><code>ck:cook</code> を囲む 3 つの固定 gate + 2 つの任意 cross-model gate</h2>
+      <p class="lede">チェックは重複していません。各 gate は、実行ステップの両端にある別個の未知の軸をターゲットとしています。 <code>/quiz-gate</code> 常に gate 最後のピン: 停止条件です。</p>
+    </div>
+
+    <div class="gate-visual">
+      <div class="gate-node">
+        <div class="g-label">ゲート 1 · cook 前</div>
+        <div class="g-cmd">/ck:plan red-team</div>
+        <div class="g-kills">unknown unknownsを排除する <strong>計画の</strong></div>
+      </div>
+      <div class="arrow-sep">→</div>
+      <div class="gate-node">
+        <div class="g-label">ゲート 2 · cook 前</div>
+        <div class="g-cmd">/ck:plan validate</div>
+        <div class="g-kills">known unknownsを排除する <strong>決断の</strong></div>
+      </div>
+      <div class="arrow-sep optional">⇢</div>
+      <div class="gate-node optional">
+        <div class="g-label">オプションのゲート · cook の前</div>
+        <div class="g-cmd">/codex:adversarial-review<br>計画上で</div>
+        <div class="g-kills">クロスゲート model — ケースクリティカル</div>
+        <span class="sub-badge">OpenAIサブが必要です</span>
+      </div>
+      <div class="arrow-sep">→</div>
+      <div class="cook-node">
+        <div class="c-label">実行</div>
+        <div class="c-cmd">/ck:cook</div>
+      </div>
+      <div class="arrow-sep optional">⇢</div>
+      <div class="gate-node optional">
+        <div class="g-label">オプションのゲート · cook 後</div>
+        <div class="g-cmd">/codex:adversarial-review<br>コードの差分について</div>
+        <div class="g-kills">unknown unknownsを排除する <strong>model 自身による</strong></div>
+        <span class="sub-badge">OpenAIサブが必要です</span>
+      </div>
+      <div class="arrow-sep">→</div>
+      <div class="gate-node">
+        <div class="g-label">ゲート 3 · cook 後 · ラッチ</div>
+        <div class="g-cmd">/quiz-gate</div>
+        <div class="g-kills">unknownsを排除する <strong>あなたの</strong> 発送されたばかりのものについて</div>
+      </div>
+    </div>
+    <p class="scroll-hint">水平にスクロールして 6 つのノードをすべて表示します →</p>
+
+    <div class="gate-explain">
+      <div class="g-item">
+        <h4>Gate 1 · <code>/ck:plan red-team</code> — agent は agent をチェックします</h4>
+        <p>2-4 reviewer subagent 敵対的なペルソナが、誰も思いつかなかった失敗モードを見つける計画を台無しにしました。 Which finding doesn't have evidence? <code>file:line</code> 特に自動拒否 — 曖昧な苦情を避けます。</p>
+      </div>
+      <div class="g-item">
+        <h4>Gate 2 · <code>/ck:plan validate</code> — red-team の後、cook の前に実行されます。</h4>
+        <p>検証パスは文字通り「マップとテリトリー」をチェックします。 codebase を grep して、プランのクレーム (ファイル、シンボル、エンドポイント) が実際に存在するかどうかを確認します。 Then interview 3-8 questions <strong>友達</strong> Close the remaining open assumptions. red-team → validate の順序は、agent が他の人たちと最終決定する前に計画を破棄して編集し、改訂されようとしている草案で最終決定するのを避けることを目的としています。</p>
+      </div>
+      <div class="g-item optional">
+        <h4>オプションゲート・ <code>/codex:adversarial-review</code> 計画通り — cook 前、validate 後 (OpenAI サブが必要)</h4>
+        <p>重大なケースのみ (migration、security、public contract)。走る <strong>ファイナル</strong> 計画段階では、計画が red-team + validate によって洗練された後、計画全体を攻撃し、Claude ファミリ全体が盲目になる場所を探します。</p>
+      </div>
+      <div class="g-item optional">
+        <h4>オプションゲート・ <code>/codex:adversarial-review</code> コードの差分 — cook の後、quiz-gate 前 (OpenAI サブルーチンが必要)</h4>
+        <p>修正された gate は、Claude をチェックするすべての Claude です。同じ model ファミリ、同じ盲点であり、reviewer は、それ自体が発生するエラーをキャッチしません。クロスゲートmodel→agent <strong>model以外</strong> (GPT-5.5) in — 残りの不明なタイプを適切に削除します: unknown unknowns <strong>model 自身による</strong>。 impl-notes の偏差セクションから取得したテキストに焦点を当てます。詳細はセクション07を参照してください。</p>
+      </div>
+      <div class="g-item">
+        <h4>Gate 3 · <code>/quiz-gate</code> — ヒューマン チェッカー、gate 最後のピン</h4>
+        <p>出荷前の最後のゲートとして、出荷されたばかりの自分の unknowns を非アクティブ化します。マシン レビュー コード (または他の model) が合格したからといって、新しい動作を完全に理解したわけではありません。人は停止条件です。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. SCENARIO COMBOS -->
+  <section id="scenario-combos">
+    <div class="reader">
+      <span class="sec-label">05 · pipeline は常にフルであるとは限りません</span>
+      <h2>シナリオコンボ – リスクに見合った保険料を支払う</h2>
+      <p class="lede">変なエリアのみフルpipeline(ステージ0→5)＋ぼかしscope＋ハイリスク。より一般的な状況では、より薄いコンボが必要になります。</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>シナリオ</th><th>使うコンボ</th><th>省略するもの</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>前回のセッションで計画があったので、続行します</td>
+            <td><code>/ck:watzup</code> ステータスを読む → 古い impl-notes の「次のセッションの学習」を読む → <code>/impl-notes init</code> → <code>/ck:cook</code> 次のフェーズ → <code>/quiz-gate</code>。古い impl-notes をまだ持っていませんか (以前 ClaudeKit を使用したプロジェクトに 3 つの custom skill を追加しただけです)?読み飛ばす 学習内容 — <code>/impl-notes init</code> アクティブなプラン ディレクトリに新しいファイルを作成すると、このセッションから学習が蓄積されます。</td>
+            <td>フェーズ 0-2 — unknowns は前のセッションで料金を支払いました</td>
+          </tr>
+          <tr>
+            <td>小さなバグ修正、おなじみの領域</td>
+            <td><code>/ck:fix</code> →commit。ロイ deviation それでは <code>/impl-notes log</code></td>
+            <td>10 行を修正するための gate — quiz-gate 全体は過剰摂取です</td>
+          </tr>
+          <tr>
+            <td>奇妙なエリアですが、scope はクリアです</td>
+            <td><code>/blindspot &lt;area&gt;</code> → better-prompt をそのまま貼り付けます。 <code>/ck:plan</code></td>
+            <td><code>ck:brainstorm</code> — scope がロックされているときは議論することが何もありません</td>
+          </tr>
+          <tr>
+            <td>完全に新しいドメイン (コードではない)</td>
+            <td><code>/blindspot --domain</code> (まずは教える、語彙を学ぶ) → <code>/ck:brainstorm --html</code></td>
+            <td>スカウト codebase — ギャップはリポジトリではなく知識にあります</td>
+          </tr>
+          <tr>
+            <td>高リスク (public contract、security、migration)</td>
+            <td>Full pipeline + <code>/ck:predict</code>/<code>/ck:scenario</code> ステージ1+で <code>red-team</code> → <code>validate</code> ステージ2+で <code>/codex:adversarial-review</code> ステージ 4 (OpenAI サブがある場合); quiz-gate <strong>義務的な</strong></td>
+            <td>何もあきらめないでください</td>
+          </tr>
+          <tr>
+            <td>Claude がスタックする — debug loop、何度も修正されましたが失敗しました</td>
+            <td><code>/codex:rescue</code> (OpenAI サブが必要) — 別の死角から見える GPT-5.5 にタスクを割り当てます。 <code>--resume</code> 古いスレッドを続けます</td>
+            <td>gate を変更しても問題は解決しません。問題は model の盲点にあり、別の model が必要です。</td>
+          </tr>
+          <tr>
+            <td>計画は完了しました。リスクは中程度です。red-team に群がる価値はありません</td>
+            <td><code>/ck:plan validate</code> — 主張の検証 + 最終仮定のインタビュー → <code>/ck:cook</code></td>
+            <td><code>red-team</code> (中等度のリスクの場合は過剰摂取)、 <code>/ck:predict</code>/<code>/ck:scenario</code></td>
+          </tr>
+          <tr>
+            <td>他の人が書いた PR をレビューする</td>
+            <td><code>/quiz-gate --pr &lt;n&gt;</code> 単独で使用 — クイズは PR を詳しく読む方法です</td>
+            <td><code>blindspot</code>, <code>impl-notes</code> — 私が書いたコードではありません</td>
+          </tr>
+          <tr>
+            <td>純粋なリファクタリング、動作は変更なし</td>
+            <td><code>/ck:code-review</code> + test suite</td>
+            <td><code>quiz-gate</code> オプション — 誤解を招くような新しい動作はありません</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="golden-rule">
+      <strong>選択ルール:</strong> 各gateは <em>保険料</em>。さらに不明ですが、gate は厚く、unknowns は少なく、gate は薄いです。馴染みのあるタスクのために pipeline を完全に実行することは、危険なタスクのために gate をスキップするのと同じくらい無駄です。
+    </div>
+  </section>
+
+  <!-- 7. KINH TẾ HỌC MODEL -->
+  <section id="model-economics">
+    <div class="reader">
+      <span class="sec-label">06 · pipeline のコスト判断</span>
+      <h2>Fable 5 はどこで使うべきか？</h2>
+      <p class="lede">原則: unknowns を見つけるための初期費用は安くなります。最も高価な model をプロセスに投入すると推測されます <strong>検出して決定する</strong>、プロセスには安価なmodelを使用してください <strong>指示通りに実行する</strong> — 計画が優れているほど、model の実装もより優れたものになります。</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>工程</th><th>モデル</th><th>理由</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/blindspot</code></td>
+            <td><span class="badge">Fable 5</span></td>
+            <td>価値は解釈にあります。git history を「ポットホール」に読み取り、どの commit が従う価値のあるパターンであるかを認識します。弱いモデルはファイルをリストするだけです。</td>
+          </tr>
+          <tr>
+            <td><code>/ck:brainstorm</code>, <code>/ck:plan</code>, <code>/ck:predict</code></td>
+            <td><span class="badge">Fable 5</span></td>
+            <td>アーキテクチャ上の決定 - ここで間違っていると、その後のすべてのステップが無意味になります。</td>
+          </tr>
+          <tr>
+            <td><code>/quiz-gate</code> (質問を生成)</td>
+            <td><span class="badge">Fable 5 / Opus</span></td>
+            <td>優れた注意をそらす人は、コード作成者よりも動作をより深く理解する必要があります。回答者は、model さんがこのトピックを指摘したあなたです。</td>
+          </tr>
+          <tr>
+            <td><code>/ck:plan red-team</code></td>
+            <td><span class="badge">Fable controller + Opus/Sonnet</span></td>
+            <td>レビュー担当者 subagent は、evidence で故障モードを見つけるだけで済みます。 <code>file:line</code> (あらかじめ決められたペルソナ — Opus は十分以上の能力を持っています)。新しい裁判結果にはインテリジェンスが必要であり、メインセッションで実行されます。たとえば、subagent あたりは最も美しい pipeline です。</td>
+          </tr>
+          <tr>
+            <td><code>/ck:plan validate</code></td>
+            <td><span class="badge">Sonnet/Opus</span></td>
+            <td>検証パスは、checklist 層に従った機械的な grep です。知性は答える人にあります。model は正しい質問をするだけで済みます。</td>
+          </tr>
+          <tr>
+            <td><code>/ck:cook</code> 詳細な計画に従って</td>
+            <td><span class="badge">Sonnet</span></td>
+            <td>優れた計画により、unknowns は排除されました。実装は地図に従ってください。最大の貯蓄場所。</td>
+          </tr>
+          <tr>
+            <td><code>/ck:code-review</code></td>
+            <td><span class="badge">Opus/Sonnet</span></td>
+            <td>checklist + evidence によるレビュー; Fable は public contract に変更するだけの価値があります。</td>
+          </tr>
+          <tr>
+            <td><code>/impl-notes</code> log, <code>/ck:git</code>, <code>/ck:ship</code>, <code>/ck:watzup</code></td>
+            <td><span class="badge">Haiku/Sonnet</span></td>
+            <td>メカニズム: 数行の commit を追加し、ステータスを要約します。簡単です。</td>
+          </tr>
+          <tr>
+            <td><code>/ck:scout</code> raw discovery</td>
+            <td><span class="badge">Haiku</span></td>
+            <td>Glob/Grep でファイルを探すだけなら Fable usage を使う価値は薄い。Explore/subagent で大きく scout するなら、先に安い model を pin する。blindspot はその上の解釈層で使う。</td>
+          </tr>
+          <tr>
+            <td><code>/codex:review</code>, <code>/codex:adversarial-review</code>, <code>/codex:rescue</code></td>
+            <td><span class="badge">GPT-5.5</span> (OpenAIを使用、別途サブスクリプション)</td>
+            <td>クロスゲート model — Claude トークンの書き込みはなく、個別の請求が行われます。価値は盲点にある <strong>他の</strong> より強力な model ではありません。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="golden-rule">
+      <strong>覚えておきたい usage trap：</strong> Claude Code 組み込みの <code>Explore</code> は v2.1.198 以降、main conversation の model を継承することがあります。main session が Fable 5 の場合、Explore も Fable usage を消費する可能性があります。他の subagent に影響させず安く scout したいなら、custom subagent <code>explore.md</code> を作り、<code>name: Explore</code> として <code>model: haiku</code> または <code>model: sonnet</code> を pin します。詳しくは <a href="https://code.claude.com/docs/en/sub-agents#built-in-subagents" target="_blank" rel="noopener">Claude Code の built-in subagents docs</a> を参照。
+    </div>
+
+    <div class="reader">
+      <p><strong>避けるべきアンチパターン:</strong> cook には Fable を使用しますが、プランには Sonnet を使用します。これは、unknowns が以前に削除されるべきだったと推測させるために高価な model を支払うことを意味し、まさに記事が警告している「貧弱なマップ、高価な領域」の罠です。</p>
+    </div>
+  </section>
+
+  <!-- 8. CODEX — GATE CHÉO MODEL -->
+  <section id="codex-cross-model">
+    <div class="reader">
+      <span class="sec-label">07・modelクロスゲート</span>
+      <h2>Codex — 別の model を入れて Claude をレビューする</h2>
+
+      <div class="callout">
+        <span class="callout-tag">条件</span><br>
+        このセクションには <strong>OpenAI のサブスクリプションプラン</strong>（ChatGPT Plus/Pro または API）と、ログイン済みの Codex CLI が必要です。なければスキップして構いません。上の固定 3-gate pipeline だけでも十分使えます。
+      </div>
+
+      <p class="lede">Plugin <code>codex-plugin-cc</code> Codex/GPT-5.5をClaude Codeに挿入します。本質的な価値観は「modelが強い」ではなく、 <strong>model KHÁC</strong>: すべての内部 gate は、Claude をテストする Claude です。同じトレーニング、同じ systematic バイアスを使用すると、reviewer は、同様に発生するエラーをキャッチしません。 Codex には他にも盲点があります → unknown unknowns を model から削除できます。</p>
+
+      <h3>設定</h3>
+      <pre class="cmd-block">/plugin marketplace add openai/codex-plugin-cc
+/plugin install codex@openai-codex
+/codex:setup</pre>
+
+      <h3>plugin ではなく Codex MCP を使う場合</h3>
+      <p>Codex CLI は MCP server として起動し、他の agent から呼び出すこともできます。ただし MCP 経由では、Claude は plugin の command/gate に縛られません。brainstorm、plan、cook、review、close phase のどこでも Codex に聞けてしまいます。この使い方は可能ですが、明確な guardrails が必要です：</p>
+      <ul>
+        <li><strong>いつ聞くか：</strong>本当にリスクがある checkpoint だけにする — critical plan、material code diff、security/migration/public contract、または debug loop で 2 方向試しても詰まった場合。</li>
+        <li><strong>何を聞くか：</strong>毎回、具体的な artifact、具体的な scope、具体的な質問、evidence のない finding を reject するルールを渡す。</li>
+        <li><strong>最大何 round か：</strong>デフォルトは 1 round。round 1 が material change につながった場合だけ round 2。ask → red-team → review → 再 ask の無限チェーンにしない。</li>
+        <li><strong>誰が最終判断するか：</strong>Codex が単独で plan を approve したり、phase を close したり、ship 許可を出したりしない。Claude/human が各 finding を evidence 付きで accept/reject し、その後に修正する。</li>
+      </ul>
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 12px;">Claude Code workflow で <code>ultracode</code> のような keyword/feature を使って Codex を呼び、権限の広い review session を spawn する場合、ユーザーが明示的に edit を approve しない限り review-only として扱います。default path にしないこと。広い review session と複数 round の組み合わせは、token burst を重くしがちです。詳しくは <a href="https://developers.openai.com/codex/cli/features#model-context-protocol-mcp" target="_blank" rel="noopener">OpenAI の Codex MCP docs</a> を参照。</p>
+
+      <h3>pipeline 内の各コマンドの場所</h3>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>コマンド</th><th>タイミング</th><th>役割</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/codex:adversarial-review</code> その上 <strong>plan</strong></td>
+            <td>フェーズ 2 の終了、red-team + validate 後</td>
+            <td>計画上の 3 番目の model クロスゲート — 重大なケースのみ (migration、security、public contract)</td>
+          </tr>
+          <tr>
+            <td><code>/codex:adversarial-review</code> その上 <strong>code diff</strong></td>
+            <td>ステージ4以降 <code>/ck:code-review</code>、 前に <code>/quiz-gate</code></td>
+            <td>本物の使用例 (「出荷前レビュー」) — 設計上の選択、隠れた前提、トレードオフに挑戦します。 focus text は impl-notes の偏差セクションから取得</td>
+          </tr>
+          <tr>
+            <td><code>/codex:rescue</code></td>
+            <td>Claude がスタックしたとき (debug loop)</td>
+            <td>Escape hatch — <code>--resume</code> スレッド Codex をセッションごとに分離する</td>
+          </tr>
+          <tr>
+            <td><code>/codex:review</code></td>
+            <td>ステージ4</td>
+            <td>結果に対するセカンドオピニオン <code>/ck:code-review</code> 疑わしい; focus text は受け入れられないため、プランには使用しないでください</td>
+          </tr>
+          <tr>
+            <td>Review gate (<code>/codex:setup --enable-review-gate</code>)</td>
+            <td>各ターンには編集コードがあります</td>
+            <td><strong>デフォルトはオフ</strong> — 以下の理由をご覧ください</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="reader">
+      <h3>サンプルプロンプト — 計画に対する敵対的なレビュー</h3>
+      <p>計画が洗練された後、Codex を 3 番目のレビュー レイヤーに配置します。下位レイヤーがキャプチャした内容が見つからないように、その点を明確にします。</p>
+      <div class="prompt-box">
+        <div class="p-head">
+          <span class="p-label">サンプル プロンプト — コピーして使用する</span>
+          <button type="button" class="p-copy">コピー</button>
+        </div>
+        <pre>/codex:adversarial-review --wait Đây là implementation plan tại plans/&lt;dir&gt;/, chưa phải code — đã qua red-team và validate nội bộ. Đừng verify chi tiết file/symbol. Thay vào đó: (1) challenge HƯỚNG ĐI — đây có phải cách tiếp cận đúng không, có alternative đơn giản hơn không; (2) hidden assumptions mà plan đứng lên trên nhưng không nói ra; (3) tradeoffs bị đánh giá một chiều; (4) pressure-test các phase liên quan [điền risk area thật: auth/data loss/rollback/race].</pre>
+      </div>
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 12px;">commit のないプランは、working-tree の変更とみなされます (untracked files はレビュー可能)。プランがcommitの場合はそれを追加します <code>--base &lt;ref&gt;</code>.</p>
+
+      <h3>所見処理ループ — 自動ではなく人間によるトリガー</h3>
+      <p>敵対的レビューは read-only をロックし、output verbatim を返しました。ユーザー制御ループ:</p>
+      <ol class="loop-flow">
+        <li>Codex 敵対的実行 <strong>round 1</strong>、結果 verbatim を返します。</li>
+        <li>Claude (Fable/Opus) <strong>adjudicate</strong>: Accept/Reject は evidence と一緒に検索するために使用されます — 結果が検証済みの決定と同じである場合、ソースとともに拒否します。</li>
+        <li class="human-step"><strong>人物が承認します</strong> 承認リスト — gate 人は削除できません。</li>
+        <li>Claude <strong>apply</strong> 承認された修正 + 一貫性のスイープ。</li>
+        <li><strong>Round 2</strong> 修正が適用された場合にのみマテリアルが変更されます。 focus text は、正しい修正領域を指します。 <strong>最大2ラウンドまで。</strong></li>
+      </ol>
+    </div>
+
+    <div class="golden-rule">
+      <strong>自動ループしない理由:</strong> Codexのpromptは <em>"break confidence in the change, not validate it"</em> — 常に問題を見つけるように設計された reviewer は、決して「完璧」とは言えません。したがって、reviewer による自動ループは、設計上、無限ループになります。 <strong>有効な停止条件は人だけです</strong> (「残りは細かいことです。先に進みます」)。注記： <code>--resume</code> だけで <code>rescue</code>; adversarial-review ステートレス — ラウンド 2 は、focus text で独自のコンテキストを保持する必要があります。
+    </div>
+
+    <div class="reader review-gate-block">
+      <h3>Review gate — なぜデフォルトでオフなのか</h3>
+      <p>プラグインの唯一の自動バージョンは Stop hook で、編集コードのあるすべてのターンをレビューします。オフにする 3 つの理由:</p>
+      <ul>
+        <li><strong>タイムアウトはターンごとに最大 900 秒</strong> — 各編集は続行する前にレビューが完了するまで待つ必要があります。</li>
+        <li><strong>コード内にハード ループ ガードは見られません</strong> — OpenAI 自体も、Claude-Codex ループを警告します。</li>
+        <li><strong>ターンごとのゲーティングのパラドックス:</strong> unattended run にのみ価値がありますが、OpenAI は、モニターに座っているときにのみオンにすることを推奨しています。そして、見ている人はすでに gate です。</li>
+      </ul>
+      <p>交換する： <code>/codex:adversarial-review</code> 走る <strong>一度</strong> ステージ 4 — 同じ補償範囲、1 回の支払い、誰かが広告を掲載します。</p>
+    </div>
+  </section>
+
+  <!-- 9. BÀI 2 — ALEX FINN: ĐÚC RÚT ACTIONABLE -->
+  <section id="alex-finn">
+    <div class="reader">
+      <span class="sec-label">08・2回目のレッスンからの描画</span>
+      <h2>system を正しく再設計する</h2>
+      <p class="lede">Alex Finn の記事は、Thariq と同じ主張をしていますが、より高いレベルで、各マップを修正する代わりにアップグレードします。 <strong>マッププロッター</strong> — system を操作する独自のコーディング。すぐに適用できる 4 つの原則を次に示します。</p>
+    </div>
+
+    <div class="flaw-list">
+      <div class="flaw-item">
+        <span class="flaw-tag">原則 1 · Fable をタスク層ではなく、system 層に配置する</span>
+        <p>system レイヤーの欠陥により、上記の複利が発生します <strong>全て</strong> タスク — したがって、再設計コーディング ループの 1 つの Fable セッションは、後続の数百の cook セッションで償却されます。 output が最もコストパフォーマンスに優れているのは、output です。 <strong>再利用可能な構造</strong> (system、skill、プラン)、output が 1 回の実行の場合に最も安価になります。</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">サンプル プロンプト — コピーして使用する</span>
+            <button type="button" class="p-copy">コピー</button>
+          </div>
+          <pre>Thay vì làm ngay task này, hãy thiết kế cho tôi một skill/workflow tái sử dụng để MỌI task cùng loại về sau chạy qua nó. Loại task: [mô tả]. Output cần: quy trình từng bước, file SKILL.md (nếu phù hợp), và tiêu chí đo để biết nó có đang hoạt động tốt không.</pre>
+        </div>
+      </div>
+      <div class="flaw-item">
+        <span class="flaw-tag">原則 2 · ブレイン ダンプではなく実際の artifacts から監査する</span>
+        <p>Fable に直接読み取らせる <code>rules/</code>、skills、git history — 自分の働き方に関する実際のデータは、自分の言葉よりもはるかに強力です。アーティファクトは実際の動作を反映します。物語は行動のイメージを反映します。</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">サンプル プロンプト — コピーして使用する</span>
+            <button type="button" class="p-copy">コピー</button>
+          </div>
+          <pre>Đừng hỏi tôi làm việc thế nào — lời tự kể không đáng tin. Hãy đọc: thư mục rules/, danh sách skills đang cài, và `git log --oneline -50` của repo này, rồi tự dựng lại bức tranh workflow THỰC TẾ của tôi. Chỉ ra 3 chỗ friction lớn nhất, mỗi chỗ phải cite file hoặc commit làm bằng chứng — không nhận nhận định không có dẫn chứng.</pre>
+        </div>
+      </div>
+      <div class="flaw-item">
+        <span class="flaw-tag">原則 3 · 実行して検証する</span>
+        <p>新しい System は次の環境でテストする必要があります。 <strong>本当の仕事</strong> 次に、output を測定します。system は、議論中ではなく、実際の負荷の下でのみ弱点を明らかにします。最初にプロトタイプを作成し、後で拡張します。</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">サンプル プロンプト — コピーして使用する</span>
+            <button type="button" class="p-copy">コピー</button>
+          </div>
+          <pre>System/skill vừa thiết kế xong: chạy thử nó trên đúng MỘT task thật sau đây: [task]. So sánh với cách làm cũ theo 3 tiêu chí: thời gian, số lần phải sửa lại, chất lượng output. Nếu không hơn rõ rệt, liệt kê chỗ cần chỉnh — đừng khen.</pre>
+        </div>
+      </div>
+      <div class="flaw-item">
+        <span class="flaw-tag">原則 4 · rule of three を使用したトリガーの再設計</span>
+        <p>同じ種類の摩擦が発生します <strong>3回以上</strong> impl-notes / ジャーナル / レトロでは、system を再設計する価値があります。ループ: 作業 → deviations のビルド → レトロなパターンの公開 → 再設計 → テスト実行 → 保持または破棄。</p>
+        <div class="prompt-box">
+          <div class="p-head">
+            <span class="p-label">サンプル プロンプト — コピーして使用する</span>
+            <button type="button" class="p-copy">コピー</button>
+          </div>
+          <pre>Đọc implementation-notes.md và journal/retro gần nhất của tôi. Nhóm các deviation/friction theo loại. Loại nào xuất hiện từ 3 lần trở lên? Với MỖI loại đó, đề xuất một thay đổi system NHỎ NHẤT khử được nó. Loại nào dưới 3 lần: bỏ qua, đừng đề xuất gì.</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="golden-rule">
+      <strong>累積 evidence を使用して実行を再設計する</strong> — すべての system の修理は実際の摩擦から生まれ、実際の走行によって検証されます。
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="takeaways">
+    <h3>まとめ</h3>
+    <ul>
+      <li>すぐにコードを記述するのではなく、unknowns を見つけてプロジェクトを開始します。</li>
+      <li>門はリスクに比例する必要があります。奇妙なものには厚く、見慣れたものには薄くします。</li>
+      <li>検出と判定のための高価なモデル。直接実行用の安価な model。</li>
+      <li>System の再設計は、一時的な興奮ではなく、蓄積された evidence に対してのみ実行する必要があります。</li>
+    </ul>
+  </div>
+  <div class="post-footer-nav">
+    <a class="home-link" href="/ja" aria-label="ホームページに戻る">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      <span>ホームページに戻る</span>
+    </a>
+  </div>
+  <p class="credits">
+    この記事は、X 上の 2 つの post から着想を得て照らし合わせています：<a href="https://x.com/trq212/status/2073100352921215386" target="_blank" rel="noopener">Thariq (@trq212) — "A Field Guide to Fable: Finding Your Unknowns"</a>、および <a href="https://x.com/AlexFinn/status/2072837836999627155" target="_blank" rel="noopener">Alex Finn (@AlexFinn) — "The Most Valuable Thing You Can Do With Fable 5"</a>。例の workflow は custom skills <code>blindspot</code> / <code>impl-notes</code> / <code>quiz-gate</code> と ClaudeKit skills を組み合わせています。
+  </p>
+</footer>
+
+<script is:inline>
+  (function () {
+    // Theme toggle — dùng chung localStorage key 'theme' với các post khác.
+    var themeToggle = document.querySelector('.theme-toggle');
+    var prefersDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+    function currentTheme() {
+      return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    }
+
+    function setTheme(theme, persist) {
+      document.documentElement.dataset.theme = theme;
+      if (themeToggle) {
+        var isDark = theme === 'dark';
+        themeToggle.textContent = isDark ? 'ライト' : 'ダーク';
+        themeToggle.setAttribute('aria-pressed', String(isDark));
+      }
+      if (persist) {
+        try { localStorage.setItem('theme', theme); } catch (_) {}
+      }
+    }
+
+    if (themeToggle) {
+      setTheme(currentTheme(), false);
+      themeToggle.addEventListener('click', function () {
+        setTheme(currentTheme() === 'dark' ? 'light' : 'dark', true);
+      });
+    }
+
+    if (prefersDark && typeof prefersDark.addEventListener === 'function') {
+      prefersDark.addEventListener('change', function (event) {
+        try { if (localStorage.getItem('theme')) return; } catch (_) {}
+        setTheme(event.matches ? 'dark' : 'light', false);
+      });
+    }
+
+    // Nút copy cho các khối "Prompt mẫu" — vanilla JS, không dependency.
+    document.querySelectorAll('.prompt-box .p-copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pre = btn.closest('.prompt-box').querySelector('pre');
+        var text = pre.textContent;
+
+        function done(ok) {
+          btn.textContent = ok ? 'コピーしました ✓' : 'コピー失敗';
+          setTimeout(function () { btn.textContent = 'コピー'; }, 2000);
+        }
+
+        function fallback(t) {
+          var ta = document.createElement('textarea');
+          ta.value = t;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          document.body.removeChild(ta);
+          return ok;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallback(text)); });
+        } else {
+          done(fallback(text));
+        }
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

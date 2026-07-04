@@ -1,0 +1,13 @@
+Fable 5 is only included in subscription quota through July 7.
+
+I read two strong X posts from Thariq and Alex Finn, then mapped the ideas into a practical ClaudeKit workflow.
+
+The result: a 6-stage pipeline with 3 custom skills layered on top of ClaudeKit:
+
+• `blindspot` before planning: find unknown unknowns before code
+• `impl-notes` during cook: log deviations while they happen
+• `quiz-gate` after review: make the human prove they understand what shipped
+
+The post also covers where Fable should *not* be used, how to avoid Explore subagent burning premium usage, and when Codex should be a cross-model gate instead of an auto-loop.
+
+Link below.
