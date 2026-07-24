@@ -399,8 +399,8 @@
     "closing_p2": "Mỗi lớp bảo vệ một kiểu rủi ro: hook chặn tool call, rule nhắc hành vi, hard-gate giữ quy trình, guard skill chỉ chạy khi được gọi. Biết lớp nào đang chạy và lớp nào chỉ là lời dặn giúp audit đúng chỗ, trước khi lỗi lọt vào PR và đi tiếp lên PROD.",
     "closing_referral_kicker": "Chưa có ClaudeKit?",
     "closing_referral_title": "Nếu bạn đang build hệ thống guardrails, có thể tham khảo các pattern đã áp dụng trong ClaudeKit.",
-    "closing_referral_body": "Nếu cân nhắc mua ClaudeKit để dùng luôn bộ hooks, skills và workflow guard rails thay vì tự ghép từng mảnh, bạn có thể mua qua referral link này để được giảm 20%.",
-    "closing_referral_cta": "Nhận giảm 20%",
+    "closing_referral_body": "Nếu cân nhắc mua ClaudeKit để dùng luôn bộ hooks, skills và workflow guard rails thay vì tự ghép từng mảnh, bạn có thể mua qua referral link này để được giảm 30%.",
+    "closing_referral_cta": "Nhận giảm 30%",
     "colophon": "Inside ClaudeKit · Guard rails deep dives · claudekit-engineer@2.19.1",
     "s4_chip_removing": "removing"
   },
@@ -804,8 +804,8 @@
     "closing_p2": "Each layer protects against a different kind of risk: hooks block tool calls, rules nudge behavior, hard-gates hold the workflow, guard skills only run when invoked. Knowing which layer is running and which is just an instruction helps you audit the right place — before a bug slips into a PR and makes it to PROD.",
     "closing_referral_kicker": "New to ClaudeKit?",
     "closing_referral_title": "If you are building a guardrails system, ClaudeKit is a useful set of applied patterns to study.",
-    "closing_referral_body": "If you are considering buying ClaudeKit so you can use the hooks, skills, and workflow guard rails as a ready kit instead of assembling each layer by hand, this referral link gives you 20% off.",
-    "closing_referral_cta": "Get 20% off",
+    "closing_referral_body": "If you are considering buying ClaudeKit so you can use the hooks, skills, and workflow guard rails as a ready kit instead of assembling each layer by hand, this referral link gives you 30% off.",
+    "closing_referral_cta": "Get 30% off",
     "colophon": "Inside ClaudeKit · Guard rails deep dives · claudekit-engineer@2.19.1",
     "s4_chip_removing": "removing"
   },
@@ -1209,8 +1209,8 @@
     "closing_p2": "每层防护针对一类风险：hook 拦截 tool call，rule 提示行为，hard-gate 维护流程，guard skill 仅在被调用时运行。了解哪层正在运行、哪层只是提示语，有助于在错误进入 PR 并流向 PROD 之前在正确的地方进行审计。",
     "closing_referral_kicker": "还没有 ClaudeKit？",
     "closing_referral_title": "如果你正在构建 guardrails 系统，可以参考 ClaudeKit 中已经应用的 patterns。",
-    "closing_referral_body": "如果你正在考虑购买 ClaudeKit，想直接使用 hooks、skills 和 workflow guard rails，而不是手动拼装每一层，可以通过这个 referral link 购买并享 20% 折扣。",
-    "closing_referral_cta": "获取 20% 折扣",
+    "closing_referral_body": "如果你正在考虑购买 ClaudeKit，想直接使用 hooks、skills 和 workflow guard rails，而不是手动拼装每一层，可以通过这个 referral link 购买并享 30% 折扣。",
+    "closing_referral_cta": "获取 30% 折扣",
     "colophon": "Inside ClaudeKit · Guard rails deep dives · claudekit-engineer@2.19.1",
     "s4_chip_removing": "removing"
   },
@@ -1614,8 +1614,8 @@
     "closing_p2": "各層はそれぞれ異なるリスクを保護します：hookはtool callをブロックし、ruleは動作を促し、hard-gateはプロセスを維持し、guard skillは呼び出されたときのみ動作します。どの層が動作していて、どの層が単なる指示なのかを把握することで、バグがPRに入り込んでPRODに上がる前に、適切な場所で監査できます。",
     "closing_referral_kicker": "ClaudeKitをまだ持っていない場合",
     "closing_referral_title": "guardrailsシステムを構築しているなら、ClaudeKitで実際に使われているpatternsを参考にできます。",
-    "closing_referral_body": "hooks、skills、workflow guard railsを自分で組み合わせる代わりに、ClaudeKitの購入を検討している場合は、このreferral linkから20%割引で購入できます。",
-    "closing_referral_cta": "20%割引を使う",
+    "closing_referral_body": "hooks、skills、workflow guard railsを自分で組み合わせる代わりに、ClaudeKitの購入を検討している場合は、このreferral linkから30%割引で購入できます。",
+    "closing_referral_cta": "30%割引を使う",
     "colophon": "Inside ClaudeKit · Guard rails deep dives · claudekit-engineer@2.19.1",
     "s4_chip_removing": "removing"
   }
